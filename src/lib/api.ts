@@ -1,0 +1,822 @@
+import { supabase } from './supabase'
+import { unwrap } from './useQuery'
+import { isoDate, weekStart } from './format'
+import { weekOfPlan } from './calc'
+import type {
+  AthleteProfile,
+  CoachNote,
+  Food,
+  Invite,
+  Muscle,
+  DailyLog,
+  DietItem,
+  DietMeal,
+  DietPlan,
+  Exercise,
+  Measurement,
+  Plan,
+  PlanDay,
+  PlanExercise,
+  Profile,
+  SetLog,
+  WeeklyFeedback,
+  WorkoutSession,
+} from './database.types'
+
+/** Plano de treino activo do aluno, já com dias e exercícios. */
+export interface ActivePlan {
+  plan: Plan
+  days: PlanDay[]
+  exercisesByDay: Map<string, PlanExercise[]>
+  library: Map<string, Exercise>
+}
+
+export async function fetchActivePlan(
+  athleteId: string,
+  { includeDrafts = false } = {},
+): Promise<ActivePlan | null> {
+  let query = supabase
+    .from('plans')
+    .select('*')
+    .eq('athlete_id', athleteId)
+    .order('start_date', { ascending: false })
+    .limit(1)
+
+  query = includeDrafts
+    ? query.in('status', ['published', 'draft'])
+    : query.eq('status', 'published')
+
+  const plans = unwrap(await query)
+  const plan = plans[0]
+  if (!plan) return null
+
+  const days = unwrap(
+    await supabase
+      .from('plan_days')
+      .select('*')
+      .eq('plan_id', plan.id)
+      .order('sort_order'),
+  )
+
+  const dayIds = days.map((day) => day.id)
+  const planExercises = dayIds.length
+    ? unwrap(
+        await supabase
+          .from('plan_exercises')
+          .select('*')
+          .in('plan_day_id', dayIds)
+          .order('sort_order'),
+      )
+    : []
+
+  const exercisesByDay = new Map<string, PlanExercise[]>()
+  for (const day of days) exercisesByDay.set(day.id, [])
+  for (const item of planExercises) {
+    exercisesByDay.get(item.plan_day_id)?.push(item)
+  }
+
+  return { plan, days, exercisesByDay, library: await fetchExercisesByIds(planExercises) }
+}
+
+async function fetchExercisesByIds(
+  planExercises: PlanExercise[],
+): Promise<Map<string, Exercise>> {
+  const ids = [
+    ...new Set(
+      planExercises
+        .map((item) => item.exercise_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ]
+  if (ids.length === 0) return new Map()
+
+  const rows = unwrap(await supabase.from('exercises').select('*').in('id', ids))
+  return new Map(rows.map((row) => [row.id, row]))
+}
+
+export async function fetchDailyLog(
+  athleteId: string,
+  date = isoDate(),
+): Promise<DailyLog | null> {
+  const rows = unwrap(
+    await supabase
+      .from('daily_logs')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .eq('log_date', date)
+      .limit(1),
+  )
+  return rows[0] ?? null
+}
+
+export async function saveDailyLog(
+  athleteId: string,
+  date: string,
+  patch: Partial<DailyLog>,
+): Promise<DailyLog> {
+  const rows = unwrap(
+    await supabase
+      .from('daily_logs')
+      .upsert(
+        { athlete_id: athleteId, log_date: date, ...patch, updated_at: new Date().toISOString() },
+        { onConflict: 'athlete_id,log_date' },
+      )
+      .select(),
+  )
+  return rows[0]
+}
+
+export async function fetchRecentLogs(
+  athleteId: string,
+  days = 56,
+): Promise<DailyLog[]> {
+  const since = new Date()
+  since.setDate(since.getDate() - days)
+  return unwrap(
+    await supabase
+      .from('daily_logs')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .gte('log_date', isoDate(since))
+      .order('log_date'),
+  )
+}
+
+export async function fetchMeasurements(athleteId: string): Promise<Measurement[]> {
+  return unwrap(
+    await supabase
+      .from('measurements')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .order('measured_on', { ascending: false }),
+  )
+}
+
+export async function fetchAthleteProfile(
+  athleteId: string,
+): Promise<AthleteProfile | null> {
+  const rows = unwrap(
+    await supabase
+      .from('athlete_profiles')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .limit(1),
+  )
+  return rows[0] ?? null
+}
+
+export async function fetchLatestCoachNote(
+  athleteId: string,
+): Promise<CoachNote | null> {
+  const rows = unwrap(
+    await supabase
+      .from('coach_notes')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .order('note_date', { ascending: false })
+      .limit(1),
+  )
+  return rows[0] ?? null
+}
+
+export async function fetchCoach(coachId: string): Promise<Profile | null> {
+  const rows = unwrap(
+    await supabase.from('profiles').select('*').eq('id', coachId).limit(1),
+  )
+  return rows[0] ?? null
+}
+
+/** Sessões de uma semana do plano, para saber o que já foi feito. */
+export async function fetchWeekSessions(
+  athleteId: string,
+  planId: string,
+  week: number,
+): Promise<WorkoutSession[]> {
+  return unwrap(
+    await supabase
+      .from('workout_sessions')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .eq('plan_id', planId)
+      .eq('week_number', week)
+      .order('session_date'),
+  )
+}
+
+export async function fetchSessionSets(sessionId: string): Promise<SetLog[]> {
+  return unwrap(
+    await supabase
+      .from('set_logs')
+      .select('*')
+      .eq('session_id', sessionId)
+      .order('set_number'),
+  )
+}
+
+/**
+ * As séries que o aluno fez da última vez neste exercício, para ter a
+ * referência ao lado enquanto treina — é a coluna "semana passada" da planilha.
+ */
+export async function fetchPreviousSets(
+  athleteId: string,
+  planExerciseId: string,
+  beforeSessionId: string,
+): Promise<SetLog[]> {
+  const sessions = unwrap(
+    await supabase
+      .from('workout_sessions')
+      .select('id, session_date')
+      .eq('athlete_id', athleteId)
+      .neq('id', beforeSessionId)
+      .order('session_date', { ascending: false })
+      .limit(30),
+  )
+  if (sessions.length === 0) return []
+
+  const rows = unwrap(
+    await supabase
+      .from('set_logs')
+      .select('*')
+      .eq('plan_exercise_id', planExerciseId)
+      .in(
+        'session_id',
+        sessions.map((session) => session.id),
+      )
+      .order('set_number'),
+  )
+  if (rows.length === 0) return []
+
+  // Fica só a sessão mais recente das que aparecerem.
+  const order = new Map(sessions.map((session, index) => [session.id, index]))
+  const newest = rows.reduce((best, row) => {
+    const rank = order.get(row.session_id) ?? Infinity
+    const bestRank = order.get(best) ?? Infinity
+    return rank < bestRank ? row.session_id : best
+  }, rows[0].session_id)
+
+  return rows.filter((row) => row.session_id === newest)
+}
+
+export async function startSession(
+  athleteId: string,
+  plan: Plan,
+  dayId: string,
+): Promise<WorkoutSession> {
+  const week = weekOfPlan(plan.start_date, isoDate())
+
+  // Se já houver uma sessão desta semana para este treino, continua-se essa em
+  // vez de começar outra — o índice único na base garante o mesmo.
+  const existing = unwrap(
+    await supabase
+      .from('workout_sessions')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .eq('plan_day_id', dayId)
+      .eq('week_number', week)
+      .limit(1),
+  )
+  if (existing[0]) return existing[0]
+
+  const rows = unwrap(
+    await supabase
+      .from('workout_sessions')
+      .insert({
+        athlete_id: athleteId,
+        plan_id: plan.id,
+        plan_day_id: dayId,
+        week_number: week,
+        session_date: isoDate(),
+        started_at: new Date().toISOString(),
+        status: 'in_progress',
+      })
+      .select(),
+  )
+  return rows[0]
+}
+
+export async function saveSet(
+  sessionId: string,
+  planExerciseId: string,
+  exerciseId: string | null,
+  setNumber: number,
+  values: { weight_kg: number | null; reps: number | null; rir: number | null },
+): Promise<SetLog> {
+  const rows = unwrap(
+    await supabase
+      .from('set_logs')
+      .upsert(
+        {
+          session_id: sessionId,
+          plan_exercise_id: planExerciseId,
+          exercise_id: exerciseId,
+          set_number: setNumber,
+          done: true,
+          ...values,
+        },
+        { onConflict: 'session_id,plan_exercise_id,set_number' },
+      )
+      .select(),
+  )
+  return rows[0]
+}
+
+export async function finishSession(
+  sessionId: string,
+  startedAt: string | null,
+): Promise<void> {
+  const finishedAt = new Date()
+  const duration = startedAt
+    ? Math.round((finishedAt.getTime() - new Date(startedAt).getTime()) / 1000)
+    : null
+
+  unwrap(
+    await supabase
+      .from('workout_sessions')
+      .update({
+        status: 'done',
+        finished_at: finishedAt.toISOString(),
+        duration_s: duration,
+      })
+      .eq('id', sessionId)
+      .select(),
+  )
+}
+
+/** Plano alimentar publicado, com refeições e itens. */
+export interface DietDetail {
+  plan: DietPlan
+  meals: DietMeal[]
+  itemsByMeal: Map<string, DietItem[]>
+}
+
+export async function fetchDietPlan(
+  athleteId: string,
+  { includeDrafts = false } = {},
+): Promise<DietDetail | null> {
+  let query = supabase
+    .from('diet_plans')
+    .select('*')
+    .eq('athlete_id', athleteId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  query = includeDrafts
+    ? query.in('status', ['published', 'draft'])
+    : query.eq('status', 'published')
+
+  const plans = unwrap(await query)
+  const plan = plans[0]
+  if (!plan) return null
+
+  return { plan, ...(await fetchDietContents(plan.id)) }
+}
+
+export async function fetchDietContents(dietPlanId: string) {
+  const meals = unwrap(
+    await supabase
+      .from('diet_meals')
+      .select('*')
+      .eq('diet_plan_id', dietPlanId)
+      .order('sort_order'),
+  )
+
+  const mealIds = meals.map((meal) => meal.id)
+  const items = mealIds.length
+    ? unwrap(
+        await supabase
+          .from('diet_items')
+          .select('*')
+          .in('meal_id', mealIds)
+          .order('sort_order'),
+      )
+    : []
+
+  const itemsByMeal = new Map<string, DietItem[]>()
+  for (const meal of meals) itemsByMeal.set(meal.id, [])
+  for (const item of items) itemsByMeal.get(item.meal_id)?.push(item)
+
+  return { meals, itemsByMeal }
+}
+
+export async function fetchWeeklyFeedback(
+  athleteId: string,
+  week = weekStart(),
+): Promise<WeeklyFeedback | null> {
+  const rows = unwrap(
+    await supabase
+      .from('weekly_feedback')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .eq('week_start', week)
+      .limit(1),
+  )
+  return rows[0] ?? null
+}
+
+export async function fetchFeedbackHistory(
+  athleteId: string,
+  limit = 8,
+): Promise<WeeklyFeedback[]> {
+  return unwrap(
+    await supabase
+      .from('weekly_feedback')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .order('week_start', { ascending: false })
+      .limit(limit),
+  )
+}
+
+export async function saveWeeklyFeedback(
+  athleteId: string,
+  week: string,
+  patch: Partial<WeeklyFeedback>,
+): Promise<WeeklyFeedback> {
+  const rows = unwrap(
+    await supabase
+      .from('weekly_feedback')
+      .upsert(
+        { athlete_id: athleteId, week_start: week, ...patch },
+        { onConflict: 'athlete_id,week_start' },
+      )
+      .select(),
+  )
+  return rows[0]
+}
+
+// ── lado do treinador ────────────────────────────────────────────────
+
+/** Um aluno com o resumo que o treinador precisa de ver na lista. */
+export interface AthleteSummary {
+  profile: Profile
+  plan: Plan | null
+  week: number
+  sessionsDone: number
+  sessionsPlanned: number
+  lastLog: DailyLog | null
+  weightChange: number | null
+  unreadFeedback: WeeklyFeedback | null
+  lastSeen: string | null
+}
+
+export async function fetchAthletes(coachId: string): Promise<Profile[]> {
+  return unwrap(
+    await supabase
+      .from('profiles')
+      .select('*')
+      .eq('coach_id', coachId)
+      .order('full_name'),
+  )
+}
+
+/**
+ * Junta, para cada aluno, o estado do plano, os treinos da semana e o feedback
+ * por ler. São consultas em lote por cima de todos os alunos, para a lista não
+ * disparar uma rajada de pedidos por linha.
+ */
+export async function fetchAthleteSummaries(
+  coachId: string,
+): Promise<AthleteSummary[]> {
+  const athletes = await fetchAthletes(coachId)
+  if (athletes.length === 0) return []
+
+  const ids = athletes.map((athlete) => athlete.id)
+  const since = new Date()
+  since.setDate(since.getDate() - 60)
+
+  const [plans, sessions, logs, feedback] = await Promise.all([
+    unwrap(
+      await supabase
+        .from('plans')
+        .select('*')
+        .in('athlete_id', ids)
+        .order('start_date', { ascending: false }),
+    ),
+    unwrap(
+      await supabase
+        .from('workout_sessions')
+        .select('*')
+        .in('athlete_id', ids)
+        .gte('session_date', isoDate(since)),
+    ),
+    unwrap(
+      await supabase
+        .from('daily_logs')
+        .select('*')
+        .in('athlete_id', ids)
+        .gte('log_date', isoDate(since))
+        .order('log_date'),
+    ),
+    unwrap(
+      await supabase
+        .from('weekly_feedback')
+        .select('*')
+        .in('athlete_id', ids)
+        .eq('status', 'sent')
+        .order('week_start', { ascending: false }),
+    ),
+  ])
+
+  const planDayCounts = await countPlanDays(plans.map((plan) => plan.id))
+
+  return athletes.map((athlete) => {
+    const plan =
+      plans.find(
+        (item) => item.athlete_id === athlete.id && item.status === 'published',
+      ) ?? null
+
+    const week = plan ? weekOfPlan(plan.start_date, isoDate()) : 1
+    const mySessions = sessions.filter(
+      (session) =>
+        session.athlete_id === athlete.id &&
+        session.plan_id === plan?.id &&
+        session.week_number === week,
+    )
+
+    const myLogs = logs.filter((log) => log.athlete_id === athlete.id)
+    const weights = myLogs
+      .map((log) => log.weight_kg)
+      .filter((value): value is number => value !== null)
+
+    const unread =
+      feedback.find(
+        (entry) => entry.athlete_id === athlete.id && entry.read_at === null,
+      ) ?? null
+
+    return {
+      profile: athlete,
+      plan,
+      week,
+      sessionsDone: mySessions.filter((session) => session.status === 'done').length,
+      sessionsPlanned: plan ? planDayCounts.get(plan.id) ?? 0 : 0,
+      lastLog: myLogs[myLogs.length - 1] ?? null,
+      weightChange:
+        weights.length > 1 ? weights[weights.length - 1] - weights[0] : null,
+      unreadFeedback: unread,
+      lastSeen: myLogs[myLogs.length - 1]?.log_date ?? null,
+    }
+  })
+}
+
+async function countPlanDays(planIds: string[]): Promise<Map<string, number>> {
+  if (planIds.length === 0) return new Map()
+  const days = unwrap(
+    await supabase.from('plan_days').select('id, plan_id').in('plan_id', planIds),
+  )
+  const counts = new Map<string, number>()
+  for (const day of days) {
+    counts.set(day.plan_id, (counts.get(day.plan_id) ?? 0) + 1)
+  }
+  return counts
+}
+
+export async function fetchPlansFor(athleteId: string): Promise<Plan[]> {
+  return unwrap(
+    await supabase
+      .from('plans')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .order('start_date', { ascending: false }),
+  )
+}
+
+export async function fetchDietPlansFor(athleteId: string): Promise<DietPlan[]> {
+  return unwrap(
+    await supabase
+      .from('diet_plans')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .order('created_at', { ascending: false }),
+  )
+}
+
+export async function createPlan(
+  coachId: string,
+  athleteId: string,
+  values: { name: string; block_name: string | null; num_weeks: number; start_date: string },
+): Promise<Plan> {
+  const plans = unwrap(
+    await supabase
+      .from('plans')
+      .insert({ ...values, coach_id: coachId, athlete_id: athleteId, status: 'draft' })
+      .select(),
+  )
+  const plan = plans[0]
+
+  // Um plano vazio não serve para nada; começa com os três treinos do costume.
+  unwrap(
+    await supabase
+      .from('plan_days')
+      .insert(
+        ['A', 'B', 'C'].map((label, index) => ({
+          plan_id: plan.id,
+          label,
+          sort_order: index,
+        })),
+      )
+      .select(),
+  )
+  return plan
+}
+
+export async function fetchPlanDetail(planId: string) {
+  const plans = unwrap(await supabase.from('plans').select('*').eq('id', planId).limit(1))
+  const plan = plans[0]
+  if (!plan) throw new Error('Plano não encontrado.')
+
+  const days = unwrap(
+    await supabase.from('plan_days').select('*').eq('plan_id', planId).order('sort_order'),
+  )
+  const dayIds = days.map((day) => day.id)
+  const planExercises = dayIds.length
+    ? unwrap(
+        await supabase
+          .from('plan_exercises')
+          .select('*')
+          .in('plan_day_id', dayIds)
+          .order('sort_order'),
+      )
+    : []
+
+  const exerciseIds = [
+    ...new Set(
+      planExercises
+        .map((item) => item.exercise_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ]
+  const library = exerciseIds.length
+    ? unwrap(await supabase.from('exercises').select('*').in('id', exerciseIds))
+    : []
+
+  const athletes = unwrap(
+    await supabase.from('profiles').select('*').eq('id', plan.athlete_id).limit(1),
+  )
+
+  const exercisesByDay = new Map<string, PlanExercise[]>()
+  for (const day of days) exercisesByDay.set(day.id, [])
+  for (const item of planExercises) exercisesByDay.get(item.plan_day_id)?.push(item)
+
+  return {
+    plan,
+    days,
+    exercisesByDay,
+    library: new Map(library.map((exercise) => [exercise.id, exercise])),
+    athlete: athletes[0] ?? null,
+  }
+}
+
+export async function searchExercises(
+  term: string,
+  filters: { muscle?: string | null; pattern?: string | null } = {},
+): Promise<Exercise[]> {
+  let query = supabase.from('exercises').select('*').order('name').limit(120)
+
+  const normalized = term.trim().toLowerCase()
+  if (normalized) query = query.like('search_name', `%${normalized}%`)
+  if (filters.muscle) query = query.eq('primary_muscle', filters.muscle)
+  if (filters.pattern) query = query.eq('pattern', filters.pattern)
+
+  return unwrap(await query)
+}
+
+export async function searchFoods(term: string): Promise<Food[]> {
+  let query = supabase.from('foods').select('*').order('name').limit(60)
+  const normalized = term.trim().toLowerCase()
+  if (normalized) query = query.like('search_name', `%${normalized}%`)
+  return unwrap(await query)
+}
+
+export async function fetchMuscles(): Promise<Muscle[]> {
+  return unwrap(await supabase.from('muscles').select('*').order('sort_order'))
+}
+
+export async function addExerciseToDay(
+  dayId: string,
+  exercise: Exercise,
+  sortOrder: number,
+): Promise<PlanExercise> {
+  const rows = unwrap(
+    await supabase
+      .from('plan_exercises')
+      .insert({
+        plan_day_id: dayId,
+        exercise_id: exercise.id,
+        sort_order: sortOrder,
+        sets: 3,
+        rep_min: 8,
+        rep_max: 12,
+        rest_seconds: 90,
+      })
+      .select(),
+  )
+  return rows[0]
+}
+
+export async function updatePlanExercise(
+  id: string,
+  patch: Partial<PlanExercise>,
+): Promise<void> {
+  unwrap(await supabase.from('plan_exercises').update(patch).eq('id', id).select())
+}
+
+export async function removePlanExercise(id: string): Promise<void> {
+  unwrap(await supabase.from('plan_exercises').delete().eq('id', id).select())
+}
+
+export async function publishPlan(planId: string): Promise<void> {
+  unwrap(
+    await supabase
+      .from('plans')
+      .update({ status: 'published', published_at: new Date().toISOString() })
+      .eq('id', planId)
+      .select(),
+  )
+}
+
+export async function saveCoachNote(
+  coachId: string,
+  athleteId: string,
+  body: string,
+): Promise<CoachNote> {
+  const rows = unwrap(
+    await supabase
+      .from('coach_notes')
+      .insert({ coach_id: coachId, athlete_id: athleteId, body, note_date: isoDate() })
+      .select(),
+  )
+  return rows[0]
+}
+
+export async function replyToFeedback(
+  feedbackId: string,
+  reply: string,
+): Promise<void> {
+  unwrap(
+    await supabase
+      .from('weekly_feedback')
+      .update({
+        coach_reply: reply,
+        coach_replied_at: new Date().toISOString(),
+        read_at: new Date().toISOString(),
+      })
+      .eq('id', feedbackId)
+      .select(),
+  )
+}
+
+export async function markFeedbackRead(feedbackId: string): Promise<void> {
+  unwrap(
+    await supabase
+      .from('weekly_feedback')
+      .update({ read_at: new Date().toISOString() })
+      .eq('id', feedbackId)
+      .select(),
+  )
+}
+
+export async function fetchInvites(coachId: string): Promise<Invite[]> {
+  return unwrap(
+    await supabase
+      .from('invites')
+      .select('*')
+      .eq('coach_id', coachId)
+      .order('created_at', { ascending: false }),
+  )
+}
+
+export async function createInvite(
+  coachId: string,
+  email: string,
+  fullName: string | null,
+): Promise<Invite> {
+  const rows = unwrap(
+    await supabase
+      .from('invites')
+      .insert({ coach_id: coachId, email: email.trim().toLowerCase(), full_name: fullName })
+      .select(),
+  )
+  return rows[0]
+}
+
+export async function revokeInvite(inviteId: string): Promise<void> {
+  unwrap(
+    await supabase.from('invites').update({ status: 'revoked' }).eq('id', inviteId).select(),
+  )
+}
+
+export async function saveAthleteProfile(
+  athleteId: string,
+  patch: Partial<AthleteProfile>,
+): Promise<AthleteProfile> {
+  const rows = unwrap(
+    await supabase
+      .from('athlete_profiles')
+      .upsert(
+        { athlete_id: athleteId, ...patch, updated_at: new Date().toISOString() },
+        { onConflict: 'athlete_id' },
+      )
+      .select(),
+  )
+  return rows[0]
+}

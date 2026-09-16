@@ -1,0 +1,72 @@
+.measure__weight {
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.perimeters {
+  display: flex;
+  flex-direction: column;
+}
+
+.perimeter {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.perimeter:last-child {
+  border-bottom: none;
+}
+
+.perimeter__label {
+  flex: 1;
+  font-size: 14px;
+  color: var(--muted-strong);
+}
+
+.perimeter__value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.perimeter__diff {
+  min-width: 48px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.perimeter__diff.is-down {
+  color: var(--good);
+}
+
+.perimeter__diff.is-up {
+  color: var(--accent-dark);
+}
+
+.perimeter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.measure-history {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.measure-history li {
+  display: grid;
+  grid-template-columns: 70px 80px 1fr;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}

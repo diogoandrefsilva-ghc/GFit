@@ -1,0 +1,114 @@
+.diet-edit__meals {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.diet-edit__meal-name {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--line-2);
+  padding: 2px 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.diet-edit__meal-name:focus {
+  outline: none;
+  border-bottom-color: var(--ink);
+}
+
+.diet-edit__meal-kcal {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted-strong);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.diet-edit__items {
+  display: flex;
+  flex-direction: column;
+}
+
+.diet-edit__item {
+  display: grid;
+  grid-template-columns: 1fr 64px auto 28px;
+  align-items: center;
+  gap: 2px 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--paper-3);
+}
+
+.diet-edit__item:last-child {
+  border-bottom: none;
+}
+
+.diet-edit__item-name {
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.diet-edit__qty {
+  width: 100%;
+  min-height: 34px;
+  padding: 4px 6px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.diet-edit__unit {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.diet-edit__item-macros {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.diet-edit__remove {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--paper-2);
+  color: var(--muted-strong);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.diet-edit__no-items {
+  font-size: 13px;
+  padding: 6px 0;
+}
+
+.diet-edit__meal-macros {
+  font-size: 12px;
+  color: var(--muted-strong);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.food-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 8px;
+}
+
+.food-detail__macros {
+  font-size: 14px;
+  background: var(--paper-2);
+  border-radius: var(--radius);
+  padding: 12px;
+  font-variant-numeric: tabular-nums;
+}
