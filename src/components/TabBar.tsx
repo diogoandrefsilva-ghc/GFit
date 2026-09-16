@@ -4,7 +4,7 @@ import './tabbar.css'
 export interface Tab {
   to: string
   label: string
-  icon: 'today' | 'workout' | 'ruler' | 'plate' | 'week' | 'people' | 'library'
+  icon: 'today' | 'workout' | 'ruler' | 'plate' | 'week' | 'people' | 'library' | 'person'
   badge?: number
 }
 
@@ -86,6 +86,13 @@ function Icon({ name }: { name: Tab['icon'] }) {
       return (
         <svg {...common}>
           <path d="M4 5h6v14H4zM14 5h6v14h-6M14 10h6" />
+        </svg>
+      )
+    case 'person':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="8" r="3.6" />
+          <path d="M5 19.5c0-3.4 3.1-5.6 7-5.6s7 2.2 7 5.6" />
         </svg>
       )
   }

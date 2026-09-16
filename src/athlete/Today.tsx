@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth, useProfile } from '@/auth/useAuth'
+import { useProfile } from '@/auth/useAuth'
 import { Avatar } from '@/components/Avatar'
 import { Scale } from '@/components/Scale'
 import { Stepper } from '@/components/Stepper'
@@ -24,7 +24,6 @@ import './today.css'
 
 export function Today() {
   const profile = useProfile()
-  const { signOut } = useAuth()
   const navigate = useNavigate()
   const today = isoDate()
 
@@ -113,8 +112,8 @@ export function Today() {
           <button
             type="button"
             className="today__me"
-            onClick={signOut}
-            title="Sair"
+            onClick={() => navigate('/perfil')}
+            aria-label="Perfil e definições"
           >
             <Avatar name={profile.full_name} url={profile.avatar_url} size={38} />
           </button>

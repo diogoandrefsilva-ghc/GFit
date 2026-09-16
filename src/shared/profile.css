@@ -1,0 +1,133 @@
+.profile__me {
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile__id {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.profile__name {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  text-align: left;
+  color: var(--ink);
+}
+
+.profile__name em {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-narrow);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.profile__name-edit {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile__email {
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.profile__count {
+  font-size: 12px;
+}
+
+.profile__invites {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile__invite {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.profile__invite:last-child {
+  border-bottom: none;
+}
+
+.profile__invite-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile__invite-text strong {
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile__invite-text em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.profile__coach {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile__coach strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.profile__coach span {
+  font-size: 13px;
+}
+
+.profile__goal p {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted-strong);
+}
+
+.profile__confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile__confirm .btn {
+  flex: 1;
+}
+
+.profile__foot {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted-soft);
+  padding: 4px 0 8px;
+}

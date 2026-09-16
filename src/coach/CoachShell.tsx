@@ -4,6 +4,7 @@ import { TabBar, type Tab } from '@/components/TabBar'
 const TABS: Tab[] = [
   { to: '/alunos', label: 'Alunos', icon: 'people' },
   { to: '/exercicios', label: 'Exercícios', icon: 'library' },
+  { to: '/perfil', label: 'Perfil', icon: 'person' },
 ]
 
 export function CoachShell() {

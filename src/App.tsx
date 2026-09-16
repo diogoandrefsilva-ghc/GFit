@@ -34,6 +34,9 @@ const DietEditor = lazy(() =>
 const ExerciseLibrary = lazy(() =>
   import('@/coach/ExerciseLibrary').then((m) => ({ default: m.ExerciseLibrary })),
 )
+const Profile = lazy(() =>
+  import('@/shared/Profile').then((m) => ({ default: m.Profile })),
+)
 
 export function App() {
   const { session, profile, loading, error, isCoach, awaitingInvite } = useAuth()
@@ -82,6 +85,7 @@ export function App() {
             <Route path="/alunos" element={<Athletes />} />
             <Route path="/alunos/:athleteId" element={<AthleteDetail />} />
             <Route path="/exercicios" element={<ExerciseLibrary />} />
+            <Route path="/perfil" element={<Profile />} />
           </Route>
           <Route path="/planos/:planId" element={<PlanEditor />} />
           <Route path="/dietas/:dietPlanId" element={<DietEditor />} />
@@ -95,6 +99,7 @@ export function App() {
             <Route path="/medidas" element={<Measurements />} />
             <Route path="/dieta" element={<Diet />} />
             <Route path="/semana" element={<WeeklyFeedbackScreen />} />
+            <Route path="/perfil" element={<Profile />} />
           </Route>
           <Route path="/treino/:sessionId" element={<WorkoutSession />} />
           <Route path="*" element={<Navigate to="/hoje" replace />} />

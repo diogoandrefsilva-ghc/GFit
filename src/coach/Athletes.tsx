@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { useAuth, useProfile } from '@/auth/useAuth'
+import { Link, useNavigate } from 'react-router-dom'
+import { useProfile } from '@/auth/useAuth'
 import { Avatar } from '@/components/Avatar'
 import { Empty, Loading, ScreenHeader } from '@/components/Screen'
 import {
@@ -40,7 +40,7 @@ function needsAttention(summary: AthleteSummary): string | null {
 
 export function Athletes() {
   const profile = useProfile()
-  const { signOut } = useAuth()
+  const navigate = useNavigate()
   const [filter, setFilter] = useState<Filter>('attention')
   const [inviting, setInviting] = useState(false)
 
@@ -90,7 +90,12 @@ export function Athletes() {
           flagged.size === 1 ? 'precisa' : 'precisam'
         } de ti`}
         action={
-          <button type="button" className="today__me" onClick={signOut} title="Sair">
+          <button
+            type="button"
+            className="today__me"
+            onClick={() => navigate('/perfil')}
+            aria-label="Perfil e definições"
+          >
             <Avatar name={profile.full_name} url={profile.avatar_url} size={38} />
           </button>
         }

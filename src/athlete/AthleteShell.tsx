@@ -7,6 +7,7 @@ const TABS: Tab[] = [
   { to: '/dieta', label: 'Dieta', icon: 'plate' },
   { to: '/medidas', label: 'Medidas', icon: 'ruler' },
   { to: '/semana', label: 'Semana', icon: 'week' },
+  { to: '/perfil', label: 'Perfil', icon: 'person' },
 ]
 
 export function AthleteShell() {
