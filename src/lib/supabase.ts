@@ -1,0 +1,62 @@
+import { createClient } from '@supabase/supabase-js'
+import type { Database } from './database.types'
+
+const url = import.meta.env.VITE_SUPABASE_URL
+const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+
+if (!url || !key) {
+  throw new Error(
+    'Faltam VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY. Copia .env.example para .env.',
+  )
+}
+
+/**
+ * O projeto Supabase é partilhado por várias apps pessoais, uma schema cada.
+ * A GFit vive em `gfit`, que tem de estar exposta em Settings → API →
+ * Exposed schemas.
+ */
+export const supabase = createClient<Database, 'gfit'>(url, key, {
+  db: { schema: 'gfit' },
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce',
+  },
+})
+
+/** URL a que o OAuth deve voltar, respeitando o base path do GitHub Pages. */
+export function redirectUrl() {
+  return `${window.location.origin}${import.meta.env.BASE_URL}`
+}
+
+/**
+ * Traduz os erros mais prováveis para algo que se perceba no ecrã.
+ */
+export function describeError(error: unknown): string {
+  if (!error) return 'Erro desconhecido.'
+  const message = error instanceof Error ? error.message : String(error)
+
+  if (/schema must be one of|does not exist/i.test(message)) {
+    return 'A schema "gfit" ainda não está exposta na API do Supabase. Settings → API → Exposed schemas.'
+  }
+  if (/Invalid login credentials/i.test(message)) {
+    return 'Email ou palavra-passe errados.'
+  }
+  if (/Email not confirmed/i.test(message)) {
+    return 'Confirma o email antes de entrar.'
+  }
+  if (/User already registered/i.test(message)) {
+    return 'Já existe conta com este email. Entra em vez de criar.'
+  }
+  if (/Password should be at least/i.test(message)) {
+    return 'A palavra-passe precisa de pelo menos 6 caracteres.'
+  }
+  if (/row-level security|violates row-level/i.test(message)) {
+    return 'Sem permissões para esta operação.'
+  }
+  if (/Failed to fetch|NetworkError/i.test(message)) {
+    return 'Sem ligação. Tenta outra vez.'
+  }
+  return message
+}

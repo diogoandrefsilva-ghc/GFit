@@ -1,0 +1,40 @@
+/* Paleta e tipografia vindas do protótipo do Claude Design. */
+:root {
+  --ink: #16150f;
+  --ink-2: #26241d;
+  --ink-3: #3a372f;
+
+  --paper: #f4f1ec;
+  --paper-2: #f1eee8;
+  --paper-3: #edeae3;
+  --shell: #dad6cc;
+
+  --line: #e3dfd7;
+  --line-2: #c9c4b8;
+  --line-3: #b9b4a8;
+
+  --muted: #8a867c;
+  --muted-strong: #5d594f;
+  --muted-soft: #a9a499;
+
+  --accent: #ff4a1c;
+  --accent-dark: #c63a12;
+  --accent-soft: #fde8e1;
+
+  --good: #1f5d45;
+  --good-soft: #eaf3ee;
+  --good-line: #d8ebe1;
+
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 20px;
+
+  --font: 'Archivo', system-ui, -apple-system, sans-serif;
+  --font-narrow: 'Archivo Narrow', 'Archivo', system-ui, sans-serif;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Altura da barra de separadores, para o conteúdo não ficar por baixo. */
+  --tabbar-h: 64px;
+}

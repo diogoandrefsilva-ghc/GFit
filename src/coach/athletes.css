@@ -1,0 +1,89 @@
+.athletes__filters {
+  align-items: center;
+}
+
+.athletes__filters .chip {
+  cursor: pointer;
+}
+
+.athletes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.athlete {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  color: var(--ink);
+}
+
+.athlete__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.athlete__name {
+  font-size: 16px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.athlete__meta {
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.athlete__state em {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.athlete__flag {
+  color: var(--accent-dark);
+}
+
+.athlete__ok {
+  color: var(--good);
+}
+
+.athlete__when {
+  flex-shrink: 0;
+  font-size: 12px;
+  align-self: flex-start;
+  padding-top: 2px;
+}
+
+.invites {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.invite {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.invite__email {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}

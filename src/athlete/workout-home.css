@@ -1,0 +1,78 @@
+.workout-days {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.workout-day {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  text-align: left;
+}
+
+.workout-day:disabled {
+  opacity: 0.55;
+}
+
+.workout-day.is-done {
+  background: var(--paper-2);
+}
+
+.workout-day__label {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 17px;
+}
+
+.workout-day.is-done .workout-day__label {
+  background: var(--good);
+}
+
+.workout-day__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.workout-day__text strong {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.workout-day__text em {
+  font-style: normal;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.workout-day__state {
+  flex-shrink: 0;
+}
+
+.workout-day__go {
+  color: var(--muted-soft);
+  font-size: 18px;
+}
+
+.workout-days__notes {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted-strong);
+  white-space: pre-wrap;
+}
