@@ -86,8 +86,16 @@ Google, que pode não ser aquele em que estavas a pensar. Se a app te puser no
 ecrã "Falta o convite" quando esperavas o de treinador, é quase sempre isso.
 
 Quem entra sem estar nessa lista fica como aluno. Se houver um convite pendente
-para o email, fica logo ligado ao treinador que o convidou; se não, vê um ecrã à
-espera e pode voltar a verificar depois de o convite ser criado.
+para o email, entra com o papel que o convite diz — aluno ou treinador — e, no
+caso do aluno, fica logo ligado a quem o convidou. Se não houver convite, vê um
+ecrã à espera e pode voltar a verificar depois de o convite ser criado.
+
+Depois do primeiro treinador existir, os seguintes convidam-se pela app, no
+separador Perfil. A lista `coach_emails` serve só para o arranque.
+
+A app não envia emails: é estática, não tem servidor. Criar um convite grava-o
+na base de dados; avisar a pessoa é um botão que abre a folha de partilha do
+telemóvel ou a app de email com o texto já escrito.
 
 ### Modelo de dados
 
