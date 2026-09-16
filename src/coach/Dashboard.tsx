@@ -4,6 +4,7 @@ import { useProfile } from '@/auth/useAuth'
 import { Avatar } from '@/components/Avatar'
 import { Loading, ScreenHeader, Stat } from '@/components/Screen'
 import { attentionReason, fetchAthleteSummaries, type AthleteSummary } from '@/lib/api'
+import { weightTone } from '@/lib/calc'
 import { isoDate, longDate, num, plural, relativeDate, shortDate, signed } from '@/lib/format'
 import { useQuery } from '@/lib/useQuery'
 import './dashboard.css'
@@ -216,7 +217,10 @@ export function Dashboard() {
                     </span>
                     <span
                       className={`dash__weight-diff ${
-                        (summary.weightChange ?? 0) < 0 ? 'is-down' : 'is-up'
+                        weightTone(summary.weightChange, summary.weightDirection) ===
+                        'good'
+                          ? 'is-good'
+                          : ''
                       }`}
                     >
                       {signed(summary.weightChange)}

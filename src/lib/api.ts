@@ -22,6 +22,7 @@ import type {
   Profile,
   Role,
   SetLog,
+  WeightDirection,
   WeeklyFeedback,
   WorkoutSession,
 } from './database.types'
@@ -574,6 +575,8 @@ export interface AthleteSummary {
   weightChange: number | null
   unreadFeedback: WeeklyFeedback | null
   lastSeen: string | null
+  /** Para que lado o peso deve ir, para saber se a variação é boa notícia. */
+  weightDirection: WeightDirection | null
 }
 
 /** Porque é que um aluno precisa de atenção — null quando está tudo em dia. */
@@ -620,7 +623,7 @@ export async function fetchAthleteSummaries(
   const since = new Date()
   since.setDate(since.getDate() - 60)
 
-  const [plans, sessions, logs, feedback] = await Promise.all([
+  const [plans, sessions, logs, feedback, targets] = await Promise.all([
     unwrap(
       await supabase
         .from('plans')
@@ -651,7 +654,17 @@ export async function fetchAthleteSummaries(
         .eq('status', 'sent')
         .order('week_start', { ascending: false }),
     ),
+    unwrap(
+      await supabase
+        .from('athlete_current_targets')
+        .select('athlete_id, weight_direction')
+        .in('athlete_id', ids),
+    ),
   ])
+
+  const directionOf = new Map(
+    targets.map((row) => [row.athlete_id, row.weight_direction]),
+  )
 
   const planDayCounts = await countPlanDays(plans.map((plan) => plan.id))
 
@@ -690,6 +703,7 @@ export async function fetchAthleteSummaries(
         weights.length > 1 ? weights[weights.length - 1] - weights[0] : null,
       unreadFeedback: unread,
       lastSeen: myLogs[myLogs.length - 1]?.log_date ?? null,
+      weightDirection: directionOf.get(athlete.id) ?? null,
     }
   })
 }

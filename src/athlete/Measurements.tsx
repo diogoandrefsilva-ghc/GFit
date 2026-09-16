@@ -3,8 +3,13 @@ import { useProfile } from '@/auth/useAuth'
 import { Loading, ScreenHeader, Stat } from '@/components/Screen'
 import { Sparkline } from '@/components/Sparkline'
 import { supabase } from '@/lib/supabase'
-import { fetchAthleteProfile, fetchMeasurements, fetchRecentLogs } from '@/lib/api'
-import { rollingAverage } from '@/lib/calc'
+import {
+  fetchAthleteProfile,
+  fetchCurrentTargets,
+  fetchMeasurements,
+  fetchRecentLogs,
+} from '@/lib/api'
+import { WEIGHT_DIRECTION_LABEL, rollingAverage, weightTone } from '@/lib/calc'
 import { isoDate, num, shortDate, signed } from '@/lib/format'
 import { unwrap, useQuery } from '@/lib/useQuery'
 import type { Measurement } from '@/lib/database.types'
@@ -31,12 +36,13 @@ export function Measurements() {
 
   const { data, loading, error, reload } = useQuery(
     async () => {
-      const [logs, measurements, athlete] = await Promise.all([
+      const [logs, measurements, athlete, targets] = await Promise.all([
         fetchRecentLogs(profile.id, 120),
         fetchMeasurements(profile.id),
         fetchAthleteProfile(profile.id),
+        fetchCurrentTargets(profile.id),
       ])
-      return { logs, measurements, athlete }
+      return { logs, measurements, athlete, targets }
     },
     [profile.id],
   )
@@ -50,7 +56,7 @@ export function Measurements() {
     )
   }
 
-  const { logs, measurements, athlete } = data!
+  const { logs, measurements, athlete, targets } = data!
   const weights = logs.map((log) => log.weight_kg)
   const average = rollingAverage(weights, 7)
   const present = weights.filter((value): value is number => value !== null)
@@ -84,8 +90,12 @@ export function Measurements() {
           <Stat
             label="Variação"
             value={totalChange !== null ? `${signed(totalChange)} kg` : '—'}
-            hint="desde o primeiro registo"
-            tone={totalChange !== null && totalChange < 0 ? 'good' : 'default'}
+            hint={
+              targets?.weight_direction
+                ? WEIGHT_DIRECTION_LABEL[targets.weight_direction].toLowerCase()
+                : 'desde o primeiro registo'
+            }
+            tone={weightTone(totalChange, targets?.weight_direction)}
           />
           <Stat
             label="Média 7d"
@@ -123,11 +133,7 @@ export function Measurements() {
                   <span className="perimeter__label">{field.label}</span>
                   <strong className="perimeter__value">{num(value, 1)} cm</strong>
                   {diff !== null && (
-                    <span
-                      className={`perimeter__diff ${
-                        diff < 0 ? 'is-down' : diff > 0 ? 'is-up' : ''
-                      }`}
-                    >
+                    <span className="perimeter__diff">
                       {signed(diff)}
                     </span>
                   )}

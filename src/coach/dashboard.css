@@ -98,12 +98,9 @@
   font-weight: 700;
 }
 
-.dash__weight-diff.is-down {
+/* Verde só quando a variação vai ao encontro do objectivo do aluno. */
+.dash__weight-diff.is-good {
   color: var(--good);
-}
-
-.dash__weight-diff.is-up {
-  color: var(--accent-dark);
 }
 
 .dash__empty {

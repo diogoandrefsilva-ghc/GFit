@@ -23,10 +23,15 @@ import {
   saveCoachNote,
 } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
-import { average, rollingAverage } from '@/lib/calc'
+import {
+  WEIGHT_DIRECTION_LABEL,
+  average,
+  rollingAverage,
+  weightTone,
+} from '@/lib/calc'
 import { hoursLabel, isoDate, num, relativeDate, shortDate, signed } from '@/lib/format'
 import { unwrap, useQuery } from '@/lib/useQuery'
-import type { WeeklyFeedback } from '@/lib/database.types'
+import type { AthleteTargets, WeeklyFeedback } from '@/lib/database.types'
 import './athlete-detail.css'
 
 type Tab = 'resumo' | 'metas' | 'planos'
@@ -211,15 +216,7 @@ export function AthleteDetail() {
                     <li key={label}>
                       <span>{label}</span>
                       <strong>{num(value, 1)} cm</strong>
-                      <em
-                        className={
-                          before !== null && before !== undefined
-                            ? Number(value) < Number(before)
-                              ? 'is-down'
-                              : 'is-up'
-                            : ''
-                        }
-                      >
+                      <em>
                         {before !== null && before !== undefined
                           ? signed(Number(value) - Number(before))
                           : ''}
@@ -363,7 +360,7 @@ function WeightCard({
 }: {
   logs: { log_date: string; weight_kg: number | null }[]
   measurements: { measured_on: string; weight_kg: number | null }[]
-  targets: { weight_target_kg: number | null } | null
+  targets: AthleteTargets | null
 }) {
   const weighed = logs.filter((log) => log.weight_kg !== null)
   const latest = weighed[weighed.length - 1] ?? null
@@ -404,9 +401,16 @@ function WeightCard({
         </strong>
         {change !== null && (
           <span
-            className={`detail__delta ${change < 0 ? 'is-down' : change > 0 ? 'is-up' : ''}`}
+            className={`detail__delta ${
+              weightTone(change, targets?.weight_direction) === 'good' ? 'is-good' : ''
+            }`}
           >
             {change < 0 ? '▼' : change > 0 ? '▲' : '='} {signed(change)} kg
+          </span>
+        )}
+        {targets?.weight_direction && (
+          <span className="detail__direction muted">
+            {WEIGHT_DIRECTION_LABEL[targets.weight_direction].toLowerCase()}
           </span>
         )}
       </div>

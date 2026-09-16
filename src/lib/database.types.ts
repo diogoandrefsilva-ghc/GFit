@@ -12,6 +12,8 @@
  */
 
 export type Role = 'coach' | 'athlete'
+/** Para que lado o peso deve ir no período. */
+export type WeightDirection = 'lose' | 'gain' | 'maintain'
 export type ProfileStatus = 'pending' | 'active' | 'paused' | 'archived'
 export type PlanStatus = 'draft' | 'published' | 'archived'
 export type SessionStatus = 'in_progress' | 'done' | 'skipped'
@@ -72,6 +74,7 @@ export type AthleteTargets = {
   steps_goal: number | null
   sleep_goal_hours: number | null
   weight_target_kg: number | null
+  weight_direction: WeightDirection | null
   notes: string | null
   created_by: string | null
   created_at: string

@@ -177,14 +177,14 @@
   color: var(--muted-strong);
 }
 
-.detail__delta.is-down {
+/* Verde só quando a variação vai ao encontro do objectivo. Nunca vermelho. */
+.detail__delta.is-good {
   background: var(--good-soft);
   color: var(--good);
 }
 
-.detail__delta.is-up {
-  background: var(--accent-soft);
-  color: var(--accent-dark);
+.detail__direction {
+  font-size: 12px;
 }
 
 .detail__weight-note {
@@ -344,10 +344,8 @@
   color: var(--muted-soft);
 }
 
-.detail__perimeters li em.is-down {
-  color: var(--good);
-}
 
-.detail__perimeters li em.is-up {
-  color: var(--accent-dark);
+
+.targets__direction {
+  align-self: flex-start;
 }

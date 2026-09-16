@@ -1,4 +1,11 @@
-import type { DietItem, Exercise, MuscleShare, PlanExercise, SetLog } from './database.types'
+import type {
+  DietItem,
+  Exercise,
+  MuscleShare,
+  PlanExercise,
+  SetLog,
+  WeightDirection,
+} from './database.types'
 
 export interface Macros {
   protein: number
@@ -100,6 +107,40 @@ export function average(values: (number | null | undefined)[]): number | null {
   )
   if (present.length === 0) return null
   return present.reduce((sum, value) => sum + value, 0) / present.length
+}
+
+/** Quanto é que o peso tem de mexer para deixar de ser ruído da balança. */
+const WEIGHT_NOISE_KG = 0.2
+
+/** Margem que ainda conta como manter o peso. */
+const MAINTAIN_BAND_KG = 1
+
+/**
+ * Se a variação de peso vai ao encontro do objectivo.
+ *
+ * Devolve 'good' quando vai, e 'default' quando não vai — nunca um alarme. Uma
+ * semana em que o peso andou para o lado errado não é um erro: é uma semana. E
+ * sem saber o objectivo não há nada a dizer sobre o número, porque subir é o
+ * que se quer em metade dos casos.
+ */
+export function weightTone(
+  change: number | null | undefined,
+  direction: WeightDirection | null | undefined,
+): 'good' | 'default' {
+  if (change === null || change === undefined || !direction) return 'default'
+
+  if (direction === 'maintain') {
+    return Math.abs(change) <= MAINTAIN_BAND_KG ? 'good' : 'default'
+  }
+  if (Math.abs(change) < WEIGHT_NOISE_KG) return 'default'
+
+  return (direction === 'lose' ? change < 0 : change > 0) ? 'good' : 'default'
+}
+
+export const WEIGHT_DIRECTION_LABEL: Record<WeightDirection, string> = {
+  lose: 'Perder peso',
+  gain: 'Ganhar peso',
+  maintain: 'Manter o peso',
 }
 
 /** Em que semana do plano cai uma data (1-based). */

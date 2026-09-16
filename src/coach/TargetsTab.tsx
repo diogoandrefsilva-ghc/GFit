@@ -3,7 +3,8 @@ import { Stat } from '@/components/Screen'
 import { deleteTargets, saveTargets } from '@/lib/api'
 import { describeError } from '@/lib/supabase'
 import { int, isoDate, num, shortDate } from '@/lib/format'
-import type { AthleteTargets } from '@/lib/database.types'
+import { WEIGHT_DIRECTION_LABEL } from '@/lib/calc'
+import type { AthleteTargets, WeightDirection } from '@/lib/database.types'
 
 /**
  * As metas são revisões datadas, não um formulário que se sobrescreve. Cada vez
@@ -49,6 +50,12 @@ export function TargetsTab({
               <span className="field__label">Objetivo</span>
               <p>{current.objective}</p>
             </div>
+          )}
+
+          {current.weight_direction && (
+            <span className="chip chip--good targets__direction">
+              {WEIGHT_DIRECTION_LABEL[current.weight_direction]}
+            </span>
           )}
 
           <div className="row">
@@ -142,6 +149,9 @@ export function TargetsTab({
                     entry.weight_target_kg
                       ? `alvo ${num(entry.weight_target_kg, 1)} kg`
                       : null,
+                    entry.weight_direction
+                      ? WEIGHT_DIRECTION_LABEL[entry.weight_direction].toLowerCase()
+                      : null,
                   ]
                     .filter(Boolean)
                     .join(' · ') || 'sem números'}
@@ -186,6 +196,7 @@ function TargetsForm({
     steps_goal: seed?.steps_goal ?? 9000,
     sleep_goal_hours: seed?.sleep_goal_hours ?? 8,
     weight_target_kg: seed?.weight_target_kg ?? null,
+    weight_direction: seed?.weight_direction ?? null,
     notes: initial?.notes ?? null,
   })
   const [busy, setBusy] = useState(false)
@@ -239,6 +250,29 @@ function TargetsForm({
           onChange={(event) => set({ objective: event.target.value || null })}
         />
       </label>
+
+      <div className="field">
+        <span className="field__label">O peso deve</span>
+        <div className="row row--wrap">
+          {(Object.keys(WEIGHT_DIRECTION_LABEL) as WeightDirection[]).map((value) => (
+            <button
+              key={value}
+              type="button"
+              className={`chip ${form.weight_direction === value ? 'chip--on' : ''}`}
+              onClick={() =>
+                set({
+                  weight_direction: form.weight_direction === value ? null : value,
+                })
+              }
+            >
+              {WEIGHT_DIRECTION_LABEL[value]}
+            </button>
+          ))}
+        </div>
+        <span className="field__hint">
+          é isto que decide se uma variação de peso aparece como boa notícia
+        </span>
+      </div>
 
       <div className="grid-2">
         {numberField('Kcal', 'kcal_target')}

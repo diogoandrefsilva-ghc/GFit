@@ -41,13 +41,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.perimeter__diff.is-down {
-  color: var(--good);
-}
 
-.perimeter__diff.is-up {
-  color: var(--accent-dark);
-}
 
 .perimeter-form {
   display: flex;
