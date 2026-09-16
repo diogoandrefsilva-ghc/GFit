@@ -33,8 +33,13 @@ export function describeError(error: unknown): string {
   if (!error) return 'Erro desconhecido.'
   const message = error instanceof Error ? error.message : String(error)
 
-  if (/schema must be one of|does not exist/i.test(message)) {
-    return 'A schema "gfit" ainda não está exposta na API do Supabase. Settings → API → Exposed schemas.'
+  // PGRST106: a schema existe na base de dados, mas não está na lista de
+  // schemas que a API deixa consultar. É a configuração que mais vezes falta.
+  if (/PGRST106|invalid schema|schema must be one of/i.test(message)) {
+    return (
+      'A schema "gfit" ainda não está exposta na API do Supabase. ' +
+      'Settings → API → Exposed schemas: acrescenta "gfit" à lista e guarda.'
+    )
   }
   if (/Invalid login credentials/i.test(message)) {
     return 'Email ou palavra-passe errados.'
