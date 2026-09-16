@@ -1,29 +1,25 @@
 import { createClient } from '@supabase/supabase-js'
+import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './config'
 import type { Database } from './database.types'
-
-const url = import.meta.env.VITE_SUPABASE_URL
-const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-
-if (!url || !key) {
-  throw new Error(
-    'Faltam VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY. Copia .env.example para .env.',
-  )
-}
 
 /**
  * O projeto Supabase é partilhado por várias apps pessoais, uma schema cada.
  * A GFit vive em `gfit`, que tem de estar exposta em Settings → API →
  * Exposed schemas.
  */
-export const supabase = createClient<Database, 'gfit'>(url, key, {
-  db: { schema: 'gfit' },
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    flowType: 'pkce',
+export const supabase = createClient<Database, 'gfit'>(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY,
+  {
+    db: { schema: 'gfit' },
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+    },
   },
-})
+)
 
 /** URL a que o OAuth deve voltar, respeitando o base path do GitHub Pages. */
 export function redirectUrl() {

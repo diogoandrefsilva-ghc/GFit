@@ -106,17 +106,25 @@ de dieta ficam invisíveis ao aluno até serem publicados.
 ## Publicação
 
 O workflow `.github/workflows/deploy.yml` publica no GitHub Pages a cada push
-para `main`. Antes do primeiro deploy é preciso, no repositório:
+para `main`. Há um único passo manual, e é obrigatório:
 
-1. *Settings → Pages → Source*: **GitHub Actions**.
-2. *Settings → Secrets and variables → Actions → Variables*: criar
-   `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` com os valores de
-   `.env.example`. São chaves públicas, de cliente — quem protege os dados é o
-   RLS, não elas.
+*Settings → Pages → Source*: **GitHub Actions**.
 
-E, na configuração de Auth do Supabase, acrescentar a URL publicada
-(`https://<user>.github.io/GFit/`) às *Redirect URLs*, para o login com Google
-voltar ao sítio certo.
+Se estiver em *Deploy from a branch*, o GitHub publica a raiz do repositório em
+vez da pasta compilada. O `index.html` que fica servido aponta para
+`/src/main.tsx`, que só existe em desenvolvimento, e o resultado é uma página em
+branco. O workflow também falha, com `Failed to create deployment (status: 404)`.
+
+Não é preciso configurar variáveis nenhumas: a URL e a chave publicável do
+Supabase têm valores por omissão em `src/lib/config.ts`. São credenciais de
+cliente, que viajam no bundle de qualquer maneira — quem protege os dados é o
+RLS. Se quiseres apontar a app a outro projeto, define `VITE_SUPABASE_URL` e
+`VITE_SUPABASE_PUBLISHABLE_KEY` (num `.env` local, ou em *Settings → Secrets and
+variables → Actions → Variables*) e essas ganham.
+
+Na configuração de Auth do Supabase, a URL publicada
+(`https://<user>.github.io/GFit/`) tem de estar nas *Redirect URLs*, para o
+login com Google voltar ao sítio certo.
 
 ## Estrutura
 

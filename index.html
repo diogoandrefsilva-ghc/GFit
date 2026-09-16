@@ -16,9 +16,126 @@
       rel="stylesheet"
     />
     <title>GFit</title>
+    <style>
+      /* Estado de arranque, desenhado sem depender do CSS da app: se o
+         JavaScript rebentar antes de montar, é isto que fica no ecrã. */
+      #boot {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 24px;
+        background: #dad6cc;
+        color: #16150f;
+        font-family: 'Archivo', system-ui, -apple-system, sans-serif;
+        text-align: center;
+      }
+      #boot .ring {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 2px solid #c9c4b8;
+        border-top-color: #16150f;
+        animation: boot-spin 0.7s linear infinite;
+      }
+      @keyframes boot-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      #boot .box {
+        display: none;
+        max-width: 420px;
+        background: #fde8e1;
+        border: 1px solid #f7cdbe;
+        border-radius: 14px;
+        padding: 16px;
+        text-align: left;
+      }
+      #boot .box h1 {
+        margin: 0 0 6px;
+        font-size: 16px;
+        color: #c63a12;
+      }
+      #boot .box p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #5d594f;
+      }
+      #boot .box code {
+        display: block;
+        margin-top: 10px;
+        padding: 8px 10px;
+        background: #fff;
+        border-radius: 8px;
+        font-size: 12px;
+        word-break: break-word;
+        color: #3a372f;
+      }
+      #boot.failed .ring {
+        display: none;
+      }
+      #boot.failed .box {
+        display: block;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="boot">
+        <div class="ring"></div>
+        <div class="box">
+          <h1>A app não arrancou</h1>
+          <p>
+            Alguma coisa falhou a carregar. Puxa a página para baixo para
+            recarregar; se continuar, o detalhe do erro está aqui em baixo.
+          </p>
+          <code id="boot-detail"></code>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Um erro ao carregar o módulo principal deixava a página em branco, sem
+      // pista nenhuma. Aqui apanha-se e mostra-se.
+      ;(function () {
+        var boot = document.getElementById('boot')
+        var detail = document.getElementById('boot-detail')
+        var failed = false
+
+        function fail(message) {
+          if (failed || !boot || !document.getElementById('boot')) return
+          failed = true
+          boot.className = 'failed'
+          detail.textContent = message || 'Erro desconhecido.'
+        }
+
+        window.addEventListener('error', function (event) {
+          fail(
+            event.message ||
+              (event.target && event.target.src
+                ? 'Não foi possível carregar ' + event.target.src
+                : ''),
+          )
+        }, true)
+
+        window.addEventListener('unhandledrejection', function (event) {
+          fail(event.reason && (event.reason.message || String(event.reason)))
+        })
+
+        // Rede muito lenta ou script que nunca chega a correr.
+        setTimeout(function () {
+          if (document.getElementById('boot')) {
+            fail('A app demorou demasiado a arrancar.')
+          }
+        }, 15000)
+      })()
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

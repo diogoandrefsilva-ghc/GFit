@@ -33,6 +33,8 @@ jobs:
           npm run typecheck
           npm run lint
 
+      # As variáveis são opcionais: sem elas usam-se os valores por omissão de
+      # src/lib/config.ts. Só fazem falta para apontar a outro projeto Supabase.
       - name: Compilar
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
