@@ -120,20 +120,43 @@ def read_exercises(sheet, muscles):
 
 
 def read_foods(sheet):
+    """
+    Lê a folha "Base dados dieta".
+
+    Atenção: a planilha tem um defeito de origem. As primeiras linhas são a
+    lista própria do Treinador e estão certas, mas a meio há uma célula onde
+    foi colada a coluna inteira de nomes da tabela oficial de composição de
+    alimentos, e daí para baixo os nomes ficaram uma linha ABAIXO das macros
+    que lhes pertencem. Sem corrigir isto, "Carapau grelhado" entrava na app
+    com 49,5 g de hidratos em vez dos 26,3 g de proteína que são os dele.
+
+    A célula colada (multi-linha, milhares de caracteres) marca onde o desvio
+    começa: a partir daí o nome da linha r emparelha com as macros de r-1.
+    """
     foods, seen = [], set()
+    offset = 0
 
     for row in range(2, sheet.max_row + 1):
-        name = clean(sheet.cell(row=row, column=1).value)
+        raw_name = sheet.cell(row=row, column=1).value
+
+        # A célula corrompida marca o início do bloco desalinhado.
+        if raw_name is not None and len(str(raw_name)) > 300:
+            offset = 1
+            continue
+
+        name = clean(raw_name)
         if not name or name.lower() in seen:
             continue
-        macro_cells = [sheet.cell(row=row, column=c).value for c in (4, 5, 6)]
+
+        macro_row = row - offset
+        macro_cells = [sheet.cell(row=macro_row, column=c).value for c in (4, 5, 6)]
         if all(cell is None for cell in macro_cells):
             continue
         seen.add(name.lower())
 
-        def number(column):
+        def number(column, source_row=macro_row):
             try:
-                return round(float(sheet.cell(row=row, column=column).value), 2)
+                return round(float(sheet.cell(row=source_row, column=column).value), 2)
             except (TypeError, ValueError):
                 return 0.0
 
@@ -141,7 +164,7 @@ def read_foods(sheet):
             {
                 "name": name,
                 "base_qty": number(2) or 100.0,
-                "unit": (clean(sheet.cell(row=row, column=3).value) or "g")[:12],
+                "unit": (clean(sheet.cell(row=macro_row, column=3).value) or "g")[:12],
                 "protein_g": number(4),
                 "fat_g": number(5),
                 "carb_g": number(6),
