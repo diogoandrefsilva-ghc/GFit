@@ -61,7 +61,7 @@ export function PlanEditor() {
     <div className="app">
       <div className="screen screen--plain">
         <ScreenHeader
-          back={() => navigate(`/alunos/${plan.athlete_id}`)}
+          back={() => navigate(`/alunos/${plan.athlete_id}`, { replace: true })}
           eyebrow={athlete?.full_name ?? undefined}
           title={plan.name}
           subtitle={
@@ -176,7 +176,7 @@ export function PlanEditor() {
           <button
             type="button"
             className="btn btn--quiet"
-            onClick={() => navigate(`/alunos/${plan.athlete_id}`)}
+            onClick={() => navigate(`/alunos/${plan.athlete_id}`, { replace: true })}
           >
             Fechar
           </button>

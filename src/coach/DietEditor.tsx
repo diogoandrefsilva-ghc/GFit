@@ -55,7 +55,7 @@ export function DietEditor() {
     <div className="app">
       <div className="screen screen--plain">
         <ScreenHeader
-          back={() => navigate(`/alunos/${plan.athlete_id}`)}
+          back={() => navigate(`/alunos/${plan.athlete_id}`, { replace: true })}
           title={plan.name}
           subtitle={
             plan.status === 'published'
@@ -186,7 +186,7 @@ export function DietEditor() {
           <button
             type="button"
             className="btn btn--quiet"
-            onClick={() => navigate(`/alunos/${plan.athlete_id}`)}
+            onClick={() => navigate(`/alunos/${plan.athlete_id}`, { replace: true })}
           >
             Fechar
           </button>
