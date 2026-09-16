@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Archivo+Narrow:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#DAD6CC; font-family:'Archivo',system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  a { color:#FF4A1C; text-decoration:none; }
+  a:hover { color:#16150F; }
+</style>
+</helmet>
+
+<section style="padding:56px 56px 96px; display:flex; flex-direction:column; gap:40px">
+
+  <div id="1a" style="display:flex; flex-direction:column; gap:40px">
+
+    <div style="display:flex; align-items:flex-start; gap:20px; max-width:900px">
+      <div style="flex-shrink:0; width:34px; height:34px; border-radius:17px; background:#16150F; color:#F4F1EC; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700">1a</div>
+      <div style="display:flex; flex-direction:column; gap:10px">
+        <div style="font-family:'Archivo Narrow'; font-size:13px; letter-spacing:0.16em; text-transform:uppercase; color:#8A867C; font-weight:700">Mockup · app de coaching</div>
+        <div style="font-size:40px; line-height:1.05; font-weight:800; color:#16150F; letter-spacing:-0.02em; text-wrap:pretty">A planilha, dividida em dois apps:<br>o aluno consulta e regista, o treinador escreve.</div>
+        <div style="font-size:16px; line-height:1.55; color:#5D594F; max-width:640px; text-wrap:pretty">Cada folha do Excel virou um ecrã. Controle de medidas → Registo diário. Plano treino (C/F/R) → Treino do dia com séries. Base de dados de exercícios → biblioteca pesquisável com vídeo. Perímetros → Medidas. Feedback semanal → formulário que chega ao treinador.</div>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:14px; margin-top:8px">
+      <div style="font-family:'Archivo Narrow'; font-size:15px; letter-spacing:0.18em; text-transform:uppercase; color:#16150F; font-weight:700">Vista do aluno</div>
+      <div style="height:1px; flex:1; background:#B9B4A8"></div>
+    </div>
+
+    <div style="display:flex; flex-wrap:wrap; gap:36px">
+
+      <!-- ── 1. HOJE ───────────────────────────────── -->
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+        <div style="height:100%; display:flex; flex-direction:column; background:#F4F1EC; font-family:'Archivo',system-ui,sans-serif">
+          <div style="flex:1; overflow:hidden; padding:62px 20px 0; display:flex; flex-direction:column; gap:16px">
+
+            <div style="display:flex; align-items:flex-start; justify-content:space-between">
+              <div>
+                <div style="font-size:26px; font-weight:800; color:#16150F; letter-spacing:-0.02em">Terça, 15 set</div>
+                <div style="font-size:13px; color:#8A867C; font-weight:500; margin-top:2px">Semana 6 de 8 · Bloco Hipertrofia</div>
+              </div>
+              <div style="width:40px; height:40px; border-radius:20px; background:#16150F; color:#F4F1EC; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700">RM</div>
+            </div>
+
+            <div style="background:#16150F; border-radius:20px; padding:18px; color:#F4F1EC; display:flex; flex-direction:column; gap:14px">
+              <div style="display:flex; justify-content:space-between; align-items:center">
+                <div style="font-family:'Archivo Narrow'; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:#FF4A1C; font-weight:700">Treino de hoje</div>
+                <div style="font-size:12px; color:#A9A499; font-weight:600">~55 min</div>
+              </div>
+              <div style="font-size:22px; font-weight:700; letter-spacing:-0.01em">Treino A · Empurrar</div>
+              <div style="display:flex; gap:6px; flex-wrap:wrap">
+                <div style="font-size:12px; font-weight:600; padding:5px 10px; border-radius:99px; background:rgba(255,255,255,0.1)">Peito</div>
+                <div style="font-size:12px; font-weight:600; padding:5px 10px; border-radius:99px; background:rgba(255,255,255,0.1)">Ombro</div>
+                <div style="font-size:12px; font-weight:600; padding:5px 10px; border-radius:99px; background:rgba(255,255,255,0.1)">Tríceps</div>
+                <div style="font-size:12px; font-weight:600; padding:5px 10px; border-radius:99px; background:rgba(255,255,255,0.1)">6 exercícios · 18 séries</div>
+              </div>
+              <div style="height:48px; border-radius:14px; background:#FF4A1C; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:#FFF">Começar treino</div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:10px">
+              <div style="font-family:'Archivo Narrow'; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:#8A867C; font-weight:700">Registo de hoje</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:16px; padding:12px 14px">
+                  <div style="font-size:11px; color:#8A867C; font-weight:600; text-transform:uppercase; letter-spacing:0.08em">Peso</div>
+                  <div style="display:flex; align-items:baseline; gap:4px; margin-top:4px"><div style="font-size:24px; font-weight:800; color:#16150F; font-variant-numeric:tabular-nums">78,4</div><div style="font-size:13px; color:#8A867C; font-weight:600">kg</div></div>
+                  <div style="font-size:12px; color:#1F5D45; font-weight:600; margin-top:2px">média 7d 78,6</div>
+                </div>
+                <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:16px; padding:12px 14px">
+                  <div style="font-size:11px; color:#8A867C; font-weight:600; text-transform:uppercase; letter-spacing:0.08em">Passos</div>
+                  <div style="display:flex; align-items:baseline; gap:4px; margin-top:4px"><div style="font-size:24px; font-weight:800; color:#16150F; font-variant-numeric:tabular-nums">7 240</div></div>
+                  <div style="font-size:12px; color:#8A867C; font-weight:600; margin-top:2px">meta 9 000</div>
+                </div>
+              </div>
+              <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:16px; padding:12px 14px; display:flex; flex-direction:column; gap:10px">
+                <div style="display:flex; justify-content:space-between; align-items:center">
+                  <div style="font-size:13px; font-weight:700; color:#16150F">Energia</div>
+                  <div style="display:flex; gap:6px">
+                    <div style="width:26px; height:26px; border-radius:13px; background:#16150F; color:#FFF; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center">1</div>
+                    <div style="width:26px; height:26px; border-radius:13px; background:#F1EEE8; color:#8A867C; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center">2</div>
+                    <div style="width:26px; height:26px; border-radius:13px; background:#F1EEE8; color:#8A867C; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center">3</div>
+                    <div style="width:26px; height:26px; border-radius:13px; background:#FF4A1C; color:#FFF; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center">4</div>
+                    <div style="width:26px; height:26px; border-radius:13px; background:#F1EEE8; color:#8A867C; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center">5</div>
+                  </div>
+                </div>
+                <div style="height:1px; background:#EDEAE3"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center">
+                  <div style="font-size:13px; font-weight:700; color:#16150F">Fome</div>
+                  <div style="display:flex; gap:6px">
+                    <div style="width:26px; height:26px; border-radius:13px; background:#F1EEE8; color:#8A867C; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center">1</div>
+                    <div style="width:26px; height:26px; border-radius:13px; background:#FF4A1C; color:#FFF; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center">2</div>
+                    <div style="width:26px; height:26px; border-radius:13px; background:#F1EEE8; color:#8A867C; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center">3</div>
+                    <div style="width:26px; height:26px; border-radius:13px; background:#F1EEE8; color:#8A867C; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center">4</div>
+                    <div style="width:26px; height:26px; border-radius:13px; background:#F1EEE8; color:#8A867C; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center">5</div>
+                  </div>
+                </div>
+                <div style="height:1px; background:#EDEAE3"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center">
+                  <div style="font-size:13px; font-weight:700; color:#16150F">Sono</div>
+                  <div style="font-size:13px; font-weight:700; color:#8A867C">7h 20 · toca para editar</div>
+                </div>
+              </div>
+            </div>
+
+            <sc-if value="{{ showCoachNote }}" hint-placeholder-val="{{ true }}">
+              <div style="background:#1F5D45; border-radius:16px; padding:14px; color:#EAF3EE; display:flex; gap:12px">
+                <div style="width:32px; height:32px; border-radius:16px; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0">FG</div>
+                <div>
+                  <div style="font-size:12px; font-weight:700; opacity:0.75; text-transform:uppercase; letter-spacing:0.08em">Nota do treinador</div>
+                  <div style="font-size:14px; line-height:1.4; margin-top:3px; text-wrap:pretty">Hoje sobe 2,5 kg no supino. Se a perna incomodar, corta o agachamento e avisa-me.</div>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="flex-shrink:0; height:82px; border-top:1px solid #E3DFD7; background:#FFF; display:grid; grid-template-columns:repeat(4,1fr); padding:12px 8px 0">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px"><div style="width:22px; height:22px; border-radius:6px; background:#16150F"></div><div style="font-size:11px; font-weight:700; color:#16150F">Hoje</div></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px"><div style="width:22px; height:22px; border-radius:6px; background:#D5D1C8"></div><div style="font-size:11px; font-weight:600; color:#8A867C">Treino</div></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px"><div style="width:22px; height:22px; border-radius:6px; background:#D5D1C8"></div><div style="font-size:11px; font-weight:600; color:#8A867C">Medidas</div></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px"><div style="width:22px; height:22px; border-radius:6px; background:#D5D1C8"></div><div style="font-size:11px; font-weight:600; color:#8A867C">Semana</div></div>
+          </div>
+        </div>
+      </x-import>
+
+      <!-- ── 2. TREINO EM EXECUÇÃO ─────────────────── -->
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+        <div style="height:100%; display:flex; flex-direction:column; background:#16150F; font-family:'Archivo',system-ui,sans-serif">
+          <div style="flex:1; overflow:hidden; padding:62px 20px 0; display:flex; flex-direction:column; gap:14px">
+
+            <div style="display:flex; align-items:center; justify-content:space-between; color:#F4F1EC">
+              <div style="font-size:14px; font-weight:600; color:#A9A499">Treino A · Empurrar</div>
+              <div style="font-size:14px; font-weight:700; font-variant-numeric:tabular-nums">24:16</div>
+            </div>
+            <div style="display:flex; gap:4px">
+              <div style="height:4px; flex:1; border-radius:2px; background:#FF4A1C"></div>
+              <div style="height:4px; flex:1; border-radius:2px; background:#FF4A1C"></div>
+              <div style="height:4px; flex:1; border-radius:2px; background:#FF4A1C"></div>
+              <div style="height:4px; flex:1; border-radius:2px; background:#3A372F"></div>
+              <div style="height:4px; flex:1; border-radius:2px; background:#3A372F"></div>
+              <div style="height:4px; flex:1; border-radius:2px; background:#3A372F"></div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:3px; margin-top:4px">
+              <div style="font-family:'Archivo Narrow'; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:#FF4A1C; font-weight:700">Exercício 4 de 6</div>
+              <div style="font-size:24px; font-weight:800; color:#F4F1EC; letter-spacing:-0.02em; line-height:1.15; text-wrap:pretty">Supino inclinado halteres</div>
+              <div style="font-size:13px; color:#A9A499; font-weight:500">Peito · Ombro frontal · descanso 90 s</div>
+            </div>
+
+            <div style="height:104px; border-radius:16px; background:#26241D; border:1px solid #3A372F; display:flex; align-items:center; gap:14px; padding:0 16px">
+              <div style="width:52px; height:52px; border-radius:26px; background:#FF4A1C; display:flex; align-items:center; justify-content:center"><div style="width:0; height:0; border-left:16px solid #FFF; border-top:10px solid transparent; border-bottom:10px solid transparent; margin-left:4px"></div></div>
+              <div>
+                <div style="font-size:15px; font-weight:700; color:#F4F1EC">Ver demonstração</div>
+                <div style="font-size:12px; color:#A9A499; margin-top:2px">Vídeo da base de exercícios · 0:48</div>
+              </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:8px; margin-top:2px">
+              <div style="display:grid; grid-template-columns:34px 1fr 1fr 1fr; gap:8px; padding:0 4px">
+                <div style="font-size:11px; font-weight:700; color:#A9A499; text-transform:uppercase; letter-spacing:0.08em">Sér</div>
+                <div style="font-size:11px; font-weight:700; color:#A9A499; text-transform:uppercase; letter-spacing:0.08em">Carga</div>
+                <div style="font-size:11px; font-weight:700; color:#A9A499; text-transform:uppercase; letter-spacing:0.08em">Reps</div>
+                <div style="font-size:11px; font-weight:700; color:#A9A499; text-transform:uppercase; letter-spacing:0.08em">Falha</div>
+              </div>
+
+              <div style="display:grid; grid-template-columns:34px 1fr 1fr 1fr; gap:8px; align-items:center">
+                <div style="font-size:14px; font-weight:700; color:#1F5D45; background:#D8EBE1; border-radius:8px; height:44px; display:flex; align-items:center; justify-content:center">1</div>
+                <div style="height:44px; border-radius:10px; background:#26241D; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:#F4F1EC; font-variant-numeric:tabular-nums">22 kg</div>
+                <div style="height:44px; border-radius:10px; background:#26241D; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:#F4F1EC">10</div>
+                <div style="height:44px; border-radius:10px; background:#26241D; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:#F4F1EC">RIR 2</div>
+              </div>
+              <div style="display:grid; grid-template-columns:34px 1fr 1fr 1fr; gap:8px; align-items:center">
+                <div style="font-size:14px; font-weight:700; color:#1F5D45; background:#D8EBE1; border-radius:8px; height:44px; display:flex; align-items:center; justify-content:center">2</div>
+                <div style="height:44px; border-radius:10px; background:#26241D; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:#F4F1EC; font-variant-numeric:tabular-nums">22 kg</div>
+                <div style="height:44px; border-radius:10px; background:#26241D; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:#F4F1EC">9</div>
+                <div style="height:44px; border-radius:10px; background:#26241D; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:#F4F1EC">RIR 1</div>
+              </div>
+              <div style="display:grid; grid-template-columns:34px 1fr 1fr 1fr; gap:8px; align-items:center">
+                <div style="font-size:14px; font-weight:700; color:#FFF; background:#FF4A1C; border-radius:8px; height:48px; display:flex; align-items:center; justify-content:center">3</div>
+                <div style="height:48px; border-radius:10px; background:#26241D; border:2px solid #FF4A1C; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; color:#F4F1EC; font-variant-numeric:tabular-nums">22 kg</div>
+                <div style="height:48px; border-radius:10px; background:#26241D; border:1px solid #3A372F; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; color:#A9A499">—</div>
+                <div style="height:48px; border-radius:10px; background:#26241D; border:1px solid #3A372F; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; color:#A9A499">—</div>
+              </div>
+
+              <div style="display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.05); margin-top:2px">
+                <div style="font-size:12px; font-weight:700; color:#A9A499">Semana passada</div>
+                <div style="font-size:12px; font-weight:700; color:#F4F1EC; font-variant-numeric:tabular-nums">20 kg × 10, 10, 9</div>
+                <div style="margin-left:auto; font-size:12px; font-weight:700; color:#8ED0AE">+2 kg</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="flex-shrink:0; padding:0 20px 44px; display:flex; gap:10px">
+            <div style="flex:1; height:54px; border-radius:14px; background:#FF4A1C; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700">Guardar série</div>
+            <div style="width:100px; height:54px; border-radius:14px; background:#26241D; color:#F4F1EC; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700">Saltar</div>
+          </div>
+        </div>
+      </x-import>
+
+      <!-- ── 3. MEDIDAS ────────────────────────────── -->
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+        <div style="height:100%; display:flex; flex-direction:column; background:#F4F1EC; font-family:'Archivo',system-ui,sans-serif">
+          <div style="flex:1; overflow:hidden; padding:62px 20px 0; display:flex; flex-direction:column; gap:16px">
+            <div style="font-size:26px; font-weight:800; color:#16150F; letter-spacing:-0.02em">Medidas</div>
+
+            <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:20px; padding:16px; display:flex; flex-direction:column; gap:12px">
+              <div style="display:flex; justify-content:space-between; align-items:baseline">
+                <div>
+                  <div style="font-size:12px; color:#8A867C; font-weight:700; text-transform:uppercase; letter-spacing:0.08em">Peso · 8 semanas</div>
+                  <div style="display:flex; align-items:baseline; gap:6px; margin-top:4px"><div style="font-size:30px; font-weight:800; color:#16150F; font-variant-numeric:tabular-nums">78,4</div><div style="font-size:14px; font-weight:700; color:#1F5D45">+1,9 kg</div></div>
+                </div>
+                <div style="font-size:12px; font-weight:700; color:#8A867C">média semanal</div>
+              </div>
+              <div style="height:96px; display:flex; align-items:flex-end; gap:6px">
+                <div style="flex:1; height:38%; background:#E3DFD7; border-radius:4px"></div>
+                <div style="flex:1; height:44%; background:#E3DFD7; border-radius:4px"></div>
+                <div style="flex:1; height:41%; background:#E3DFD7; border-radius:4px"></div>
+                <div style="flex:1; height:55%; background:#E3DFD7; border-radius:4px"></div>
+                <div style="flex:1; height:62%; background:#E3DFD7; border-radius:4px"></div>
+                <div style="flex:1; height:58%; background:#E3DFD7; border-radius:4px"></div>
+                <div style="flex:1; height:74%; background:#16150F; border-radius:4px"></div>
+                <div style="flex:1; height:88%; background:#FF4A1C; border-radius:4px"></div>
+              </div>
+            </div>
+
+            <div style="display:flex; align-items:center; justify-content:space-between">
+              <div style="font-family:'Archivo Narrow'; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:#8A867C; font-weight:700">Perímetros · 12 set</div>
+              <div style="font-size:12px; font-weight:700; color:#FF4A1C">Próximo update 26 set</div>
+            </div>
+
+            <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:20px; overflow:hidden">
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 16px; border-bottom:1px solid #EDEAE3">
+                <div style="font-size:15px; font-weight:600; color:#16150F">Cintura</div>
+                <div style="display:flex; align-items:baseline; gap:10px"><div style="font-size:15px; font-weight:700; color:#16150F; font-variant-numeric:tabular-nums">84,0 cm</div><div style="font-size:13px; font-weight:700; color:#1F5D45; width:46px; text-align:right">−1,5</div></div>
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 16px; border-bottom:1px solid #EDEAE3">
+                <div style="font-size:15px; font-weight:600; color:#16150F">Glúteo</div>
+                <div style="display:flex; align-items:baseline; gap:10px"><div style="font-size:15px; font-weight:700; color:#16150F; font-variant-numeric:tabular-nums">98,5 cm</div><div style="font-size:13px; font-weight:700; color:#8A867C; width:46px; text-align:right">+0,2</div></div>
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 16px; border-bottom:1px solid #EDEAE3">
+                <div style="font-size:15px; font-weight:600; color:#16150F">Coxa Drt.</div>
+                <div style="display:flex; align-items:baseline; gap:10px"><div style="font-size:15px; font-weight:700; color:#16150F; font-variant-numeric:tabular-nums">58,0 cm</div><div style="font-size:13px; font-weight:700; color:#1F5D45; width:46px; text-align:right">+1,0</div></div>
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 16px; border-bottom:1px solid #EDEAE3">
+                <div style="font-size:15px; font-weight:600; color:#16150F">Braço Drt.</div>
+                <div style="display:flex; align-items:baseline; gap:10px"><div style="font-size:15px; font-weight:700; color:#16150F; font-variant-numeric:tabular-nums">36,4 cm</div><div style="font-size:13px; font-weight:700; color:#1F5D45; width:46px; text-align:right">+0,8</div></div>
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 16px">
+                <div style="font-size:15px; font-weight:600; color:#16150F">Gémeo Drt.</div>
+                <div style="display:flex; align-items:baseline; gap:10px"><div style="font-size:15px; font-weight:700; color:#16150F; font-variant-numeric:tabular-nums">38,1 cm</div><div style="font-size:13px; font-weight:700; color:#8A867C; width:46px; text-align:right">0,0</div></div>
+              </div>
+            </div>
+
+            <div style="height:52px; border-radius:14px; border:1.5px dashed #B9B4A8; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; color:#16150F">+ Novo registo de medidas</div>
+          </div>
+
+          <div style="flex-shrink:0; height:82px; border-top:1px solid #E3DFD7; background:#FFF; display:grid; grid-template-columns:repeat(4,1fr); padding:12px 8px 0">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px"><div style="width:22px; height:22px; border-radius:6px; background:#D5D1C8"></div><div style="font-size:11px; font-weight:600; color:#8A867C">Hoje</div></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px"><div style="width:22px; height:22px; border-radius:6px; background:#D5D1C8"></div><div style="font-size:11px; font-weight:600; color:#8A867C">Treino</div></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px"><div style="width:22px; height:22px; border-radius:6px; background:#16150F"></div><div style="font-size:11px; font-weight:700; color:#16150F">Medidas</div></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px"><div style="width:22px; height:22px; border-radius:6px; background:#D5D1C8"></div><div style="font-size:11px; font-weight:600; color:#8A867C">Semana</div></div>
+          </div>
+        </div>
+      </x-import>
+
+      <!-- ── 4. FEEDBACK SEMANAL ───────────────────── -->
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+        <div style="height:100%; display:flex; flex-direction:column; background:#F4F1EC; font-family:'Archivo',system-ui,sans-serif">
+          <div style="flex:1; overflow:hidden; padding:62px 20px 0; display:flex; flex-direction:column; gap:14px">
+            <div>
+              <div style="font-size:26px; font-weight:800; color:#16150F; letter-spacing:-0.02em">Feedback da semana 6</div>
+              <div style="font-size:13px; color:#8A867C; font-weight:500; margin-top:2px">Envia até domingo às 20h</div>
+            </div>
+
+            <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:18px; padding:14px 16px; display:flex; flex-direction:column; gap:12px">
+              <div style="font-size:14px; font-weight:700; color:#16150F">Aderência ao plano</div>
+              <div style="display:flex; gap:8px">
+                <div style="flex:1; height:42px; border-radius:10px; background:#F1EEE8; color:#8A867C; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center">Treino</div>
+                <div style="flex:1; height:42px; border-radius:10px; background:#16150F; color:#FFF; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center">4 de 4</div>
+                <div style="flex:1; height:42px; border-radius:10px; background:#F1EEE8; color:#8A867C; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center">Dieta 80%</div>
+              </div>
+            </div>
+
+            <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:18px; padding:14px 16px; display:flex; flex-direction:column; gap:14px">
+              <div style="display:flex; flex-direction:column; gap:8px">
+                <div style="display:flex; justify-content:space-between"><div style="font-size:14px; font-weight:700; color:#16150F">Qualidade do sono</div><div style="font-size:13px; font-weight:700; color:#FF4A1C">4 / 5</div></div>
+                <div style="height:8px; border-radius:4px; background:#F1EEE8; overflow:hidden"><div style="width:80%; height:100%; background:#FF4A1C"></div></div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px">
+                <div style="display:flex; justify-content:space-between"><div style="font-size:14px; font-weight:700; color:#16150F">Energia média</div><div style="font-size:13px; font-weight:700; color:#FF4A1C">3 / 5</div></div>
+                <div style="height:8px; border-radius:4px; background:#F1EEE8; overflow:hidden"><div style="width:60%; height:100%; background:#FF4A1C"></div></div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px">
+                <div style="display:flex; justify-content:space-between"><div style="font-size:14px; font-weight:700; color:#16150F">Fome</div><div style="font-size:13px; font-weight:700; color:#FF4A1C">2 / 5</div></div>
+                <div style="height:8px; border-radius:4px; background:#F1EEE8; overflow:hidden"><div style="width:40%; height:100%; background:#FF4A1C"></div></div>
+              </div>
+            </div>
+
+            <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:18px; padding:14px 16px; display:flex; flex-direction:column; gap:8px; flex:1">
+              <div style="font-size:14px; font-weight:700; color:#16150F">Como correu a semana?</div>
+              <div style="font-size:14px; line-height:1.5; color:#5D594F; text-wrap:pretty">Joelho aguentou bem o agachamento búlgaro. Na quinta falhei o treino, fiz no sábado. Tenho comido pouco ao almoço nos dias de escritório.</div>
+              <div style="margin-top:auto; display:flex; gap:8px">
+                <div style="font-size:12px; font-weight:600; color:#8A867C; padding:6px 10px; border-radius:99px; background:#F1EEE8">+ Foto de progresso</div>
+                <div style="font-size:12px; font-weight:600; color:#8A867C; padding:6px 10px; border-radius:99px; background:#F1EEE8">+ Áudio</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="flex-shrink:0; padding:14px 20px 44px">
+            <div style="height:54px; border-radius:14px; background:#16150F; color:#F4F1EC; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700">Enviar ao treinador</div>
+          </div>
+        </div>
+      </x-import>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:14px; margin-top:8px">
+      <div style="font-family:'Archivo Narrow'; font-size:15px; letter-spacing:0.18em; text-transform:uppercase; color:#16150F; font-weight:700">Vista do treinador</div>
+      <div style="height:1px; flex:1; background:#B9B4A8"></div>
+    </div>
+
+    <div style="display:flex; flex-wrap:wrap; gap:36px">
+
+      <!-- ── 5. ALUNOS ─────────────────────────────── -->
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+        <div style="height:100%; display:flex; flex-direction:column; background:#F4F1EC; font-family:'Archivo',system-ui,sans-serif">
+          <div style="flex:1; overflow:hidden; padding:62px 20px 0; display:flex; flex-direction:column; gap:14px">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between">
+              <div>
+                <div style="font-size:26px; font-weight:800; color:#16150F; letter-spacing:-0.02em">Alunos</div>
+                <div style="font-size:13px; color:#8A867C; font-weight:500; margin-top:2px">12 activos · 3 precisam de ti</div>
+              </div>
+              <div style="height:36px; padding:0 14px; border-radius:18px; background:#16150F; color:#F4F1EC; display:flex; align-items:center; font-size:13px; font-weight:700">+ Aluno</div>
+            </div>
+
+            <div style="display:flex; gap:8px">
+              <div style="padding:8px 14px; border-radius:99px; background:#16150F; color:#FFF; font-size:13px; font-weight:700">A precisar (3)</div>
+              <div style="padding:8px 14px; border-radius:99px; background:#FFF; border:1px solid #E3DFD7; color:#8A867C; font-size:13px; font-weight:600">Todos</div>
+              <div style="padding:8px 14px; border-radius:99px; background:#FFF; border:1px solid #E3DFD7; color:#8A867C; font-size:13px; font-weight:600">Em pausa</div>
+            </div>
+
+            <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:18px; padding:14px; display:flex; gap:12px; border-left:none">
+              <div style="width:42px; height:42px; border-radius:21px; background:#FF4A1C; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; flex-shrink:0">RM</div>
+              <div style="flex:1; min-width:0">
+                <div style="display:flex; justify-content:space-between; align-items:baseline"><div style="font-size:16px; font-weight:700; color:#16150F">Rui Martins</div><div style="font-size:12px; font-weight:700; color:#FF4A1C">Plano acaba dom.</div></div>
+                <div style="font-size:13px; color:#8A867C; font-weight:500; margin-top:2px">Semana 6/8 · 78,4 kg (+1,9)</div>
+                <div style="display:flex; gap:6px; margin-top:8px">
+                  <div style="font-size:11px; font-weight:700; padding:4px 8px; border-radius:6px; background:#FDE8E1; color:#C63A12">Feedback por ler</div>
+                  <div style="font-size:11px; font-weight:700; padding:4px 8px; border-radius:6px; background:#F1EEE8; color:#5D594F">4/4 treinos</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:18px; padding:14px; display:flex; gap:12px">
+              <div style="width:42px; height:42px; border-radius:21px; background:#1F5D45; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; flex-shrink:0">AS</div>
+              <div style="flex:1; min-width:0">
+                <div style="display:flex; justify-content:space-between; align-items:baseline"><div style="font-size:16px; font-weight:700; color:#16150F">Ana Sousa</div><div style="font-size:12px; font-weight:700; color:#8A867C">há 2 dias</div></div>
+                <div style="font-size:13px; color:#8A867C; font-weight:500; margin-top:2px">Semana 2/8 · 64,1 kg (−0,6)</div>
+                <div style="display:flex; gap:6px; margin-top:8px">
+                  <div style="font-size:11px; font-weight:700; padding:4px 8px; border-radius:6px; background:#FDE8E1; color:#C63A12">2 treinos falhados</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:18px; padding:14px; display:flex; gap:12px">
+              <div style="width:42px; height:42px; border-radius:21px; background:#D5D1C8; color:#5D594F; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; flex-shrink:0">JP</div>
+              <div style="flex:1; min-width:0">
+                <div style="display:flex; justify-content:space-between; align-items:baseline"><div style="font-size:16px; font-weight:700; color:#16150F">João Pinto</div><div style="font-size:12px; font-weight:700; color:#8A867C">ontem</div></div>
+                <div style="font-size:13px; color:#8A867C; font-weight:500; margin-top:2px">Semana 4/8 · 91,7 kg (−2,4)</div>
+                <div style="display:flex; gap:6px; margin-top:8px">
+                  <div style="font-size:11px; font-weight:700; padding:4px 8px; border-radius:6px; background:#D8EBE1; color:#1F5D45">Tudo em dia</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:18px; padding:14px; display:flex; gap:12px">
+              <div style="width:42px; height:42px; border-radius:21px; background:#D5D1C8; color:#5D594F; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; flex-shrink:0">MC</div>
+              <div style="flex:1; min-width:0">
+                <div style="display:flex; justify-content:space-between; align-items:baseline"><div style="font-size:16px; font-weight:700; color:#5D594F">Marta Costa</div><div style="font-size:12px; font-weight:700; color:#8A867C">há 5 dias</div></div>
+                <div style="font-size:13px; color:#8A867C; font-weight:500; margin-top:2px">Semana 8/8 · 57,2 kg (−1,1)</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="flex-shrink:0; height:82px; border-top:1px solid #E3DFD7; background:#FFF; display:grid; grid-template-columns:repeat(4,1fr); padding:12px 8px 0">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px"><div style="width:22px; height:22px; border-radius:6px; background:#16150F"></div><div style="font-size:11px; font-weight:700; color:#16150F">Alunos</div></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px"><div style="width:22px; height:22px; border-radius:6px; background:#D5D1C8"></div><div style="font-size:11px; font-weight:600; color:#8A867C">Planos</div></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px"><div style="width:22px; height:22px; border-radius:6px; background:#D5D1C8"></div><div style="font-size:11px; font-weight:600; color:#8A867C">Exercícios</div></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px"><div style="width:22px; height:22px; border-radius:6px; background:#D5D1C8"></div><div style="font-size:11px; font-weight:600; color:#8A867C">Mensagens</div></div>
+          </div>
+        </div>
+      </x-import>
+
+      <!-- ── 6. EDITOR DO PLANO ────────────────────── -->
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+        <div style="height:100%; display:flex; flex-direction:column; background:#F4F1EC; font-family:'Archivo',system-ui,sans-serif">
+          <div style="flex:1; overflow:hidden; padding:62px 20px 0; display:flex; flex-direction:column; gap:14px">
+            <div style="display:flex; align-items:center; gap:10px">
+              <div style="font-size:20px; font-weight:800; color:#8A867C">←</div>
+              <div style="flex:1">
+                <div style="font-size:20px; font-weight:800; color:#16150F; letter-spacing:-0.02em">Rui Martins · Semana 7</div>
+                <div style="font-size:12px; color:#8A867C; font-weight:600; margin-top:1px">Rascunho · o aluno ainda não vê</div>
+              </div>
+            </div>
+
+            <div style="background:#FFF3EE; border:1px solid #F6D3C6; border-radius:14px; padding:11px 13px">
+              <div style="font-size:12px; font-weight:800; color:#C63A12; text-transform:uppercase; letter-spacing:0.08em">Limitações</div>
+              <div style="font-size:13px; color:#5D594F; font-weight:500; margin-top:3px; line-height:1.4">Trombo na perna (histórico) · artrite. Evitar impacto e cargas máximas em membros inferiores.</div>
+            </div>
+
+            <div style="display:flex; gap:6px">
+              <div style="flex:1; height:38px; border-radius:10px; background:#16150F; color:#FFF; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center">Treino A</div>
+              <div style="flex:1; height:38px; border-radius:10px; background:#FFF; border:1px solid #E3DFD7; color:#8A867C; font-size:13px; font-weight:600; display:flex; align-items:center; justify-content:center">B</div>
+              <div style="flex:1; height:38px; border-radius:10px; background:#FFF; border:1px solid #E3DFD7; color:#8A867C; font-size:13px; font-weight:600; display:flex; align-items:center; justify-content:center">C</div>
+              <div style="flex:1; height:38px; border-radius:10px; background:#FFF; border:1px dashed #C9C4B8; color:#8A867C; font-size:16px; font-weight:700; display:flex; align-items:center; justify-content:center">+</div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:8px">
+              <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:14px; padding:12px 12px 12px 10px; display:flex; gap:10px; align-items:center">
+                <div style="display:flex; flex-direction:column; gap:3px; flex-shrink:0"><div style="width:16px; height:2px; background:#C9C4B8"></div><div style="width:16px; height:2px; background:#C9C4B8"></div><div style="width:16px; height:2px; background:#C9C4B8"></div></div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:14px; font-weight:700; color:#16150F; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Supino inclinado halteres</div>
+                  <div style="font-size:12px; color:#8A867C; font-weight:500; margin-top:1px">Peito · vídeo anexo</div>
+                </div>
+                <div style="display:flex; gap:4px; flex-shrink:0">
+                  <div style="width:38px; height:38px; border-radius:9px; background:#F1EEE8; display:flex; flex-direction:column; align-items:center; justify-content:center"><div style="font-size:14px; font-weight:800; color:#16150F">3</div><div style="font-size:8px; font-weight:700; color:#8A867C; letter-spacing:0.05em">SÉR</div></div>
+                  <div style="width:46px; height:38px; border-radius:9px; background:#F1EEE8; display:flex; flex-direction:column; align-items:center; justify-content:center"><div style="font-size:14px; font-weight:800; color:#16150F">8-10</div><div style="font-size:8px; font-weight:700; color:#8A867C; letter-spacing:0.05em">REPS</div></div>
+                  <div style="width:40px; height:38px; border-radius:9px; background:#F1EEE8; display:flex; flex-direction:column; align-items:center; justify-content:center"><div style="font-size:14px; font-weight:800; color:#16150F">90s</div><div style="font-size:8px; font-weight:700; color:#8A867C; letter-spacing:0.05em">DESC</div></div>
+                </div>
+              </div>
+              <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:14px; padding:12px 12px 12px 10px; display:flex; gap:10px; align-items:center">
+                <div style="display:flex; flex-direction:column; gap:3px; flex-shrink:0"><div style="width:16px; height:2px; background:#C9C4B8"></div><div style="width:16px; height:2px; background:#C9C4B8"></div><div style="width:16px; height:2px; background:#C9C4B8"></div></div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:14px; font-weight:700; color:#16150F; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Pull face cabos sentado</div>
+                  <div style="font-size:12px; color:#8A867C; font-weight:500; margin-top:1px">Ombro posterior · trapézio</div>
+                </div>
+                <div style="display:flex; gap:4px; flex-shrink:0">
+                  <div style="width:38px; height:38px; border-radius:9px; background:#F1EEE8; display:flex; flex-direction:column; align-items:center; justify-content:center"><div style="font-size:14px; font-weight:800; color:#16150F">3</div><div style="font-size:8px; font-weight:700; color:#8A867C; letter-spacing:0.05em">SÉR</div></div>
+                  <div style="width:46px; height:38px; border-radius:9px; background:#F1EEE8; display:flex; flex-direction:column; align-items:center; justify-content:center"><div style="font-size:14px; font-weight:800; color:#16150F">12-15</div><div style="font-size:8px; font-weight:700; color:#8A867C; letter-spacing:0.05em">REPS</div></div>
+                  <div style="width:40px; height:38px; border-radius:9px; background:#F1EEE8; display:flex; flex-direction:column; align-items:center; justify-content:center"><div style="font-size:14px; font-weight:800; color:#16150F">60s</div><div style="font-size:8px; font-weight:700; color:#8A867C; letter-spacing:0.05em">DESC</div></div>
+                </div>
+              </div>
+              <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:14px; padding:12px 12px 12px 10px; display:flex; gap:10px; align-items:center">
+                <div style="display:flex; flex-direction:column; gap:3px; flex-shrink:0"><div style="width:16px; height:2px; background:#C9C4B8"></div><div style="width:16px; height:2px; background:#C9C4B8"></div><div style="width:16px; height:2px; background:#C9C4B8"></div></div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:14px; font-weight:700; color:#16150F; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Tríceps corda cabos</div>
+                  <div style="font-size:12px; color:#8A867C; font-weight:500; margin-top:1px">Tríceps</div>
+                </div>
+                <div style="display:flex; gap:4px; flex-shrink:0">
+                  <div style="width:38px; height:38px; border-radius:9px; background:#F1EEE8; display:flex; flex-direction:column; align-items:center; justify-content:center"><div style="font-size:14px; font-weight:800; color:#16150F">3</div><div style="font-size:8px; font-weight:700; color:#8A867C; letter-spacing:0.05em">SÉR</div></div>
+                  <div style="width:46px; height:38px; border-radius:9px; background:#F1EEE8; display:flex; flex-direction:column; align-items:center; justify-content:center"><div style="font-size:14px; font-weight:800; color:#16150F">10-12</div><div style="font-size:8px; font-weight:700; color:#8A867C; letter-spacing:0.05em">REPS</div></div>
+                  <div style="width:40px; height:38px; border-radius:9px; background:#F1EEE8; display:flex; flex-direction:column; align-items:center; justify-content:center"><div style="font-size:14px; font-weight:800; color:#16150F">60s</div><div style="font-size:8px; font-weight:700; color:#8A867C; letter-spacing:0.05em">DESC</div></div>
+                </div>
+              </div>
+              <div style="height:46px; border-radius:14px; border:1.5px dashed #B9B4A8; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#16150F">+ Adicionar da base de exercícios</div>
+            </div>
+
+            <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:14px; padding:12px 14px">
+              <div style="font-size:12px; font-weight:800; color:#8A867C; text-transform:uppercase; letter-spacing:0.08em">Volume semanal</div>
+              <div style="display:flex; gap:16px; margin-top:8px">
+                <div><div style="font-size:18px; font-weight:800; color:#16150F">18</div><div style="font-size:11px; color:#8A867C; font-weight:600">séries peito</div></div>
+                <div><div style="font-size:18px; font-weight:800; color:#16150F">14</div><div style="font-size:11px; color:#8A867C; font-weight:600">dorsal</div></div>
+                <div><div style="font-size:18px; font-weight:800; color:#FF4A1C">6</div><div style="font-size:11px; color:#8A867C; font-weight:600">quadríceps</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="flex-shrink:0; padding:14px 20px 44px; display:flex; gap:10px">
+            <div style="flex:1; height:54px; border-radius:14px; background:#16150F; color:#F4F1EC; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700">Publicar ao aluno</div>
+            <div style="width:110px; height:54px; border-radius:14px; background:#FFF; border:1px solid #E3DFD7; color:#5D594F; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700">Duplicar</div>
+          </div>
+        </div>
+      </x-import>
+
+      <!-- ── 7. BASE DE EXERCÍCIOS ─────────────────── -->
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+        <div style="height:100%; display:flex; flex-direction:column; background:#F4F1EC; font-family:'Archivo',system-ui,sans-serif">
+          <div style="flex:1; overflow:hidden; padding:62px 20px 0; display:flex; flex-direction:column; gap:12px">
+            <div>
+              <div style="font-size:26px; font-weight:800; color:#16150F; letter-spacing:-0.02em">Exercícios</div>
+              <div style="font-size:13px; color:#8A867C; font-weight:500; margin-top:2px">412 na base · 386 com vídeo</div>
+            </div>
+
+            <div style="height:44px; border-radius:12px; background:#FFF; border:1px solid #E3DFD7; display:flex; align-items:center; padding:0 14px; gap:10px">
+              <div style="width:14px; height:14px; border:2px solid #8A867C; border-radius:7px"></div>
+              <div style="font-size:15px; color:#16150F; font-weight:600">puxada</div>
+            </div>
+
+            <div style="display:flex; gap:6px; flex-wrap:wrap">
+              <div style="padding:7px 12px; border-radius:99px; background:#16150F; color:#FFF; font-size:12px; font-weight:700">Puxar</div>
+              <div style="padding:7px 12px; border-radius:99px; background:#FFF; border:1px solid #E3DFD7; color:#8A867C; font-size:12px; font-weight:600">Empurrar</div>
+              <div style="padding:7px 12px; border-radius:99px; background:#FFF; border:1px solid #E3DFD7; color:#8A867C; font-size:12px; font-weight:600">Pernas</div>
+              <div style="padding:7px 12px; border-radius:99px; background:#FFF; border:1px solid #E3DFD7; color:#8A867C; font-size:12px; font-weight:600">Dorsal</div>
+              <div style="padding:7px 12px; border-radius:99px; background:#FFF; border:1px solid #E3DFD7; color:#8A867C; font-size:12px; font-weight:600">Elástico</div>
+            </div>
+
+            <div style="font-family:'Archivo Narrow'; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:#8A867C; font-weight:700; margin-top:2px">Elevações / puxadas vertical</div>
+
+            <div style="display:flex; flex-direction:column; gap:8px">
+              <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:14px; padding:11px 12px; display:flex; align-items:center; gap:11px">
+                <div style="width:44px; height:44px; border-radius:10px; background:#16150F; display:flex; align-items:center; justify-content:center; flex-shrink:0"><div style="width:0; height:0; border-left:11px solid #FFF; border-top:7px solid transparent; border-bottom:7px solid transparent; margin-left:3px"></div></div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:14px; font-weight:700; color:#16150F">Puxador vertical dorsal neutra</div>
+                  <div style="font-size:12px; color:#8A867C; font-weight:500; margin-top:1px">Dorsal · trapézio · máquina</div>
+                </div>
+                <div style="width:30px; height:30px; border-radius:15px; background:#F1EEE8; color:#16150F; font-size:17px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">+</div>
+              </div>
+              <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:14px; padding:11px 12px; display:flex; align-items:center; gap:11px">
+                <div style="width:44px; height:44px; border-radius:10px; background:#16150F; display:flex; align-items:center; justify-content:center; flex-shrink:0"><div style="width:0; height:0; border-left:11px solid #FFF; border-top:7px solid transparent; border-bottom:7px solid transparent; margin-left:3px"></div></div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:14px; font-weight:700; color:#16150F">Puxada vertical elástico</div>
+                  <div style="font-size:12px; color:#8A867C; font-weight:500; margin-top:1px">Dorsal · trapézio · elástico</div>
+                </div>
+                <div style="width:30px; height:30px; border-radius:15px; background:#F1EEE8; color:#16150F; font-size:17px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">+</div>
+              </div>
+              <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:14px; padding:11px 12px; display:flex; align-items:center; gap:11px">
+                <div style="width:44px; height:44px; border-radius:10px; background:#16150F; display:flex; align-items:center; justify-content:center; flex-shrink:0"><div style="width:0; height:0; border-left:11px solid #FFF; border-top:7px solid transparent; border-bottom:7px solid transparent; margin-left:3px"></div></div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:14px; font-weight:700; color:#16150F">Puxador vertical unilateral cruzado</div>
+                  <div style="font-size:12px; color:#8A867C; font-weight:500; margin-top:1px">Dorsal · cabos</div>
+                </div>
+                <div style="width:30px; height:30px; border-radius:15px; background:#F1EEE8; color:#16150F; font-size:17px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">+</div>
+              </div>
+              <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:14px; padding:11px 12px; display:flex; align-items:center; gap:11px">
+                <div style="width:44px; height:44px; border-radius:10px; background:#E8E4DC; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; font-weight:700; color:#5D594F">s/v</div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-size:14px; font-weight:700; color:#5D594F">Elevações pega supinada</div>
+                  <div style="font-size:12px; color:#8A867C; font-weight:500; margin-top:1px">Dorsal · sem vídeo</div>
+                </div>
+                <div style="width:30px; height:30px; border-radius:15px; background:#F1EEE8; color:#16150F; font-size:17px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">+</div>
+              </div>
+            </div>
+
+            <div style="font-family:'Archivo Narrow'; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:#8A867C; font-weight:700; margin-top:4px">Pull over cabos</div>
+            <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:14px; padding:11px 12px; display:flex; align-items:center; gap:11px">
+              <div style="width:44px; height:44px; border-radius:10px; background:#16150F; display:flex; align-items:center; justify-content:center; flex-shrink:0"><div style="width:0; height:0; border-left:11px solid #FFF; border-top:7px solid transparent; border-bottom:7px solid transparent; margin-left:3px"></div></div>
+              <div style="flex:1; min-width:0">
+                <div style="font-size:14px; font-weight:700; color:#16150F">Pull over deitado halteres</div>
+                <div style="font-size:12px; color:#8A867C; font-weight:500; margin-top:1px">Dorsal · tríceps · halteres</div>
+              </div>
+              <div style="width:30px; height:30px; border-radius:15px; background:#F1EEE8; color:#16150F; font-size:17px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">+</div>
+            </div>
+          </div>
+
+          <div style="flex-shrink:0; padding:12px 20px 44px">
+            <div style="height:50px; border-radius:14px; background:#FF4A1C; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700">Adicionar 3 ao Treino A</div>
+          </div>
+        </div>
+      </x-import>
+    </div>
+
+    <div style="max-width:900px; display:flex; flex-wrap:wrap; gap:28px; margin-top:16px; padding-top:28px; border-top:1px solid #B9B4A8">
+      <div style="flex:1; min-width:220px">
+        <div style="font-size:14px; font-weight:800; color:#16150F">O que muda face ao Excel</div>
+        <div style="font-size:14px; line-height:1.55; color:#5D594F; margin-top:6px; text-wrap:pretty">O treinador escreve o plano num sítio só e publica; o aluno recebe sem ficheiros nem versões. As colunas C/F/R passam a Carga, Falha e Reps com o histórico da semana anterior ao lado.</div>
+      </div>
+      <div style="flex:1; min-width:220px">
+        <div style="font-size:14px; font-weight:800; color:#16150F">Por decidir</div>
+        <div style="font-size:14px; line-height:1.55; color:#5D594F; margin-top:6px; text-wrap:pretty">Dieta e suplementos ficaram de fora deste mockup. Falta decidir se o cálculo de kcal/macros da folha Base é automático na app ou continua a ser o treinador a definir.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showCoachNote&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Ecrã Hoje&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return { showCoachNote: this.props.showCoachNote ?? true };
+  }
+}
+</script>
+</body>
+</html>

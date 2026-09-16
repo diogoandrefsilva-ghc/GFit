@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Archivo+Narrow:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#DAD6CC; font-family:'Archivo',system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  a { color:#FF4A1C; text-decoration:none; }
+  a:hover { color:#16150F; }
+  input, textarea, button { font-family:'Archivo',system-ui,sans-serif; }
+  input:focus, textarea:focus { outline:none; }
+</style>
+</helmet>
+
+<div style="min-height:100vh; display:flex; flex-direction:column; align-items:center; gap:22px; padding:40px 24px 64px; box-sizing:border-box">
+
+  <div style="display:flex; flex-direction:column; align-items:center; gap:14px; max-width:520px; text-align:center">
+    <div style="font-family:'Archivo Narrow'; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:#8A867C; font-weight:700">Protótipo clicável</div>
+    <div style="font-size:15px; line-height:1.5; color:#5D594F; text-wrap:pretty">Funciona a sério: registar séries, editar o plano, pesquisar a base de exercícios e publicar ao aluno.</div>
+    <div style="display:flex; gap:6px; padding:4px; background:#C9C4B8; border-radius:99px">
+      <div onClick="{{ setAluno }}" style="padding:8px 18px; border-radius:99px; font-size:13px; font-weight:700; cursor:pointer; background:{{ alunoTabBg }}; color:{{ alunoTabFg }}">Aluno</div>
+      <div onClick="{{ setTreinador }}" style="padding:8px 18px; border-radius:99px; font-size:13px; font-weight:700; cursor:pointer; background:{{ coachTabBg }}; color:{{ coachTabFg }}">Treinador</div>
+    </div>
+  </div>
+
+  <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ isDark }}" hint-size="402px,874px">
+
+    <!-- ══ ALUNO · HOJE ═══════════════════════════ -->
+    <sc-if value="{{ scrHoje }}" hint-placeholder-val="{{ true }}">
+      <div style="height:100%; display:flex; flex-direction:column; background:#F4F1EC">
+        <div style="flex:1; overflow:auto; padding:62px 20px 8px; display:flex; flex-direction:column; gap:16px">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between">
+            <div>
+              <div style="font-size:26px; font-weight:800; color:#16150F; letter-spacing:-0.02em">Terça, 15 set</div>
+              <div style="font-size:13px; color:#8A867C; font-weight:500; margin-top:2px">Semana 6 de 8 · Bloco Hipertrofia</div>
+            </div>
+            <div style="width:40px; height:40px; border-radius:20px; background:#16150F; color:#F4F1EC; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700">RM</div>
+          </div>
+
+          <div style="background:#16150F; border-radius:20px; padding:18px; color:#F4F1EC; display:flex; flex-direction:column; gap:14px">
+            <div style="display:flex; justify-content:space-between; align-items:center">
+              <div style="font-family:'Archivo Narrow'; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:#FF4A1C; font-weight:700">Treino de hoje</div>
+              <div style="font-size:12px; color:#A9A499; font-weight:600">{{ workoutStatus }}</div>
+            </div>
+            <div style="font-size:22px; font-weight:700; letter-spacing:-0.01em">Treino A · Empurrar</div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap">
+              <div style="font-size:12px; font-weight:600; padding:5px 10px; border-radius:99px; background:rgba(255,255,255,0.1)">Peito</div>
+              <div style="font-size:12px; font-weight:600; padding:5px 10px; border-radius:99px; background:rgba(255,255,255,0.1)">Ombro</div>
+              <div style="font-size:12px; font-weight:600; padding:5px 10px; border-radius:99px; background:rgba(255,255,255,0.1)">Tríceps</div>
+              <div style="font-size:12px; font-weight:600; padding:5px 10px; border-radius:99px; background:rgba(255,255,255,0.1)">{{ workoutVolume }}</div>
+            </div>
+            <div onClick="{{ startWorkout }}" style="height:48px; border-radius:14px; background:#FF4A1C; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:#FFF; cursor:pointer">{{ startLabel }}</div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <div style="font-family:'Archivo Narrow'; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:#8A867C; font-weight:700">Registo de hoje</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+              <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:16px; padding:12px 14px">
+                <div style="font-size:11px; color:#8A867C; font-weight:600; text-transform:uppercase; letter-spacing:0.08em">Peso</div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px">
+                  <div style="display:flex; align-items:baseline; gap:4px"><div style="font-size:24px; font-weight:800; color:#16150F; font-variant-numeric:tabular-nums">{{ pesoFmt }}</div><div style="font-size:13px; color:#8A867C; font-weight:600">kg</div></div>
+                  <div style="display:flex; gap:5px">
+                    <div onClick="{{ pesoDown }}" style="width:28px; height:28px; border-radius:8px; background:#F1EEE8; color:#16150F; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer">−</div>
+                    <div onClick="{{ pesoUp }}" style="width:28px; height:28px; border-radius:8px; background:#F1EEE8; color:#16150F; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer">+</div>
+                  </div>
+                </div>
+                <div style="font-size:12px; color:#1F5D45; font-weight:600; margin-top:4px">média 7d 78,6</div>
+              </div>
+              <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:16px; padding:12px 14px">
+                <div style="font-size:11px; color:#8A867C; font-weight:600; text-transform:uppercase; letter-spacing:0.08em">Passos</div>
+                <div style="font-size:24px; font-weight:800; color:#16150F; font-variant-numeric:tabular-nums; margin-top:4px">7 240</div>
+                <div style="font-size:12px; color:#8A867C; font-weight:600; margin-top:2px">meta 9 000</div>
+                <div style="font-size:11px; color:#8A867C; font-weight:600; margin-top:6px">sincronizado do relógio</div>
+              </div>
+            </div>
+
+            <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:16px; padding:12px 14px; display:flex; flex-direction:column; gap:10px">
+              <div style="display:flex; justify-content:space-between; align-items:center">
+                <div style="font-size:13px; font-weight:700; color:#16150F">Energia</div>
+                <div style="display:flex; gap:6px">
+                  <sc-for list="{{ energiaScale }}" as="s" hint-placeholder-count="5">
+                    <div onClick="{{ s.onTap }}" style="width:26px; height:26px; border-radius:13px; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; background:{{ s.bg }}; color:{{ s.fg }}">{{ s.n }}</div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="height:1px; background:#EDEAE3"></div>
+              <div style="display:flex; justify-content:space-between; align-items:center">
+                <div style="font-size:13px; font-weight:700; color:#16150F">Fome</div>
+                <div style="display:flex; gap:6px">
+                  <sc-for list="{{ fomeScale }}" as="s" hint-placeholder-count="5">
+                    <div onClick="{{ s.onTap }}" style="width:26px; height:26px; border-radius:13px; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; background:{{ s.bg }}; color:{{ s.fg }}">{{ s.n }}</div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="height:1px; background:#EDEAE3"></div>
+              <div style="display:flex; justify-content:space-between; align-items:center">
+                <div style="font-size:13px; font-weight:700; color:#16150F">Sono</div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <div onClick="{{ sonoDown }}" style="width:28px; height:28px; border-radius:8px; background:#F1EEE8; color:#16150F; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer">−</div>
+                  <div style="font-size:14px; font-weight:800; color:#16150F; font-variant-numeric:tabular-nums; min-width:56px; text-align:center">{{ sonoFmt }}</div>
+                  <div onClick="{{ sonoUp }}" style="width:28px; height:28px; border-radius:8px; background:#F1EEE8; color:#16150F; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer">+</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#1F5D45; border-radius:16px; padding:14px; color:#EAF3EE; display:flex; gap:12px">
+            <div style="width:32px; height:32px; border-radius:16px; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0">FG</div>
+            <div>
+              <div style="font-size:12px; font-weight:700; opacity:0.75; text-transform:uppercase; letter-spacing:0.08em">Nota do treinador</div>
+              <div style="font-size:14px; line-height:1.4; margin-top:3px; text-wrap:pretty">Hoje sobe 2,5 kg no supino. Se a perna incomodar, corta o agachamento e avisa-me.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ══ ALUNO · TREINO ═════════════════════════ -->
+    <sc-if value="{{ scrTreino }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%; display:flex; flex-direction:column; background:#16150F">
+        <div style="flex:1; overflow:auto; padding:62px 20px 0; display:flex; flex-direction:column; gap:14px">
+          <div style="display:flex; align-items:center; justify-content:space-between; color:#F4F1EC">
+            <div onClick="{{ exitWorkout }}" style="font-size:14px; font-weight:600; color:#A9A499; cursor:pointer">← Treino A · Empurrar</div>
+            <div style="font-size:14px; font-weight:700; font-variant-numeric:tabular-nums">{{ clock }}</div>
+          </div>
+          <div style="display:flex; gap:4px">
+            <sc-for list="{{ exBars }}" as="b" hint-placeholder-count="6">
+              <div style="height:4px; flex:1; border-radius:2px; background:{{ b.bg }}"></div>
+            </sc-for>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:3px; margin-top:4px">
+            <div style="font-family:'Archivo Narrow'; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:#FF4A1C; font-weight:700">{{ exCounter }}</div>
+            <div style="font-size:24px; font-weight:800; color:#F4F1EC; letter-spacing:-0.02em; line-height:1.15; text-wrap:pretty">{{ exName }}</div>
+            <div style="font-size:13px; color:#A9A499; font-weight:500">{{ exMeta }}</div>
+          </div>
+
+          <div style="height:96px; border-radius:16px; background:#26241D; border:1px solid #3A372F; display:flex; align-items:center; gap:14px; padding:0 16px; flex-shrink:0">
+            <div style="width:48px; height:48px; border-radius:24px; background:#FF4A1C; display:flex; align-items:center; justify-content:center; flex-shrink:0"><div style="width:0; height:0; border-left:15px solid #FFF; border-top:9px solid transparent; border-bottom:9px solid transparent; margin-left:4px"></div></div>
+            <div>
+              <div style="font-size:15px; font-weight:700; color:#F4F1EC">Ver demonstração</div>
+              <div style="font-size:12px; color:#A9A499; margin-top:2px">Vídeo da base de exercícios</div>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:7px">
+            <div style="display:grid; grid-template-columns:34px 1fr 1fr 1fr; gap:8px; padding:0 4px">
+              <div style="font-size:11px; font-weight:700; color:#A9A499; text-transform:uppercase; letter-spacing:0.08em">Sér</div>
+              <div style="font-size:11px; font-weight:700; color:#A9A499; text-transform:uppercase; letter-spacing:0.08em">Carga</div>
+              <div style="font-size:11px; font-weight:700; color:#A9A499; text-transform:uppercase; letter-spacing:0.08em">Reps</div>
+              <div style="font-size:11px; font-weight:700; color:#A9A499; text-transform:uppercase; letter-spacing:0.08em">Falha</div>
+            </div>
+            <sc-for list="{{ series }}" as="r" hint-placeholder-count="3">
+              <div style="display:grid; grid-template-columns:34px 1fr 1fr 1fr; gap:8px; align-items:center">
+                <div style="height:44px; border-radius:8px; font-size:14px; font-weight:700; display:flex; align-items:center; justify-content:center; background:{{ r.numBg }}; color:{{ r.numFg }}">{{ r.n }}</div>
+                <div style="height:44px; border-radius:10px; background:#26241D; border:{{ r.border }}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; font-variant-numeric:tabular-nums; color:{{ r.fg }}">{{ r.kg }}</div>
+                <div style="height:44px; border-radius:10px; background:#26241D; border:{{ r.border }}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:{{ r.fg }}">{{ r.reps }}</div>
+                <div style="height:44px; border-radius:10px; background:#26241D; border:{{ r.border }}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:{{ r.fg }}">{{ r.rir }}</div>
+              </div>
+            </sc-for>
+            <div style="display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.05)">
+              <div style="font-size:12px; font-weight:700; color:#A9A499">Semana passada</div>
+              <div style="font-size:12px; font-weight:700; color:#F4F1EC; font-variant-numeric:tabular-nums">{{ lastWeek }}</div>
+              <div style="margin-left:auto; font-size:12px; font-weight:700; color:#8ED0AE">{{ progresso }}</div>
+            </div>
+          </div>
+
+          <sc-if value="{{ hasActiveSet }}" hint-placeholder-val="{{ true }}">
+            <div style="background:#26241D; border:1px solid #3A372F; border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:12px">
+              <div style="display:flex; align-items:center; justify-content:space-between">
+                <div style="font-size:12px; font-weight:800; color:#FF4A1C; text-transform:uppercase; letter-spacing:0.08em">Série {{ activeSetN }}</div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <div onClick="{{ kgDown }}" style="width:34px; height:34px; border-radius:9px; background:#3A372F; color:#F4F1EC; font-size:17px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer">−</div>
+                  <div style="font-size:17px; font-weight:800; color:#F4F1EC; min-width:66px; text-align:center; font-variant-numeric:tabular-nums">{{ activeKg }}</div>
+                  <div onClick="{{ kgUp }}" style="width:34px; height:34px; border-radius:9px; background:#3A372F; color:#F4F1EC; font-size:17px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer">+</div>
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:6px">
+                <div style="font-size:11px; font-weight:700; color:#A9A499; text-transform:uppercase; letter-spacing:0.08em">Reps feitas</div>
+                <div style="display:flex; gap:6px">
+                  <sc-for list="{{ repChips }}" as="c" hint-placeholder-count="6">
+                    <div onClick="{{ c.onTap }}" style="flex:1; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; cursor:pointer; background:{{ c.bg }}; color:{{ c.fg }}">{{ c.label }}</div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:6px">
+                <div style="font-size:11px; font-weight:700; color:#A9A499; text-transform:uppercase; letter-spacing:0.08em">Reps em reserva</div>
+                <div style="display:flex; gap:6px">
+                  <sc-for list="{{ rirChips }}" as="c" hint-placeholder-count="4">
+                    <div onClick="{{ c.onTap }}" style="flex:1; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; cursor:pointer; background:{{ c.bg }}; color:{{ c.fg }}">{{ c.label }}</div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ workoutDone }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#1F5D45; border-radius:16px; padding:16px; color:#EAF3EE; display:flex; flex-direction:column; gap:6px">
+              <div style="font-size:18px; font-weight:800">Treino concluído</div>
+              <div style="font-size:14px; line-height:1.45">{{ doneSummary }}</div>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="flex-shrink:0; padding:12px 20px 44px; display:flex; gap:10px">
+          <div onClick="{{ saveSet }}" style="flex:1; height:54px; border-radius:14px; background:#FF4A1C; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; cursor:pointer">{{ primaryLabel }}</div>
+          <sc-if value="{{ hasActiveSet }}" hint-placeholder-val="{{ true }}">
+            <div onClick="{{ skipEx }}" style="width:100px; height:54px; border-radius:14px; background:#26241D; color:#F4F1EC; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; cursor:pointer">Saltar</div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ══ ALUNO · MEDIDAS ════════════════════════ -->
+    <sc-if value="{{ scrMedidas }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%; display:flex; flex-direction:column; background:#F4F1EC">
+        <div style="flex:1; overflow:auto; padding:62px 20px 8px; display:flex; flex-direction:column; gap:16px">
+          <div style="font-size:26px; font-weight:800; color:#16150F; letter-spacing:-0.02em">Medidas</div>
+
+          <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:20px; padding:16px; display:flex; flex-direction:column; gap:12px">
+            <div style="display:flex; justify-content:space-between; align-items:baseline">
+              <div>
+                <div style="font-size:12px; color:#8A867C; font-weight:700; text-transform:uppercase; letter-spacing:0.08em">Peso · 8 semanas</div>
+                <div style="display:flex; align-items:baseline; gap:6px; margin-top:4px"><div style="font-size:30px; font-weight:800; color:#16150F; font-variant-numeric:tabular-nums">{{ pesoFmt }}</div><div style="font-size:14px; font-weight:700; color:#1F5D45">+1,9 kg</div></div>
+              </div>
+              <div style="font-size:12px; font-weight:700; color:#8A867C">média semanal</div>
+            </div>
+            <div style="height:96px; display:flex; align-items:flex-end; gap:6px">
+              <sc-for list="{{ pesoBars }}" as="b" hint-placeholder-count="8">
+                <div style="flex:1; border-radius:4px; height:{{ b.h }}; background:{{ b.bg }}"></div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:space-between">
+            <div style="font-family:'Archivo Narrow'; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:#8A867C; font-weight:700">Perímetros · {{ perimData }}</div>
+            <div style="font-size:12px; font-weight:700; color:#FF4A1C">Próximo update 26 set</div>
+          </div>
+
+          <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:20px; overflow:hidden">
+            <sc-for list="{{ perims }}" as="p" hint-placeholder-count="5">
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 16px; border-bottom:{{ p.border }}">
+                <div style="font-size:15px; font-weight:600; color:#16150F">{{ p.name }}</div>
+                <div style="display:flex; align-items:center; gap:10px">
+                  <div style="font-size:15px; font-weight:700; color:#16150F; font-variant-numeric:tabular-nums">{{ p.valueFmt }}</div>
+                  <div style="font-size:13px; font-weight:700; width:46px; text-align:right; color:{{ p.diffColor }}">{{ p.diffFmt }}</div>
+                  <sc-if value="{{ editingPerims }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex; gap:5px">
+                      <div onClick="{{ p.down }}" style="width:30px; height:30px; border-radius:8px; background:#F1EEE8; color:#16150F; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer">−</div>
+                      <div onClick="{{ p.up }}" style="width:30px; height:30px; border-radius:8px; background:#F1EEE8; color:#16150F; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer">+</div>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div onClick="{{ togglePerims }}" style="height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; cursor:pointer; background:{{ perimBtnBg }}; color:{{ perimBtnFg }}; border:{{ perimBtnBorder }}">{{ perimBtnLabel }}</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ══ ALUNO · FEEDBACK ═══════════════════════ -->
+    <sc-if value="{{ scrSemana }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%; display:flex; flex-direction:column; background:#F4F1EC">
+        <div style="flex:1; overflow:auto; padding:62px 20px 8px; display:flex; flex-direction:column; gap:14px">
+          <div>
+            <div style="font-size:26px; font-weight:800; color:#16150F; letter-spacing:-0.02em">Feedback da semana 6</div>
+            <div style="font-size:13px; color:#8A867C; font-weight:500; margin-top:2px">{{ fbDeadline }}</div>
+          </div>
+
+          <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:18px; padding:14px 16px; display:flex; flex-direction:column; gap:12px">
+            <div style="font-size:14px; font-weight:700; color:#16150F">Aderência ao plano</div>
+            <div style="display:flex; gap:8px">
+              <sc-for list="{{ adesao }}" as="a" hint-placeholder-count="3">
+                <div onClick="{{ a.onTap }}" style="flex:1; height:42px; border-radius:10px; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; background:{{ a.bg }}; color:{{ a.fg }}">{{ a.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:18px; padding:14px 16px; display:flex; flex-direction:column; gap:14px">
+            <sc-for list="{{ fbScales }}" as="s" hint-placeholder-count="3">
+              <div style="display:flex; flex-direction:column; gap:9px">
+                <div style="display:flex; justify-content:space-between"><div style="font-size:14px; font-weight:700; color:#16150F">{{ s.label }}</div><div style="font-size:13px; font-weight:700; color:#FF4A1C">{{ s.valueLabel }}</div></div>
+                <div style="display:flex; gap:6px">
+                  <sc-for list="{{ s.dots }}" as="d" hint-placeholder-count="5">
+                    <div onClick="{{ d.onTap }}" style="flex:1; height:30px; border-radius:8px; cursor:pointer; background:{{ d.bg }}"></div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:18px; padding:14px 16px; display:flex; flex-direction:column; gap:8px; flex:1; min-height:150px">
+            <div style="font-size:14px; font-weight:700; color:#16150F">Como correu a semana?</div>
+            <textarea value="{{ fbText }}" onChange="{{ setFbText }}" placeholder="Escreve aqui…" style="flex:1; border:none; resize:none; font-size:14px; line-height:1.5; color:#16150F; background:transparent; padding:0; min-height:90px"></textarea>
+            <div style="display:flex; gap:8px">
+              <div style="font-size:12px; font-weight:600; color:#5D594F; padding:6px 10px; border-radius:99px; background:#F1EEE8">+ Foto de progresso</div>
+              <div style="font-size:12px; font-weight:600; color:#5D594F; padding:6px 10px; border-radius:99px; background:#F1EEE8">+ Áudio</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex-shrink:0; padding:12px 20px 20px">
+          <div onClick="{{ sendFeedback }}" style="height:54px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; cursor:pointer; background:{{ sendBg }}; color:{{ sendFg }}">{{ sendLabel }}</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ══ TREINADOR · ALUNOS ═════════════════════ -->
+    <sc-if value="{{ scrAlunos }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%; display:flex; flex-direction:column; background:#F4F1EC">
+        <div style="flex:1; overflow:auto; padding:62px 20px 8px; display:flex; flex-direction:column; gap:14px">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between">
+            <div>
+              <div style="font-size:26px; font-weight:800; color:#16150F; letter-spacing:-0.02em">Alunos</div>
+              <div style="font-size:13px; color:#8A867C; font-weight:500; margin-top:2px">{{ alunosMeta }}</div>
+            </div>
+            <div style="height:36px; padding:0 14px; border-radius:18px; background:#16150F; color:#F4F1EC; display:flex; align-items:center; font-size:13px; font-weight:700">+ Aluno</div>
+          </div>
+
+          <div style="display:flex; gap:8px">
+            <sc-for list="{{ alunoFilters }}" as="f" hint-placeholder-count="3">
+              <div onClick="{{ f.onTap }}" style="padding:8px 14px; border-radius:99px; font-size:13px; font-weight:700; cursor:pointer; background:{{ f.bg }}; color:{{ f.fg }}; border:{{ f.border }}">{{ f.label }}</div>
+            </sc-for>
+          </div>
+
+          <sc-for list="{{ alunos }}" as="a" hint-placeholder-count="4">
+            <div onClick="{{ a.onTap }}" style="background:#FFF; border:1px solid #E3DFD7; border-radius:18px; padding:14px; display:flex; gap:12px; cursor:pointer">
+              <div style="width:42px; height:42px; border-radius:21px; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; flex-shrink:0; background:{{ a.color }}">{{ a.initials }}</div>
+              <div style="flex:1; min-width:0">
+                <div style="display:flex; justify-content:space-between; align-items:baseline"><div style="font-size:16px; font-weight:700; color:{{ a.nameColor }}">{{ a.name }}</div><div style="font-size:12px; font-weight:700; color:{{ a.whenColor }}">{{ a.when }}</div></div>
+                <div style="font-size:13px; color:#8A867C; font-weight:500; margin-top:2px">{{ a.meta }}</div>
+                <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap">
+                  <sc-for list="{{ a.tags }}" as="t" hint-placeholder-count="2">
+                    <div style="font-size:11px; font-weight:700; padding:4px 8px; border-radius:6px; background:{{ t.bg }}; color:{{ t.fg }}">{{ t.label }}</div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ══ TREINADOR · PLANO ══════════════════════ -->
+    <sc-if value="{{ scrPlano }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%; display:flex; flex-direction:column; background:#F4F1EC">
+        <div style="flex:1; overflow:auto; padding:62px 20px 8px; display:flex; flex-direction:column; gap:14px">
+          <div style="display:flex; align-items:center; gap:10px">
+            <div onClick="{{ backToAlunos }}" style="font-size:22px; font-weight:800; color:#8A867C; cursor:pointer; line-height:1">←</div>
+            <div style="flex:1">
+              <div style="font-size:20px; font-weight:800; color:#16150F; letter-spacing:-0.02em">{{ planTitle }}</div>
+              <div style="font-size:12px; font-weight:600; margin-top:1px; color:{{ planStateColor }}">{{ planState }}</div>
+            </div>
+          </div>
+
+          <div style="background:#FFF3EE; border:1px solid #F6D3C6; border-radius:14px; padding:11px 13px">
+            <div style="font-size:12px; font-weight:800; color:#C63A12; text-transform:uppercase; letter-spacing:0.08em">Limitações</div>
+            <div style="font-size:13px; color:#5D594F; font-weight:500; margin-top:3px; line-height:1.4">Trombo na perna (histórico) · artrite. Evitar impacto e cargas máximas em membros inferiores.</div>
+          </div>
+
+          <div style="display:flex; gap:6px">
+            <sc-for list="{{ dayTabs }}" as="d" hint-placeholder-count="3">
+              <div onClick="{{ d.onTap }}" style="flex:1; height:38px; border-radius:10px; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; background:{{ d.bg }}; color:{{ d.fg }}; border:{{ d.border }}">{{ d.label }}</div>
+            </sc-for>
+            <div onClick="{{ addDay }}" style="width:44px; height:38px; border-radius:10px; background:#FFF; border:1px dashed #C9C4B8; color:#5D594F; font-size:16px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer">+</div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <sc-for list="{{ planRows }}" as="r" hint-placeholder-count="3">
+              <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:10px">
+                <div style="display:flex; align-items:flex-start; gap:10px">
+                  <div style="flex:1; min-width:0">
+                    <div style="font-size:14px; font-weight:700; color:#16150F">{{ r.name }}</div>
+                    <div style="font-size:12px; color:#8A867C; font-weight:500; margin-top:1px">{{ r.meta }}</div>
+                  </div>
+                  <div onClick="{{ r.remove }}" style="width:26px; height:26px; border-radius:13px; background:#F1EEE8; color:#5D594F; font-size:14px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0">×</div>
+                </div>
+                <div style="display:flex; gap:6px">
+                  <sc-for list="{{ r.fields }}" as="f" hint-placeholder-count="3">
+                    <div style="flex:1; background:#F6F4F0; border-radius:10px; padding:6px; display:flex; align-items:center; justify-content:space-between">
+                      <div onClick="{{ f.down }}" style="width:26px; height:26px; border-radius:7px; background:#FFF; border:1px solid #E3DFD7; color:#16150F; font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer">−</div>
+                      <div style="text-align:center"><div style="font-size:13px; font-weight:800; color:#16150F; font-variant-numeric:tabular-nums">{{ f.value }}</div><div style="font-size:8px; font-weight:700; color:#8A867C; letter-spacing:0.05em">{{ f.label }}</div></div>
+                      <div onClick="{{ f.up }}" style="width:26px; height:26px; border-radius:7px; background:#FFF; border:1px solid #E3DFD7; color:#16150F; font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer">+</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+            <div onClick="{{ goLibrary }}" style="height:46px; border-radius:14px; border:1.5px dashed #B9B4A8; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#16150F; cursor:pointer">+ Adicionar da base de exercícios</div>
+          </div>
+
+          <div style="background:#FFF; border:1px solid #E3DFD7; border-radius:14px; padding:12px 14px">
+            <div style="font-size:12px; font-weight:800; color:#8A867C; text-transform:uppercase; letter-spacing:0.08em">Volume do treino {{ activeDay }}</div>
+            <div style="display:flex; gap:18px; margin-top:8px; flex-wrap:wrap">
+              <sc-for list="{{ volume }}" as="v" hint-placeholder-count="3">
+                <div><div style="font-size:18px; font-weight:800; color:{{ v.color }}">{{ v.value }}</div><div style="font-size:11px; color:#8A867C; font-weight:600">{{ v.label }}</div></div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex-shrink:0; padding:12px 20px 20px; display:flex; gap:10px">
+          <div onClick="{{ publish }}" style="flex:1; height:54px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; cursor:pointer; background:{{ pubBg }}; color:{{ pubFg }}">{{ pubLabel }}</div>
+          <div style="width:110px; height:54px; border-radius:14px; background:#FFF; border:1px solid #E3DFD7; color:#5D594F; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700">Duplicar</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ══ TREINADOR · EXERCÍCIOS ═════════════════ -->
+    <sc-if value="{{ scrExercicios }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%; display:flex; flex-direction:column; background:#F4F1EC">
+        <div style="flex:1; overflow:auto; padding:62px 20px 8px; display:flex; flex-direction:column; gap:12px">
+          <div style="display:flex; align-items:center; gap:10px">
+            <sc-if value="{{ fromPlan }}" hint-placeholder-val="{{ false }}">
+              <div onClick="{{ backToPlan }}" style="font-size:22px; font-weight:800; color:#8A867C; cursor:pointer; line-height:1">←</div>
+            </sc-if>
+            <div>
+              <div style="font-size:26px; font-weight:800; color:#16150F; letter-spacing:-0.02em">Exercícios</div>
+              <div style="font-size:13px; color:#8A867C; font-weight:500; margin-top:2px">{{ libMeta }}</div>
+            </div>
+          </div>
+
+          <input value="{{ query }}" onChange="{{ setQuery }}" placeholder="Pesquisar exercício…" style="height:44px; border-radius:12px; background:#FFF; border:1px solid #E3DFD7; padding:0 14px; font-size:15px; font-weight:600; color:#16150F; box-sizing:border-box"></input>
+
+          <div style="display:flex; gap:6px; flex-wrap:wrap">
+            <sc-for list="{{ libFilters }}" as="f" hint-placeholder-count="4">
+              <div onClick="{{ f.onTap }}" style="padding:7px 12px; border-radius:99px; font-size:12px; font-weight:700; cursor:pointer; background:{{ f.bg }}; color:{{ f.fg }}; border:{{ f.border }}">{{ f.label }}</div>
+            </sc-for>
+          </div>
+
+          <sc-for list="{{ libRows }}" as="e" hint-placeholder-count="6">
+            <div onClick="{{ e.onTap }}" style="background:#FFF; border:{{ e.border }}; border-radius:14px; padding:11px 12px; display:flex; align-items:center; gap:11px; cursor:pointer">
+              <div style="width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; font-weight:700; background:{{ e.thumbBg }}; color:#5D594F">{{ e.thumbLabel }}</div>
+              <div style="flex:1; min-width:0">
+                <div style="font-size:14px; font-weight:700; color:{{ e.nameColor }}">{{ e.name }}</div>
+                <div style="font-size:12px; color:#8A867C; font-weight:500; margin-top:1px">{{ e.meta }}</div>
+              </div>
+              <div style="width:30px; height:30px; border-radius:15px; font-size:16px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:{{ e.btnBg }}; color:{{ e.btnFg }}">{{ e.btnLabel }}</div>
+            </div>
+          </sc-for>
+
+          <sc-if value="{{ libEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:26px 0; text-align:center; font-size:14px; font-weight:600; color:#8A867C">Nada encontrado para "{{ query }}"</div>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ hasSelection }}" hint-placeholder-val="{{ false }}">
+          <div style="flex-shrink:0; padding:12px 20px 20px">
+            <div onClick="{{ addSelected }}" style="height:50px; border-radius:14px; background:#FF4A1C; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; cursor:pointer">{{ addLabel }}</div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ══ TAB BAR ════════════════════════════════ -->
+    <sc-if value="{{ showTabs }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute; bottom:0; left:0; right:0; height:82px; border-top:1px solid #E3DFD7; background:#FFF; display:grid; grid-template-columns:repeat(4,1fr); padding:12px 8px 0; box-sizing:border-box">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+          <div onClick="{{ t.onTap }}" style="display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer">
+            <div style="width:22px; height:22px; border-radius:6px; background:{{ t.dot }}"></div>
+            <div style="font-size:11px; font-weight:700; color:{{ t.fg }}">{{ t.label }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+  </x-import>
+
+  <div style="max-width:430px; font-size:13px; line-height:1.5; color:#5D594F; text-align:center; text-wrap:pretty">{{ hint }}</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:1100}}">
+const INK = '#16150F', PAPER = '#F4F1EC', MUTED = '#8A867C', LINE = '#E3DFD7', ACCENT = '#FF4A1C', GREEN = '#1F5D45';
+
+const LIB = [
+  { name: 'Puxador vertical dorsal neutra', pattern: 'Puxar', group: 'Dorsal · trapézio · máquina', video: true },
+  { name: 'Puxada vertical elástico', pattern: 'Puxar', group: 'Dorsal · trapézio · elástico', video: true },
+  { name: 'Puxador vertical unilateral cruzado', pattern: 'Puxar', group: 'Dorsal · cabos', video: true },
+  { name: 'Elevações pega supinada', pattern: 'Puxar', group: 'Dorsal · peso livre', video: false },
+  { name: 'Elevações pega neutra', pattern: 'Puxar', group: 'Dorsal · peso livre', video: true },
+  { name: 'Pull over deitado halteres', pattern: 'Puxar', group: 'Dorsal · tríceps · halteres', video: true },
+  { name: 'Pull face cabos sentado', pattern: 'Puxar', group: 'Ombro posterior · trapézio', video: true },
+  { name: 'Pull face TRX', pattern: 'Puxar', group: 'Ombro posterior · TRX', video: true },
+  { name: 'Biceps curl banco inclinado halteres', pattern: 'Puxar', group: 'Bíceps · halteres', video: true },
+  { name: 'Biceps curl concentrado', pattern: 'Puxar', group: 'Bíceps · halteres', video: true },
+  { name: 'Biceps curl máquina scott', pattern: 'Puxar', group: 'Bíceps · máquina', video: true },
+  { name: 'Biceps martelo pé corda', pattern: 'Puxar', group: 'Bíceps · cabos', video: true },
+  { name: 'Supino inclinado halteres', pattern: 'Empurrar', group: 'Peito · ombro frontal', video: true },
+  { name: 'Supino plano barra', pattern: 'Empurrar', group: 'Peito · tríceps', video: true },
+  { name: 'Peck deck máquina', pattern: 'Empurrar', group: 'Peito · máquina', video: true },
+  { name: 'Cristo cabos em pé', pattern: 'Empurrar', group: 'Peito · cabos', video: true },
+  { name: 'Desenvolvimento militar halteres', pattern: 'Empurrar', group: 'Ombro frontal · tríceps', video: true },
+  { name: 'Elevação lateral halteres', pattern: 'Empurrar', group: 'Ombro médio', video: true },
+  { name: 'Tríceps corda cabos', pattern: 'Empurrar', group: 'Tríceps · cabos', video: true },
+  { name: 'Tríceps francês halteres', pattern: 'Empurrar', group: 'Tríceps · halteres', video: false },
+  { name: 'Agachamento búlgaro', pattern: 'Pernas', group: 'Quadríceps · glúteo', video: true },
+  { name: 'Agachamento goblet', pattern: 'Pernas', group: 'Quadríceps · glúteo', video: true },
+  { name: 'Prensa horizontal', pattern: 'Pernas', group: 'Quadríceps · máquina', video: true },
+  { name: 'Hip thrust barra', pattern: 'Pernas', group: 'Glúteo · posterior de coxa', video: true },
+  { name: 'Peso morto romeno halteres', pattern: 'Pernas', group: 'Posterior de coxa · lombares', video: true },
+  { name: 'Leg curl máquina', pattern: 'Pernas', group: 'Posterior de coxa · máquina', video: true },
+  { name: 'Extensão de pernas máquina', pattern: 'Pernas', group: 'Quadríceps · máquina', video: true },
+  { name: 'Gémeos em pé máquina', pattern: 'Pernas', group: 'Gémeos · máquina', video: true },
+];
+
+const num = (n, d) => n.toFixed(d).replace('.', ',');
+
+class Component extends DCLogic {
+  state = {
+    role: 'aluno',
+    screen: 'hoje',
+    peso: 78.4, sono: 7.33, energia: 4, fome: 2,
+    workout: {
+      started: false, ex: 0, elapsed: 0,
+      exercises: [
+        { name: 'Supino plano barra', meta: 'Peito · tríceps · descanso 90 s', last: '45 kg × 10, 10, 8', kg: 47.5, sets: [null, null, null] },
+        { name: 'Supino inclinado halteres', meta: 'Peito · ombro frontal · descanso 90 s', last: '20 kg × 10, 10, 9', kg: 22, sets: [null, null, null] },
+        { name: 'Desenvolvimento militar halteres', meta: 'Ombro frontal · tríceps · descanso 75 s', last: '16 kg × 10, 9, 9', kg: 16, sets: [null, null, null] },
+        { name: 'Elevação lateral halteres', meta: 'Ombro médio · descanso 60 s', last: '8 kg × 15, 14, 12', kg: 8, sets: [null, null, null] },
+        { name: 'Pull face cabos sentado', meta: 'Ombro posterior · trapézio · descanso 60 s', last: '25 kg × 15, 15, 15', kg: 25, sets: [null, null, null] },
+        { name: 'Tríceps corda cabos', meta: 'Tríceps · descanso 60 s', last: '30 kg × 12, 11, 10', kg: 30, sets: [null, null, null] },
+      ],
+      reps: 10, rir: 2,
+    },
+    editingPerims: false,
+    perims: [
+      { name: 'Cintura', value: 84.0, base: 85.5 },
+      { name: 'Glúteo', value: 98.5, base: 98.3 },
+      { name: 'Coxa Drt.', value: 58.0, base: 57.0 },
+      { name: 'Braço Drt.', value: 36.4, base: 35.6 },
+      { name: 'Gémeo Drt.', value: 38.1, base: 38.1 },
+    ],
+    fb: { treino: 1, sono: 4, energia: 3, fome: 2, text: 'Joelho aguentou bem o agachamento búlgaro. Na quinta falhei o treino, fiz no sábado.', sent: false },
+    alunoFilter: 'A precisar',
+    activeDay: 'A',
+    days: ['A', 'B', 'C'],
+    plan: {
+      A: [
+        { name: 'Supino inclinado halteres', meta: 'Peito · ombro frontal', sets: 3, reps: 10, rest: 90 },
+        { name: 'Pull face cabos sentado', meta: 'Ombro posterior · trapézio', sets: 3, reps: 14, rest: 60 },
+        { name: 'Tríceps corda cabos', meta: 'Tríceps', sets: 3, reps: 12, rest: 60 },
+      ],
+      B: [
+        { name: 'Puxador vertical dorsal neutra', meta: 'Dorsal · trapézio', sets: 4, reps: 10, rest: 90 },
+        { name: 'Biceps curl banco inclinado halteres', meta: 'Bíceps', sets: 3, reps: 12, rest: 60 },
+      ],
+      C: [
+        { name: 'Hip thrust barra', meta: 'Glúteo · posterior de coxa', sets: 4, reps: 10, rest: 90 },
+        { name: 'Leg curl máquina', meta: 'Posterior de coxa', sets: 3, reps: 12, rest: 60 },
+      ],
+    },
+    published: false,
+    query: '', libFilter: 'Todos', selected: [], fromPlan: false,
+  };
+
+  componentDidMount() {
+    this.timer = setInterval(() => {
+      if (this.state.workout.started && this.state.screen === 'treino') {
+        this.setState(s => ({ workout: { ...s.workout, elapsed: s.workout.elapsed + 1 } }));
+      }
+    }, 1000);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+
+  go = (screen) => this.setState({ screen });
+  setW = (patch) => this.setState(s => ({ workout: { ...s.workout, ...patch } }));
+
+  scale(field, n) {
+    const active = this.state[field] === n;
+    return { n, bg: active ? (n === this.state[field] ? ACCENT : '#F1EEE8') : '#F1EEE8', fg: active ? '#FFF' : MUTED, onTap: () => this.setState({ [field]: n }) };
+  }
+
+  saveSet = () => {
+    const w = this.state.workout;
+    const ex = w.exercises[w.ex];
+    const i = ex.sets.findIndex(x => x === null);
+    if (i === -1) {
+      if (w.ex < w.exercises.length - 1) return this.setW({ ex: w.ex + 1, reps: 10, rir: 2 });
+      return this.setState({ screen: 'hoje', workout: { ...w, started: false } });
+    }
+    const exercises = w.exercises.map((e, idx) => idx !== w.ex ? e : { ...e, sets: e.sets.map((s, j) => j === i ? { kg: e.kg, reps: w.reps, rir: w.rir } : s) });
+    this.setW({ exercises });
+  };
+
+  renderVals() {
+    const st = this.state;
+    const isAluno = st.role === 'aluno';
+    const w = st.workout;
+    const ex = w.exercises[w.ex];
+    const nextSet = ex.sets.findIndex(x => x === null);
+    const allDone = w.exercises.every(e => e.sets.every(s => s !== null));
+    const doneCount = w.exercises.reduce((a, e) => a + e.sets.filter(s => s !== null).length, 0);
+
+    // tabs
+    const tabDefs = isAluno
+      ? [['Hoje', 'hoje'], ['Treino', 'treino'], ['Medidas', 'medidas'], ['Semana', 'semana']]
+      : [['Alunos', 'alunos'], ['Planos', 'plano'], ['Exercícios', 'exercicios'], ['Mensagens', 'alunos']];
+    const tabs = tabDefs.map(([label, scr]) => {
+      const on = st.screen === scr && !(label === 'Mensagens');
+      return { label, dot: on ? INK : '#D5D1C8', fg: on ? INK : MUTED, onTap: () => this.setState({ screen: scr, fromPlan: false }) };
+    });
+
+    // perímetros
+    const perims = st.perims.map((p, i) => {
+      const diff = p.value - p.base;
+      return {
+        name: p.name, valueFmt: num(p.value, 1) + ' cm',
+        diffFmt: (diff > 0 ? '+' : diff < 0 ? '−' : '') + num(Math.abs(diff), 1),
+        diffColor: Math.abs(diff) < 0.05 ? MUTED : GREEN,
+        border: i === st.perims.length - 1 ? 'none' : '1px solid #EDEAE3',
+        up: () => this.setState(s => ({ perims: s.perims.map((x, j) => j === i ? { ...x, value: +(x.value + 0.5).toFixed(1) } : x) })),
+        down: () => this.setState(s => ({ perims: s.perims.map((x, j) => j === i ? { ...x, value: +(x.value - 0.5).toFixed(1) } : x) })),
+      };
+    });
+
+    // feedback
+    const fbScale = (field, label) => ({
+      label, valueLabel: st.fb[field] + ' / 5',
+      dots: [1, 2, 3, 4, 5].map(n => ({
+        bg: n <= st.fb[field] ? ACCENT : '#F1EEE8',
+        onTap: () => this.setState(s => ({ fb: { ...s.fb, [field]: n, sent: false } })),
+      })),
+    });
+
+    // alunos
+    const alunoData = [
+      { initials: 'RM', name: 'Rui Martins', when: 'Plano acaba dom.', whenColor: ACCENT, meta: 'Semana 6/8 · 78,4 kg (+1,9)', color: ACCENT, tags: [{ label: 'Feedback por ler', bg: '#FDE8E1', fg: '#C63A12' }, { label: '4/4 treinos', bg: '#F1EEE8', fg: '#5D594F' }], precisa: true },
+      { initials: 'AS', name: 'Ana Sousa', when: 'há 2 dias', whenColor: MUTED, meta: 'Semana 2/8 · 64,1 kg (−0,6)', color: GREEN, tags: [{ label: '2 treinos falhados', bg: '#FDE8E1', fg: '#C63A12' }], precisa: true },
+      { initials: 'JP', name: 'João Pinto', when: 'ontem', whenColor: MUTED, meta: 'Semana 4/8 · 91,7 kg (−2,4)', color: '#8A867C', tags: [{ label: 'Tudo em dia', bg: '#D8EBE1', fg: GREEN }], precisa: false },
+      { initials: 'MC', name: 'Marta Costa', when: 'há 5 dias', whenColor: MUTED, meta: 'Semana 8/8 · 57,2 kg (−1,1) · em pausa', color: '#B9B4A8', tags: [{ label: 'Bloco terminado', bg: '#F1EEE8', fg: '#5D594F' }], precisa: false, pausa: true },
+    ];
+
+    const filter = st.alunoFilter;
+    const alunos = alunoData
+      .filter(a => filter === 'Todos' ? true : filter === 'Em pausa' ? a.pausa : a.precisa)
+      .map(a => ({ ...a, nameColor: a.pausa ? '#5D594F' : INK, onTap: () => this.setState({ screen: 'plano', fromPlan: false }) }));
+
+    const alunoFilters = ['A precisar (2)', 'Todos', 'Em pausa'].map(label => {
+      const key = label.startsWith('A precisar') ? 'A precisar' : label;
+      const on = st.alunoFilter === key;
+      return { label, bg: on ? INK : '#FFF', fg: on ? '#FFF' : MUTED, border: on ? 'none' : '1px solid ' + LINE, onTap: () => this.setState({ alunoFilter: key }) };
+    });
+
+    // plano
+    const rows = st.plan[st.activeDay] || [];
+    const bump = (i, key, delta, min, max) => () => this.setState(s => ({
+      published: false,
+      plan: { ...s.plan, [s.activeDay]: s.plan[s.activeDay].map((r, j) => j === i ? { ...r, [key]: Math.max(min, Math.min(max, r[key] + delta)) } : r) },
+    }));
+    const planRows = rows.map((r, i) => ({
+      name: r.name, meta: r.meta,
+      remove: () => this.setState(s => ({ published: false, plan: { ...s.plan, [s.activeDay]: s.plan[s.activeDay].filter((_, j) => j !== i) } })),
+      fields: [
+        { label: 'SÉRIES', value: String(r.sets), up: bump(i, 'sets', 1, 1, 8), down: bump(i, 'sets', -1, 1, 8) },
+        { label: 'REPS', value: String(r.reps), up: bump(i, 'reps', 1, 1, 30), down: bump(i, 'reps', -1, 1, 30) },
+        { label: 'DESC', value: r.rest + 's', up: bump(i, 'rest', 15, 30, 240), down: bump(i, 'rest', -15, 30, 240) },
+      ],
+    }));
+
+    const groupOf = (meta) => meta.split(' · ')[0];
+    const volMap = {};
+    rows.forEach(r => { const g = groupOf(r.meta); volMap[g] = (volMap[g] || 0) + r.sets; });
+    const volume = Object.keys(volMap).slice(0, 4).map(g => ({ label: 'séries ' + g.toLowerCase(), value: String(volMap[g]), color: volMap[g] < 8 ? ACCENT : INK }));
+
+    const dayTabs = st.days.map(d => {
+      const on = st.activeDay === d;
+      return { label: on ? 'Treino ' + d : d, bg: on ? INK : '#FFF', fg: on ? '#FFF' : MUTED, border: on ? 'none' : '1px solid ' + LINE, onTap: () => this.setState({ activeDay: d }) };
+    });
+
+    // biblioteca
+    const q = st.query.trim().toLowerCase();
+    const libRows = LIB
+      .filter(e => st.libFilter === 'Todos' || e.pattern === st.libFilter)
+      .filter(e => !q || e.name.toLowerCase().includes(q) || e.group.toLowerCase().includes(q))
+      .slice(0, 12)
+      .map(e => {
+        const on = st.selected.includes(e.name);
+        return {
+          name: e.name, meta: e.group + (e.video ? '' : ' · sem vídeo'),
+          nameColor: e.video ? INK : '#5D594F',
+          thumbBg: e.video ? INK : '#E8E4DC', thumbLabel: e.video ? '▶' : 's/v',
+          border: on ? '2px solid ' + ACCENT : '1px solid ' + LINE,
+          btnBg: on ? ACCENT : '#F1EEE8', btnFg: on ? '#FFF' : INK, btnLabel: on ? '✓' : '+',
+          onTap: () => this.setState(s => ({ selected: on ? s.selected.filter(n => n !== e.name) : [...s.selected, e.name] })),
+        };
+      });
+
+    const addSelected = () => this.setState(s => {
+      const add = s.selected.map(n => {
+        const e = LIB.find(x => x.name === n);
+        return { name: e.name, meta: e.group.split(' · ').slice(0, 2).map((p, i) => i === 0 ? p.charAt(0).toUpperCase() + p.slice(1) : p).join(' · '), sets: 3, reps: 10, rest: 60 };
+      });
+      return { plan: { ...s.plan, [s.activeDay]: [...s.plan[s.activeDay], ...add] }, selected: [], screen: 'plano', published: false };
+    });
+
+    const hints = {
+      hoje: 'Toca nas escalas de energia e fome, ajusta o peso e o sono, e começa o treino.',
+      treino: 'Escolhe a carga, as reps e o RIR, e guarda cada série. O treino avança sozinho.',
+      medidas: 'Toca em "Novo registo" para editar os perímetros — as diferenças recalculam.',
+      semana: 'Preenche as escalas, escreve o texto e envia ao treinador.',
+      alunos: 'Toca num aluno para abrir o plano da semana dele.',
+      plano: 'Muda séries, reps e descanso, apaga exercícios, ou adiciona da base. Depois publica.',
+      exercicios: 'Pesquisa (ex. "curl", "glúteo"), filtra por padrão e selecciona para adicionar ao treino.',
+    };
+
+    return {
+      isDark: st.screen === 'treino',
+      isAluno,
+      setAluno: () => this.setState({ role: 'aluno', screen: 'hoje', fromPlan: false }),
+      setTreinador: () => this.setState({ role: 'treinador', screen: 'alunos', fromPlan: false }),
+      alunoTabBg: isAluno ? INK : 'transparent', alunoTabFg: isAluno ? PAPER : '#5D594F',
+      coachTabBg: isAluno ? 'transparent' : INK, coachTabFg: isAluno ? '#5D594F' : PAPER,
+
+      scrHoje: st.screen === 'hoje', scrTreino: st.screen === 'treino', scrMedidas: st.screen === 'medidas',
+      scrSemana: st.screen === 'semana', scrAlunos: st.screen === 'alunos', scrPlano: st.screen === 'plano',
+      scrExercicios: st.screen === 'exercicios',
+      showTabs: st.screen !== 'treino',
+      tabs,
+      hint: hints[st.screen] || '',
+
+      // hoje
+      pesoFmt: num(st.peso, 1),
+      pesoUp: () => this.setState(s => ({ peso: +(s.peso + 0.1).toFixed(1) })),
+      pesoDown: () => this.setState(s => ({ peso: +(s.peso - 0.1).toFixed(1) })),
+      sonoFmt: Math.floor(st.sono) + 'h ' + String(Math.round((st.sono % 1) * 60)).padStart(2, '0'),
+      sonoUp: () => this.setState(s => ({ sono: Math.min(12, s.sono + 0.25) })),
+      sonoDown: () => this.setState(s => ({ sono: Math.max(3, s.sono - 0.25) })),
+      energiaScale: [1, 2, 3, 4, 5].map(n => ({ n, bg: st.energia === n ? ACCENT : '#F1EEE8', fg: st.energia === n ? '#FFF' : MUTED, onTap: () => this.setState({ energia: n }) })),
+      fomeScale: [1, 2, 3, 4, 5].map(n => ({ n, bg: st.fome === n ? ACCENT : '#F1EEE8', fg: st.fome === n ? '#FFF' : MUTED, onTap: () => this.setState({ fome: n }) })),
+      workoutStatus: doneCount ? doneCount + ' séries feitas' : '~55 min',
+      workoutVolume: w.exercises.length + ' exercícios · ' + w.exercises.reduce((a, e) => a + e.sets.length, 0) + ' séries',
+      startLabel: allDone ? 'Treino concluído ✓' : doneCount ? 'Continuar treino' : 'Começar treino',
+      startWorkout: () => this.setState(s => ({ screen: 'treino', workout: { ...s.workout, started: true } })),
+
+      // treino
+      clock: Math.floor(w.elapsed / 60) + ':' + String(w.elapsed % 60).padStart(2, '0'),
+      exBars: w.exercises.map((e, i) => ({ bg: e.sets.every(s => s !== null) ? ACCENT : i === w.ex ? '#7A6A5A' : '#3A372F' })),
+      exCounter: 'Exercício ' + (w.ex + 1) + ' de ' + w.exercises.length,
+      exName: ex.name, exMeta: ex.meta, lastWeek: ex.last,
+      progresso: '+' + num(ex.kg - parseFloat(ex.last), 1).replace(',0', '') + ' kg',
+      series: ex.sets.map((s, i) => {
+        const active = i === nextSet;
+        return {
+          n: i + 1,
+          kg: s ? num(s.kg, 1).replace(',0', '') + ' kg' : active ? num(ex.kg, 1).replace(',0', '') + ' kg' : '—',
+          reps: s ? String(s.reps) : '—',
+          rir: s ? 'RIR ' + s.rir : '—',
+          numBg: s ? '#D8EBE1' : active ? ACCENT : '#26241D',
+          numFg: s ? GREEN : active ? '#FFF' : '#A9A499',
+          border: active ? '2px solid ' + ACCENT : '1px solid #3A372F',
+          fg: s ? '#F4F1EC' : active ? '#F4F1EC' : '#A9A499',
+        };
+      }),
+      hasActiveSet: nextSet !== -1,
+      activeSetN: nextSet + 1,
+      activeKg: num(ex.kg, 1).replace(',0', '') + ' kg',
+      kgUp: () => this.setW({ exercises: w.exercises.map((e, i) => i === w.ex ? { ...e, kg: +(e.kg + 2.5).toFixed(1) } : e) }),
+      kgDown: () => this.setW({ exercises: w.exercises.map((e, i) => i === w.ex ? { ...e, kg: Math.max(0, +(e.kg - 2.5).toFixed(1)) } : e) }),
+      repChips: [8, 9, 10, 11, 12, 15].map(n => ({ label: String(n), bg: w.reps === n ? ACCENT : '#3A372F', fg: w.reps === n ? '#FFF' : '#F4F1EC', onTap: () => this.setW({ reps: n }) })),
+      rirChips: [0, 1, 2, 3].map(n => ({ label: 'RIR ' + n, bg: w.rir === n ? ACCENT : '#3A372F', fg: w.rir === n ? '#FFF' : '#F4F1EC', onTap: () => this.setW({ rir: n }) })),
+      primaryLabel: nextSet !== -1 ? 'Guardar série ' + (nextSet + 1) : w.ex < w.exercises.length - 1 ? 'Próximo exercício' : 'Terminar treino',
+      saveSet: this.saveSet,
+      skipEx: () => this.setW({ ex: Math.min(w.exercises.length - 1, w.ex + 1), reps: 10, rir: 2 }),
+      exitWorkout: () => this.go('hoje'),
+      workoutDone: allDone,
+      doneSummary: doneCount + ' séries registadas. O treinador já vê os valores.',
+
+      // medidas
+      pesoBars: [38, 44, 41, 55, 62, 58, 74, 88].map((h, i) => ({ h: h + '%', bg: i === 7 ? ACCENT : i === 6 ? INK : LINE })),
+      perims,
+      perimData: st.editingPerims ? 'a editar' : '12 set',
+      editingPerims: st.editingPerims,
+      togglePerims: () => this.setState(s => ({ editingPerims: !s.editingPerims })),
+      perimBtnLabel: st.editingPerims ? 'Guardar registo' : '+ Novo registo de medidas',
+      perimBtnBg: st.editingPerims ? INK : 'transparent',
+      perimBtnFg: st.editingPerims ? PAPER : INK,
+      perimBtnBorder: st.editingPerims ? 'none' : '1.5px dashed #B9B4A8',
+
+      // feedback
+      fbDeadline: st.fb.sent ? 'Enviado · o treinador foi notificado' : 'Envia até domingo às 20h',
+      adesao: [['Treino 4/4', 1], ['3 de 4', 2], ['Menos de 3', 3]].map(([label, v]) => ({
+        label, bg: st.fb.treino === v ? INK : '#F1EEE8', fg: st.fb.treino === v ? '#FFF' : MUTED,
+        onTap: () => this.setState(s => ({ fb: { ...s.fb, treino: v, sent: false } })),
+      })),
+      fbScales: [fbScale('sono', 'Qualidade do sono'), fbScale('energia', 'Energia média'), fbScale('fome', 'Fome')],
+      fbText: st.fb.text,
+      setFbText: (e) => this.setState(s => ({ fb: { ...s.fb, text: e.target.value, sent: false } })),
+      sendLabel: st.fb.sent ? 'Feedback enviado ✓' : 'Enviar ao treinador',
+      sendBg: st.fb.sent ? GREEN : INK, sendFg: st.fb.sent ? '#EAF3EE' : PAPER,
+      sendFeedback: () => this.setState(s => ({ fb: { ...s.fb, sent: true } })),
+
+      // alunos
+      alunos, alunoFilters,
+      alunosMeta: '12 activos · 2 precisam de ti',
+
+      // plano
+      planTitle: 'Rui Martins · Semana 7',
+      planState: st.published ? 'Publicado · o aluno já vê' : 'Rascunho · o aluno ainda não vê',
+      planStateColor: st.published ? GREEN : MUTED,
+      dayTabs, activeDay: st.activeDay, planRows, volume,
+      addDay: () => this.setState(s => {
+        const next = String.fromCharCode(65 + s.days.length);
+        return { days: [...s.days, next], plan: { ...s.plan, [next]: [] }, activeDay: next, published: false };
+      }),
+      backToAlunos: () => this.go('alunos'),
+      goLibrary: () => this.setState({ screen: 'exercicios', fromPlan: true, selected: [], query: '' }),
+      publish: () => this.setState({ published: true }),
+      pubLabel: st.published ? 'Publicado ✓' : 'Publicar ao aluno',
+      pubBg: st.published ? GREEN : INK, pubFg: st.published ? '#EAF3EE' : PAPER,
+
+      // biblioteca
+      libMeta: st.selected.length ? st.selected.length + ' seleccionados' : LIB.length + ' na base · 24 com vídeo',
+      query: st.query,
+      setQuery: (e) => this.setState({ query: e.target.value }),
+      libFilters: ['Todos', 'Puxar', 'Empurrar', 'Pernas'].map(label => {
+        const on = st.libFilter === label;
+        return { label, bg: on ? INK : '#FFF', fg: on ? '#FFF' : MUTED, border: on ? 'none' : '1px solid ' + LINE, onTap: () => this.setState({ libFilter: label }) };
+      }),
+      libRows, libEmpty: libRows.length === 0,
+      fromPlan: st.fromPlan,
+      backToPlan: () => this.setState({ screen: 'plano', fromPlan: false, selected: [] }),
+      hasSelection: st.selected.length > 0,
+      addLabel: 'Adicionar ' + st.selected.length + ' ao Treino ' + st.activeDay,
+      addSelected,
+    };
+  }
+}
+</script>
+</body>
+</html>
