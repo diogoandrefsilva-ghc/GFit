@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Loading, ScreenHeader } from '@/components/Screen'
+import { VideoModal } from '@/components/VideoModal'
+import { hasPlayableVideo } from '@/lib/video'
+import type { Exercise } from '@/lib/database.types'
 import { fetchMuscles, searchExercises } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { plural } from '@/lib/format'
@@ -16,6 +19,7 @@ export function ExerciseLibrary() {
   const [muscle, setMuscle] = useState<string | null>(null)
   const [pattern, setPattern] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  const [video, setVideo] = useState<Exercise | null>(null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebounced(term), 220)
@@ -134,15 +138,14 @@ export function ExerciseLibrary() {
                       .join(' · ')}
                   </em>
                 </span>
-                {exercise.video_url ? (
-                  <a
+                {hasPlayableVideo(exercise.video_url) ? (
+                  <button
+                    type="button"
                     className="library__video"
-                    href={exercise.video_url}
-                    target="_blank"
-                    rel="noreferrer"
+                    onClick={() => setVideo(exercise)}
                   >
                     ▸ vídeo
-                  </a>
+                  </button>
                 ) : (
                   <span className="library__novideo">sem vídeo</span>
                 )}
@@ -153,6 +156,14 @@ export function ExerciseLibrary() {
             )}
           </ul>
         </>
+      )}
+
+      {video && (
+        <VideoModal
+          url={video.video_url}
+          title={video.name}
+          onClose={() => setVideo(null)}
+        />
       )}
     </div>
   )

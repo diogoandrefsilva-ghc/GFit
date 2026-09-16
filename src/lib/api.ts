@@ -417,7 +417,12 @@ export async function saveSet(
   planExerciseId: string,
   exerciseId: string | null,
   setNumber: number,
-  values: { weight_kg: number | null; reps: number | null; rir: number | null },
+  values: {
+    weight_kg?: number | null
+    reps?: number | null
+    rir?: number | null
+    duration_s?: number | null
+  },
 ): Promise<SetLog> {
   const rows = unwrap(
     await supabase
@@ -436,6 +441,35 @@ export async function saveSet(
       .select(),
   )
   return rows[0]
+}
+
+/** Grava de uma vez as séries cronometradas de um treino guiado. */
+export async function saveTimedSets(
+  sessionId: string,
+  rows: {
+    planExerciseId: string
+    exerciseId: string | null
+    setNumber: number
+    seconds: number
+  }[],
+): Promise<void> {
+  if (rows.length === 0) return
+  unwrap(
+    await supabase
+      .from('set_logs')
+      .upsert(
+        rows.map((row) => ({
+          session_id: sessionId,
+          plan_exercise_id: row.planExerciseId,
+          exercise_id: row.exerciseId,
+          set_number: row.setNumber,
+          duration_s: row.seconds,
+          done: true,
+        })),
+        { onConflict: 'session_id,plan_exercise_id,set_number' },
+      )
+      .select(),
+  )
 }
 
 export async function finishSession(

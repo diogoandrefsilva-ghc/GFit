@@ -79,7 +79,13 @@ export function WorkoutHome() {
                   <em>
                     {exercises.length === 0
                       ? 'sem exercícios'
-                      : `${plural(exercises.length, 'exercício', 'exercícios')} · ${plural(sets, 'série', 'séries')}`}
+                      : day.mode === 'time'
+                        ? `${plural(exercises.length, 'exercício', 'exercícios')} · ${
+                            day.flow === 'circuit'
+                              ? `${day.rounds ?? 3} voltas`
+                              : 'por tempo'
+                          }`
+                        : `${plural(exercises.length, 'exercício', 'exercícios')} · ${plural(sets, 'série', 'séries')}`}
                   </em>
                 </span>
                 <span className="workout-day__state">

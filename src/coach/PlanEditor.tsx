@@ -15,7 +15,7 @@ import { supabase } from '@/lib/supabase'
 import { weeklyVolume } from '@/lib/calc'
 import { num, plural, repRange } from '@/lib/format'
 import { unwrap, useQuery } from '@/lib/useQuery'
-import type { Exercise, PlanExercise } from '@/lib/database.types'
+import type { Exercise, PlanDay, PlanExercise, WorkMode } from '@/lib/database.types'
 import './plan-editor.css'
 
 export function PlanEditor() {
@@ -114,27 +114,7 @@ export function PlanEditor() {
           </button>
         </div>
 
-        {day && (
-          <label className="field">
-            <span className="field__label">Nome do treino {day.label}</span>
-            <input
-              className="input"
-              defaultValue={day.title ?? ''}
-              placeholder="Empurrar, Pernas, Full body…"
-              onBlur={async (event) => {
-                if (event.target.value === (day.title ?? '')) return
-                unwrap(
-                  await supabase
-                    .from('plan_days')
-                    .update({ title: event.target.value || null })
-                    .eq('id', day.id)
-                    .select(),
-                )
-                reload()
-              }}
-            />
-          </label>
-        )}
+        {day && <DaySettings day={day} onChanged={reload} />}
 
         {/* ── exercícios ─────────────────────────────── */}
         <ul className="plan__exercises">
@@ -142,6 +122,7 @@ export function PlanEditor() {
             <PlanExerciseRow
               key={item.id}
               item={item}
+              dayMode={day?.mode ?? 'reps'}
               exercise={item.exercise_id ? library.get(item.exercise_id) ?? null : null}
               canMoveUp={index > 0}
               canMoveDown={index < items.length - 1}
@@ -228,6 +209,7 @@ export function PlanEditor() {
 
 function PlanExerciseRow({
   item,
+  dayMode,
   exercise,
   canMoveUp,
   canMoveDown,
@@ -235,6 +217,7 @@ function PlanExerciseRow({
   onMove,
 }: {
   item: PlanExercise
+  dayMode: WorkMode
   exercise: Exercise | null
   canMoveUp: boolean
   canMoveDown: boolean
@@ -242,6 +225,7 @@ function PlanExerciseRow({
   onMove: (direction: 1 | -1) => void
 }) {
   const [open, setOpen] = useState(false)
+  const mode = item.mode ?? dayMode
 
   async function patch(values: Partial<PlanExercise>) {
     await updatePlanExercise(item.id, values)
@@ -275,8 +259,12 @@ function PlanExerciseRow({
           <em>sér</em>
         </span>
         <span>
-          <strong>{repRange(item.rep_min, item.rep_max)}</strong>
-          <em>reps</em>
+          <strong>
+            {mode === 'time'
+              ? `${item.work_seconds ?? 45}s`
+              : repRange(item.rep_min, item.rep_max)}
+          </strong>
+          <em>{mode === 'time' ? 'tempo' : 'reps'}</em>
         </span>
         <span>
           <strong>{item.rest_seconds}s</strong>
@@ -286,6 +274,34 @@ function PlanExerciseRow({
 
       {open && (
         <div className="plan-ex__edit">
+          <div className="field">
+            <span className="field__label">Conta-se em</span>
+            <div className="row row--wrap">
+              <button
+                type="button"
+                className={`chip ${item.mode === null ? 'chip--on' : ''}`}
+                onClick={() => patch({ mode: null })}
+              >
+                Como o treino
+              </button>
+              {(
+                [
+                  ['reps', 'Repetições'],
+                  ['time', 'Tempo'],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`chip ${item.mode === value ? 'chip--on' : ''}`}
+                  onClick={() => patch({ mode: value })}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid-2">
             <label className="field">
               <span className="field__label">Séries</span>
@@ -310,36 +326,56 @@ function PlanExerciseRow({
                 onBlur={(event) => patch({ rest_seconds: Number(event.target.value) })}
               />
             </label>
-            <label className="field">
-              <span className="field__label">Reps mín.</span>
-              <input
-                className="input"
-                type="number"
-                min={1}
-                max={60}
-                defaultValue={item.rep_min ?? ''}
-                onBlur={(event) =>
-                  patch({
-                    rep_min: event.target.value === '' ? null : Number(event.target.value),
-                  })
-                }
-              />
-            </label>
-            <label className="field">
-              <span className="field__label">Reps máx.</span>
-              <input
-                className="input"
-                type="number"
-                min={1}
-                max={60}
-                defaultValue={item.rep_max ?? ''}
-                onBlur={(event) =>
-                  patch({
-                    rep_max: event.target.value === '' ? null : Number(event.target.value),
-                  })
-                }
-              />
-            </label>
+            {mode === 'time' && (
+              <label className="field">
+                <span className="field__label">Duração (s)</span>
+                <input
+                  className="input"
+                  type="number"
+                  min={1}
+                  max={3600}
+                  step={5}
+                  defaultValue={item.work_seconds ?? 45}
+                  onBlur={(event) => patch({ work_seconds: Number(event.target.value) })}
+                />
+              </label>
+            )}
+            {mode === 'reps' && (
+              <>
+                <label className="field">
+                  <span className="field__label">Reps mín.</span>
+                  <input
+                    className="input"
+                    type="number"
+                    min={1}
+                    max={60}
+                    defaultValue={item.rep_min ?? ''}
+                    onBlur={(event) =>
+                      patch({
+                        rep_min:
+                          event.target.value === '' ? null : Number(event.target.value),
+                      })
+                    }
+                  />
+                </label>
+                <label className="field">
+                  <span className="field__label">Reps máx.</span>
+                  <input
+                    className="input"
+                    type="number"
+                    min={1}
+                    max={60}
+                    defaultValue={item.rep_max ?? ''}
+                    onBlur={(event) =>
+                      patch({
+                        rep_max:
+                          event.target.value === '' ? null : Number(event.target.value),
+                      })
+                    }
+                  />
+                </label>
+              </>
+            )}
           </div>
 
           <label className="field">
@@ -383,5 +419,117 @@ function PlanExerciseRow({
         </div>
       )}
     </li>
+  )
+}
+
+/** Como corre este treino: por repetições ou no relógio, e em que ordem. */
+function DaySettings({ day, onChanged }: { day: PlanDay; onChanged: () => void }) {
+  async function patch(values: Partial<PlanDay>) {
+    unwrap(await supabase.from('plan_days').update(values).eq('id', day.id).select())
+    onChanged()
+  }
+
+  return (
+    <section className="card">
+      <label className="field">
+        <span className="field__label">Nome do treino {day.label}</span>
+        <input
+          className="input"
+          defaultValue={day.title ?? ''}
+          placeholder="Empurrar, Pernas, Full body…"
+          onBlur={(event) => {
+            if (event.target.value !== (day.title ?? '')) {
+              void patch({ title: event.target.value || null })
+            }
+          }}
+        />
+      </label>
+
+      <div className="field">
+        <span className="field__label">Este treino conta-se em</span>
+        <div className="row">
+          {(
+            [
+              ['reps', 'Repetições'],
+              ['time', 'Tempo'],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={`chip ${day.mode === value ? 'chip--on' : ''}`}
+              onClick={() => day.mode !== value && patch({ mode: value })}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <span className="field__hint">
+          {day.mode === 'time'
+            ? 'A app conduz o treino com temporizador, e o aluno só tem de seguir.'
+            : 'O aluno regista carga, repetições e reps em reserva em cada série.'}
+        </span>
+      </div>
+
+      {day.mode === 'time' && (
+        <>
+          <div className="field">
+            <span className="field__label">Ordem</span>
+            <div className="row">
+              {(
+                [
+                  ['sets', 'Série a série'],
+                  ['circuit', 'Circuito'],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`chip ${day.flow === value ? 'chip--on' : ''}`}
+                  onClick={() => day.flow !== value && patch({ flow: value })}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <span className="field__hint">
+              {day.flow === 'circuit'
+                ? 'Percorre a lista toda e repete a volta.'
+                : 'Faz as séries todas de um exercício antes de passar ao seguinte.'}
+            </span>
+          </div>
+
+          {day.flow === 'circuit' && (
+            <div className="grid-2">
+              <label className="field">
+                <span className="field__label">Voltas</span>
+                <input
+                  className="input"
+                  type="number"
+                  min={1}
+                  max={30}
+                  defaultValue={day.rounds ?? 3}
+                  onBlur={(event) => patch({ rounds: Number(event.target.value) })}
+                />
+              </label>
+              <label className="field">
+                <span className="field__label">Descanso entre voltas (s)</span>
+                <input
+                  className="input"
+                  type="number"
+                  min={0}
+                  max={900}
+                  step={15}
+                  defaultValue={day.round_rest_seconds ?? 60}
+                  onBlur={(event) =>
+                    patch({ round_rest_seconds: Number(event.target.value) })
+                  }
+                />
+              </label>
+            </div>
+          )}
+        </>
+      )}
+    </section>
   )
 }

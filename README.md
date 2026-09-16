@@ -7,8 +7,9 @@ Funciona como PWA (instalável no telemóvel, com os dados em cache para o
 ginásio onde a rede é fraca) e está publicada no GitHub Pages.
 
 - **Aluno** — vê o treino do dia e regista cada série (carga, repetições, reps
-  em reserva) com o que fez da última vez ao lado; regista peso, passos, sono,
-  energia, fome e stress; consulta a dieta; envia o feedback da semana.
+  em reserva) com o que fez da última vez ao lado; nos treinos por tempo a app
+  conduz com temporizador; regista peso, passos, sono, energia, fome e stress;
+  consulta a dieta; envia o feedback da semana.
 - **Treinador** — vê quem precisa de atenção, escreve o plano de treino a partir
   da base de exercícios e publica-o, monta o plano alimentar a partir da base de
   alimentos, deixa notas e responde ao feedback.
@@ -167,6 +168,27 @@ src/
 
 Os protótipos do Claude Design (`FG Coach App.dc.html`,
 `FG Coach Protótipo.dc.html`) ficam no repositório como referência do desenho.
+
+## Treinos por repetições e por tempo
+
+Um treino declara em `plan_days.mode` se se conta em repetições ou em tempo, e
+um exercício pode fugir à regra do treino onde está — uma prancha de 45s no meio
+de um dia de cargas. Quando o treino é todo por tempo, o aluno recebe um
+temporizador guiado, com sinal sonoro nas transições e o ecrã mantido aceso.
+
+`plan_days.flow` decide a ordem, e as duas dão sessões diferentes com os mesmos
+números:
+
+- `sets` — cada exercício esgota as suas séries antes de se passar ao seguinte.
+- `circuit` — percorre-se a lista toda, descansa-se mais, e repete-se a volta.
+  As voltas são do treino (`rounds`), não do exercício.
+
+## Vídeos
+
+Os 236 vídeos da base são links do YouTube de terceiros. Alojá-los seria violar
+direitos de autor, por isso a app embebe o leitor do YouTube numa janela por
+cima do treino — o aluno vê a demonstração sem sair da app, que é o que
+interessava. Fica com a marca do YouTube e precisa de rede.
 
 ## O que falta
 

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { VideoModal } from '@/components/VideoModal'
 import { fetchMuscles, searchExercises } from '@/lib/api'
+import { hasPlayableVideo } from '@/lib/video'
 import { useQuery } from '@/lib/useQuery'
 import type { Exercise } from '@/lib/database.types'
 import './exercise-picker.css'
@@ -22,6 +24,7 @@ export function ExercisePicker({
   const [muscle, setMuscle] = useState<string | null>(null)
   const [pattern, setPattern] = useState<string | null>(null)
   const [added, setAdded] = useState<string[]>([])
+  const [video, setVideo] = useState<Exercise | null>(null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebounced(term), 220)
@@ -93,9 +96,17 @@ export function ExercisePicker({
           )}
           {(results ?? []).map((exercise) => (
             <li key={exercise.id} className="picker__item">
-              <span className={`picker__thumb ${exercise.video_url ? '' : 'is-empty'}`}>
-                {exercise.video_url ? '▸' : 's/v'}
-              </span>
+              <button
+                type="button"
+                className={`picker__thumb ${
+                  hasPlayableVideo(exercise.video_url) ? '' : 'is-empty'
+                }`}
+                onClick={() => hasPlayableVideo(exercise.video_url) && setVideo(exercise)}
+                aria-label={`Ver vídeo de ${exercise.name}`}
+                disabled={!hasPlayableVideo(exercise.video_url)}
+              >
+                {hasPlayableVideo(exercise.video_url) ? '▸' : 's/v'}
+              </button>
               <span className="picker__text">
                 <strong>{exercise.name}</strong>
                 <em>
@@ -132,6 +143,14 @@ export function ExercisePicker({
           </button>
         )}
       </div>
+
+      {video && (
+        <VideoModal
+          url={video.video_url}
+          title={video.name}
+          onClose={() => setVideo(null)}
+        />
+      )}
     </div>
   )
 }

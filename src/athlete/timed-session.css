@@ -1,0 +1,262 @@
+.timed {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--safe-top) + 16px) 18px calc(var(--safe-bottom) + 18px);
+  background: var(--paper);
+  transition: background 0.3s ease;
+}
+
+/* O fundo diz o que se está a fazer sem ser preciso ler. */
+.timed.is-work {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.timed.is-rest {
+  background: var(--good-soft);
+}
+
+.timed__bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: var(--accent);
+  transition: width 0.9s linear;
+}
+
+.timed__top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timed__exit {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  background: rgba(128, 128, 128, 0.18);
+  color: inherit;
+}
+
+.timed__where {
+  font-family: var(--font-narrow);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  opacity: 0.66;
+}
+
+.timed__stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  min-height: 0;
+}
+
+.timed__kind {
+  font-family: var(--font-narrow);
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+.timed__name {
+  font-size: 26px;
+  line-height: 1.12;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.timed__clock {
+  font-size: 104px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+  margin: 4px 0;
+}
+
+/* Nos últimos segundos o número pulsa, para dar conta sem se olhar fixamente. */
+.timed__clock.is-close {
+  color: var(--accent);
+  animation: timed-pulse 1s ease-in-out infinite;
+}
+
+@keyframes timed-pulse {
+  50% {
+    transform: scale(1.07);
+  }
+}
+
+.timed__next {
+  font-size: 15px;
+  opacity: 0.75;
+}
+
+.timed__video {
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+}
+
+.timed__notes {
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0.75;
+  max-width: 320px;
+}
+
+.timed__controls {
+  display: flex;
+  gap: 10px;
+}
+
+.timed__controls .btn {
+  flex: 1;
+}
+
+.timed.is-work .btn--quiet {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--paper);
+}
+
+.timed.is-work .timed__pause {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.timed__pause {
+  flex: 1.4;
+}
+
+/* ── antes e depois ─────────────────────────────────────── */
+
+.timed--intro,
+.timed--done,
+.timed--empty {
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.timed--done,
+.timed--empty {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.timed__preview {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.timed__preview li {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.timed__preview-n {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.timed__preview-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.timed__preview-text strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.timed__preview-text em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.timed__intro-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.timed__intro-actions .btn {
+  flex: 1;
+}
+
+.timed__hint {
+  font-size: 12px;
+  text-align: center;
+}
+
+.timed__done-mark {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--good);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  margin-bottom: 4px;
+}
+
+.timed--done .btn {
+  margin-top: 12px;
+  max-width: 320px;
+}
+
+@media (max-height: 700px) {
+  .timed__clock {
+    font-size: 78px;
+  }
+
+  .timed__name {
+    font-size: 22px;
+  }
+}

@@ -3,13 +3,18 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useProfile } from '@/auth/useAuth'
 import { Loading, ScreenHeader } from '@/components/Screen'
 import { Stepper } from '@/components/Stepper'
+import { TimedSession } from '@/athlete/TimedSession'
+import { VideoModal } from '@/components/VideoModal'
 import {
   fetchActivePlan,
   fetchPreviousSets,
   fetchSessionSets,
   finishSession,
   saveSet,
+  saveTimedSets,
 } from '@/lib/api'
+import { hasPlayableVideo } from '@/lib/video'
+import { isTimedWorkout } from '@/lib/workout'
 import { supabase } from '@/lib/supabase'
 import { unwrap, useQuery } from '@/lib/useQuery'
 import { clock, num, repRange, restLabel, signed } from '@/lib/format'
@@ -72,6 +77,34 @@ export function WorkoutSession() {
   }
 
   const { session, plan, day, exercises } = data
+
+  // Um treino todo por tempo corre no temporizador guiado; um treino de cargas
+  // continua a registar-se série a série. Misturados, manda o registo manual e
+  // cada exercício por tempo mostra a sua duração.
+  if (day && isTimedWorkout(day, exercises)) {
+    return (
+      <TimedSession
+        day={day}
+        planExercises={exercises}
+        library={plan?.library ?? new Map()}
+        onExit={() => navigate('/treino')}
+        onFinish={async (done) => {
+          await saveTimedSets(
+            session.id,
+            done.map((item) => ({
+              planExerciseId: item.step.planExercise.id,
+              exerciseId: item.step.planExercise.exercise_id,
+              setNumber: item.step.setNumber,
+              seconds: item.seconds,
+            })),
+          )
+          await finishSession(session.id, session.started_at)
+          navigate('/treino')
+        }}
+      />
+    )
+  }
+
   const current = exercises[index]
 
   if (!current || !day) {
@@ -223,6 +256,7 @@ function ExerciseCard({
 }: CardProps) {
   const [previous, setPrevious] = useState<SetLog[] | null>(null)
   const [saving, setSaving] = useState(false)
+  const [showVideo, setShowVideo] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -319,15 +353,14 @@ function ExerciseCard({
             .filter(Boolean)
             .join(' · ')}
         </p>
-        {videoUrl && (
-          <a
+        {hasPlayableVideo(videoUrl) && (
+          <button
+            type="button"
             className="exercise__video"
-            href={videoUrl}
-            target="_blank"
-            rel="noreferrer"
+            onClick={() => setShowVideo(true)}
           >
             ▸ Ver demonstração
-          </a>
+          </button>
         )}
       </div>
 
@@ -380,6 +413,10 @@ function ExerciseCard({
       )}
 
       {planExercise.notes && <p className="exercise__notes">{planExercise.notes}</p>}
+
+      {showVideo && (
+        <VideoModal url={videoUrl} title={name} onClose={() => setShowVideo(false)} />
+      )}
 
       {allDone ? (
         <p className="exercise__done">Séries todas registadas ✓</p>

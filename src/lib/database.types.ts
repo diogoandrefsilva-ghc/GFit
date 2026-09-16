@@ -14,6 +14,10 @@
 export type Role = 'coach' | 'athlete'
 /** Para que lado o peso deve ir no período. */
 export type WeightDirection = 'lose' | 'gain' | 'maintain'
+/** Se o trabalho se conta em repetições ou em segundos. */
+export type WorkMode = 'reps' | 'time'
+/** Ordem por que se percorre o treino: exercício a exercício, ou às voltas. */
+export type WorkFlow = 'sets' | 'circuit'
 export type ProfileStatus = 'pending' | 'active' | 'paused' | 'archived'
 export type PlanStatus = 'draft' | 'published' | 'archived'
 export type SessionStatus = 'in_progress' | 'done' | 'skipped'
@@ -155,6 +159,11 @@ export type PlanDay = {
   title: string | null
   sort_order: number
   notes: string | null
+  mode: WorkMode
+  flow: WorkFlow
+  /** Voltas do circuito. Só conta quando flow é 'circuit'. */
+  rounds: number | null
+  round_rest_seconds: number | null
 }
 
 export type PlanExercise = {
@@ -169,6 +178,10 @@ export type PlanExercise = {
   rest_seconds: number
   superset_group: string | null
   notes: string | null
+  /** Excepção ao modo do treino. Nulo segue o treino. */
+  mode: WorkMode | null
+  /** Duração de cada série quando corre por tempo. */
+  work_seconds: number | null
 }
 
 export type WorkoutSession = {
@@ -195,6 +208,8 @@ export type SetLog = {
   weight_kg: number | null
   reps: number | null
   rir: number | null
+  /** Segundos feitos, quando a série é cronometrada. */
+  duration_s: number | null
   done: boolean
   created_at: string
 }
