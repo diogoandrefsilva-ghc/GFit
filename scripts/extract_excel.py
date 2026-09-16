@@ -3,8 +3,8 @@
 Extrai as bases de dados da planilha do Treinador (FG_Planilha.xlsx) para os
 ficheiros que alimentam o Supabase:
 
-  supabase/migrations/20260916T0005_gfit_seed_exercises.sql
-  supabase/migrations/20260916T0006_gfit_seed_foods.sql
+  supabase/migrations/20260916090700_gfit_seed_exercises.sql
+  supabase/migrations/20260916090701_gfit_seed_foods.sql
   supabase/seed/exercises.json
   supabase/seed/foods.json
 
@@ -263,8 +263,8 @@ def main():
     migrations.mkdir(parents=True, exist_ok=True)
     seed.mkdir(parents=True, exist_ok=True)
 
-    write_exercises_sql(migrations / "20260916T0005_gfit_seed_exercises.sql", muscles, exercises)
-    write_foods_sql(migrations / "20260916T0006_gfit_seed_foods.sql", foods)
+    write_exercises_sql(migrations / "20260916090700_gfit_seed_exercises.sql", muscles, exercises)
+    write_foods_sql(migrations / "20260916090701_gfit_seed_foods.sql", foods)
 
     (seed / "exercises.json").write_text(
         json.dumps({"muscles": muscles, "exercises": exercises}, ensure_ascii=False),

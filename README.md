@@ -76,6 +76,15 @@ update gfit.app_config
  where key = 'coach_emails';
 ```
 
+A lista é lida a cada login, não só no primeiro: quem já tenha entrado como
+aluno passa a treinador assim que o email for acrescentado. O contrário não
+acontece — tirar alguém da lista não lhe retira o perfil, para ninguém perder o
+acesso aos seus alunos por causa de uma edição distraída.
+
+Atenção ao email que o login devolve: entrar com Google traz o endereço da conta
+Google, que pode não ser aquele em que estavas a pensar. Se a app te puser no
+ecrã "Falta o convite" quando esperavas o de treinador, é quase sempre isso.
+
 Quem entra sem estar nessa lista fica como aluno. Se houver um convite pendente
 para o email, fica logo ligado ao treinador que o convidou; se não, vê um ecrã à
 espera e pode voltar a verificar depois de o convite ser criado.
