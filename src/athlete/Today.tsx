@@ -7,7 +7,7 @@ import { Stepper } from '@/components/Stepper'
 import { Loading, ScreenHeader } from '@/components/Screen'
 import {
   fetchActivePlan,
-  fetchAthleteProfile,
+  fetchCurrentTargets,
   fetchCoach,
   fetchDailyLog,
   fetchLatestCoachNote,
@@ -28,12 +28,12 @@ export function Today() {
   const today = isoDate()
 
   const { data, loading, error, reload } = useQuery(async () => {
-    const [plan, log, recent, note, athlete, coach] = await Promise.all([
+    const [plan, log, recent, note, targets, coach] = await Promise.all([
       fetchActivePlan(profile.id),
       fetchDailyLog(profile.id, today),
       fetchRecentLogs(profile.id, 14),
       fetchLatestCoachNote(profile.id),
-      fetchAthleteProfile(profile.id),
+      fetchCurrentTargets(profile.id),
       profile.coach_id ? fetchCoach(profile.coach_id) : Promise.resolve(null),
     ])
 
@@ -42,7 +42,7 @@ export function Today() {
       ? await fetchWeekSessions(profile.id, plan.plan.id, week)
       : []
 
-    return { plan, log, recent, note, athlete, coach, week, sessions }
+    return { plan, log, recent, note, targets, coach, week, sessions }
   }, [profile.id, today])
 
   const [draft, setDraft] = useState<Partial<DailyLog> | null>(null)
@@ -79,7 +79,7 @@ export function Today() {
     )
   }
 
-  const { plan, recent, note, athlete, coach, week, sessions } = data!
+  const { plan, recent, note, targets, coach, week, sessions } = data!
 
   const doneDayIds = new Set(
     sessions.filter((session) => session.status === 'done').map((s) => s.plan_day_id),
@@ -95,7 +95,7 @@ export function Today() {
   const weightAverage = average(weights.slice(-7))
   const lastWeight = log.weight_kg ?? weights[weights.length - 1] ?? null
 
-  const stepsGoal = athlete?.steps_goal ?? 9000
+  const stepsGoal = targets?.steps_goal ?? 9000
 
   return (
     <div className="screen">

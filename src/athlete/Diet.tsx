@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useProfile } from '@/auth/useAuth'
 import { Empty, Loading, ScreenHeader, Stat } from '@/components/Screen'
-import { fetchAthleteProfile, fetchDailyLog, fetchDietPlan, saveDailyLog } from '@/lib/api'
+import { fetchCurrentTargets, fetchDailyLog, fetchDietPlan, saveDailyLog } from '@/lib/api'
 import { EMPTY_MACROS, addMacros, macrosOf, type Macros } from '@/lib/calc'
 import { int, isoDate, num } from '@/lib/format'
 import { useQuery } from '@/lib/useQuery'
@@ -14,12 +14,12 @@ export function Diet() {
   const [logging, setLogging] = useState(false)
 
   const { data, loading, error, reload } = useQuery(async () => {
-    const [diet, athlete, log] = await Promise.all([
+    const [diet, targets, log] = await Promise.all([
       fetchDietPlan(profile.id),
-      fetchAthleteProfile(profile.id),
+      fetchCurrentTargets(profile.id),
       fetchDailyLog(profile.id, today),
     ])
-    return { diet, athlete, log }
+    return { diet, targets, log }
   }, [profile.id, today])
 
   const totals = useMemo(() => {
@@ -39,13 +39,13 @@ export function Diet() {
     )
   }
 
-  const { diet, athlete, log } = data!
+  const { diet, targets: goals, log } = data!
 
   const targets = {
-    kcal: diet?.plan.kcal_target ?? athlete?.kcal_target ?? null,
-    protein: diet?.plan.protein_target_g ?? athlete?.protein_target_g ?? null,
-    fat: diet?.plan.fat_target_g ?? athlete?.fat_target_g ?? null,
-    carb: diet?.plan.carb_target_g ?? athlete?.carb_target_g ?? null,
+    kcal: diet?.plan.kcal_target ?? goals?.kcal_target ?? null,
+    protein: diet?.plan.protein_target_g ?? goals?.protein_target_g ?? null,
+    fat: diet?.plan.fat_target_g ?? goals?.fat_target_g ?? null,
+    carb: diet?.plan.carb_target_g ?? goals?.carb_target_g ?? null,
   }
 
   if (!diet) {

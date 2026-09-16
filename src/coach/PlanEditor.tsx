@@ -4,7 +4,7 @@ import { Loading, ScreenHeader } from '@/components/Screen'
 import { ExercisePicker } from '@/coach/ExercisePicker'
 import {
   addExerciseToDay,
-  fetchAthleteProfile,
+  fetchLimitations,
   fetchMuscles,
   fetchPlanDetail,
   publishPlan,
@@ -26,11 +26,12 @@ export function PlanEditor() {
 
   const { data, loading, error, reload } = useQuery(async () => {
     const detail = await fetchPlanDetail(planId!)
-    const [muscles, ficha] = await Promise.all([
+    const [muscles, limitations] = await Promise.all([
       fetchMuscles(),
-      fetchAthleteProfile(detail.plan.athlete_id),
+      fetchLimitations(detail.plan.athlete_id),
     ])
-    return { ...detail, muscles, ficha }
+    // Só as que ainda vigoram: é o que condiciona o plano que se vai escrever.
+    return { ...detail, muscles, limitations: limitations.filter((l) => !l.resolved_on) }
   }, [planId])
 
   const dayId = activeDay ?? data?.days[0]?.id ?? null
@@ -51,7 +52,7 @@ export function PlanEditor() {
     )
   }
 
-  const { plan, days, exercisesByDay, library, muscles, athlete, ficha } = data
+  const { plan, days, exercisesByDay, library, muscles, athlete, limitations } = data
   const day = days.find((item) => item.id === dayId) ?? null
   const items = day ? exercisesByDay.get(day.id) ?? [] : []
   const muscleNames = new Map(muscles.map((muscle) => [muscle.slug, muscle.name]))
@@ -70,10 +71,14 @@ export function PlanEditor() {
           }
         />
 
-        {ficha?.limitations && (
+        {limitations.length > 0 && (
           <section className="card card--accent">
-            <span className="eyebrow">Limitações</span>
-            <p className="plan__limitations">{ficha.limitations}</p>
+            <span className="eyebrow">Limitações a respeitar</span>
+            {limitations.map((limitation) => (
+              <p key={limitation.id} className="plan__limitations">
+                {limitation.body}
+              </p>
+            ))}
           </section>
         )}
 

@@ -45,25 +45,47 @@ export type Invite = {
   created_at: string
 }
 
+/** A ficha guarda só o que não muda ao longo do acompanhamento. */
 export type AthleteProfile = {
   athlete_id: string
   birth_date: string | null
   sex: 'M' | 'F' | null
   height_cm: number | null
+  occupation: string | null
   start_weight_kg: number | null
   activity_level: number | null
-  goal: string | null
-  limitations: string | null
-  observations: string | null
   pack_end_date: string | null
   next_update_date: string | null
-  steps_goal: number | null
-  sleep_goal_hours: number | null
+  updated_at: string
+}
+
+/** Uma revisão de metas. A que vale hoje é a mais recente já em vigor. */
+export type AthleteTargets = {
+  id: string
+  athlete_id: string
+  effective_from: string
+  objective: string | null
   kcal_target: number | null
   protein_target_g: number | null
   fat_target_g: number | null
   carb_target_g: number | null
-  updated_at: string
+  steps_goal: number | null
+  sleep_goal_hours: number | null
+  weight_target_kg: number | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
+}
+
+/** Lesão, condição ou restrição. Sem `resolved_on`, ainda está a vigorar. */
+export type AthleteLimitation = {
+  id: string
+  athlete_id: string
+  body: string
+  started_on: string
+  resolved_on: string | null
+  created_by: string | null
+  created_at: string
 }
 
 export type Muscle = {
@@ -296,6 +318,8 @@ export type Database = {
       profiles: Table<Profile>
       invites: Table<Invite>
       athlete_profiles: Table<AthleteProfile>
+      athlete_targets: Table<AthleteTargets>
+      athlete_limitations: Table<AthleteLimitation>
       muscles: Table<Muscle>
       exercises: Table<Exercise>
       foods: Table<Food>
@@ -312,7 +336,12 @@ export type Database = {
       weekly_feedback: Table<WeeklyFeedback>
       coach_notes: Table<CoachNote>
     }
-    Views: Record<string, never>
+    Views: {
+      athlete_current_targets: {
+        Row: AthleteTargets
+        Relationships: []
+      }
+    }
     Functions: {
       ensure_profile: { Args: Record<string, never>; Returns: Profile }
       claim_pending_invite: { Args: Record<string, never>; Returns: Profile }

@@ -3,7 +3,9 @@ import { unwrap } from './useQuery'
 import { daysBetween, isoDate, weekStart } from './format'
 import { weekOfPlan } from './calc'
 import type {
+  AthleteLimitation,
   AthleteProfile,
+  AthleteTargets,
   CoachNote,
   Food,
   Invite,
@@ -164,6 +166,120 @@ export async function fetchAthleteProfile(
       .limit(1),
   )
   return rows[0] ?? null
+}
+
+/** As metas em vigor hoje. */
+export async function fetchCurrentTargets(
+  athleteId: string,
+): Promise<AthleteTargets | null> {
+  const rows = unwrap(
+    await supabase
+      .from('athlete_current_targets')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .limit(1),
+  )
+  return rows[0] ?? null
+}
+
+/** Todas as revisões de metas, da mais recente para a mais antiga. */
+export async function fetchTargetsHistory(
+  athleteId: string,
+): Promise<AthleteTargets[]> {
+  return unwrap(
+    await supabase
+      .from('athlete_targets')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .order('effective_from', { ascending: false }),
+  )
+}
+
+export async function saveTargets(
+  athleteId: string,
+  coachId: string,
+  values: Partial<AthleteTargets> & { effective_from: string },
+): Promise<AthleteTargets> {
+  const rows = unwrap(
+    await supabase
+      .from('athlete_targets')
+      .upsert(
+        { ...values, athlete_id: athleteId, created_by: coachId },
+        { onConflict: 'athlete_id,effective_from' },
+      )
+      .select(),
+  )
+  return rows[0]
+}
+
+export async function deleteTargets(id: string): Promise<void> {
+  unwrap(await supabase.from('athlete_targets').delete().eq('id', id).select())
+}
+
+/** Limitações: as que ainda vigoram primeiro, depois as resolvidas. */
+export async function fetchLimitations(
+  athleteId: string,
+): Promise<AthleteLimitation[]> {
+  return unwrap(
+    await supabase
+      .from('athlete_limitations')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .order('resolved_on', { ascending: true, nullsFirst: true })
+      .order('started_on', { ascending: false }),
+  )
+}
+
+export async function addLimitation(
+  athleteId: string,
+  coachId: string,
+  body: string,
+  startedOn: string,
+): Promise<AthleteLimitation> {
+  const rows = unwrap(
+    await supabase
+      .from('athlete_limitations')
+      .insert({
+        athlete_id: athleteId,
+        created_by: coachId,
+        body,
+        started_on: startedOn,
+      })
+      .select(),
+  )
+  return rows[0]
+}
+
+export async function resolveLimitation(
+  id: string,
+  resolvedOn: string | null,
+): Promise<void> {
+  unwrap(
+    await supabase
+      .from('athlete_limitations')
+      .update({ resolved_on: resolvedOn })
+      .eq('id', id)
+      .select(),
+  )
+}
+
+export async function deleteLimitation(id: string): Promise<void> {
+  unwrap(await supabase.from('athlete_limitations').delete().eq('id', id).select())
+}
+
+/** Todas as notas do treinador, que são o histórico de conselhos do dia. */
+export async function fetchCoachNotes(
+  athleteId: string,
+  limit = 30,
+): Promise<CoachNote[]> {
+  return unwrap(
+    await supabase
+      .from('coach_notes')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .order('note_date', { ascending: false })
+      .limit(limit),
+  )
 }
 
 export async function fetchLatestCoachNote(

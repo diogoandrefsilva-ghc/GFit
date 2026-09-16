@@ -247,7 +247,18 @@ ul {
   font-size: 16px; /* 16px evita o zoom automático no iOS */
 }
 
+/*
+ * Altura fixa em vez de mínima: cada tipo de campo tem o seu conteúdo interno
+ * com medidas próprias — o de data traz uma caixa extra no shadow DOM — e com
+ * min-height ficavam campos de alturas diferentes lado a lado.
+ */
+.input,
+.select {
+  height: 48px;
+}
+
 .textarea {
+  height: auto;
   min-height: 108px;
   resize: vertical;
   line-height: 1.5;
@@ -258,6 +269,47 @@ ul {
 .select:focus {
   outline: none;
   border-color: var(--ink);
+}
+
+/*
+ * O Safari do iOS desenha os campos de data à maneira dele: altura própria,
+ * texto centrado na vertical à revelia do padding, e quando estão vazios ficam
+ * uma caixa em branco sem nada que sugira uma data. Isto alinha-os com os
+ * restantes campos e o `.field__hint` ao lado diz o formato.
+ */
+.input[type='date'] {
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+  background: #fff
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%238A867C' stroke-width='1.8' stroke-linecap='round'><rect x='2.5' y='3.5' width='13' height='12' rx='2.5'/><path d='M6 2v3M12 2v3M2.5 7.5h13'/></svg>")
+    no-repeat right 12px center;
+  padding-right: 40px;
+}
+
+/*
+ * O valor de uma data vive numa caixa própria dentro do campo, com margens e
+ * altura que o browser decide. Fixá-la é o que faz o campo medir exactamente o
+ * mesmo que um campo de texto ao lado.
+ */
+.input[type='date']::-webkit-datetime-edit,
+.input[type='date']::-webkit-date-and-time-value {
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.input[type='date']::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  width: 28px;
+  margin-right: -8px;
+}
+
+/* Um campo de data vazio não diz nada; o texto de apoio explica o que se espera. */
+.field__hint {
+  font-size: 12px;
+  color: var(--muted-soft);
 }
 
 .row {

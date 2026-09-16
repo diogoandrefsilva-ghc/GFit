@@ -4,26 +4,32 @@ import { useProfile } from '@/auth/useAuth'
 import { Avatar } from '@/components/Avatar'
 import { Loading, ScreenHeader, Stat } from '@/components/Screen'
 import { Sparkline } from '@/components/Sparkline'
+import { IdentityCard } from '@/coach/IdentityCard'
+import { LimitationsCard } from '@/coach/LimitationsCard'
+import { TargetsTab } from '@/coach/TargetsTab'
 import {
   createPlan,
   fetchAthleteProfile,
+  fetchCoachNotes,
+  fetchCurrentTargets,
   fetchDietPlansFor,
   fetchFeedbackHistory,
+  fetchLimitations,
   fetchMeasurements,
   fetchPlansFor,
   fetchRecentLogs,
+  fetchTargetsHistory,
   replyToFeedback,
-  saveAthleteProfile,
   saveCoachNote,
 } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { average, rollingAverage } from '@/lib/calc'
-import { hoursLabel, isoDate, num, shortDate, signed } from '@/lib/format'
+import { hoursLabel, isoDate, num, relativeDate, shortDate, signed } from '@/lib/format'
 import { unwrap, useQuery } from '@/lib/useQuery'
-import type { AthleteProfile, WeeklyFeedback } from '@/lib/database.types'
+import type { WeeklyFeedback } from '@/lib/database.types'
 import './athlete-detail.css'
 
-type Tab = 'resumo' | 'planos' | 'ficha'
+type Tab = 'resumo' | 'metas' | 'planos'
 
 export function AthleteDetail() {
   const coach = useProfile()
@@ -38,16 +44,43 @@ export function AthleteDetail() {
     const athlete = profiles[0]
     if (!athlete) throw new Error('Aluno não encontrado.')
 
-    const [logs, measurements, plans, dietPlans, feedback, ficha] = await Promise.all([
+    const [
+      logs,
+      measurements,
+      plans,
+      dietPlans,
+      feedback,
+      ficha,
+      targets,
+      targetsHistory,
+      limitations,
+      notes,
+    ] = await Promise.all([
       fetchRecentLogs(athleteId!, 90),
       fetchMeasurements(athleteId!),
       fetchPlansFor(athleteId!),
       fetchDietPlansFor(athleteId!),
       fetchFeedbackHistory(athleteId!, 6),
       fetchAthleteProfile(athleteId!),
+      fetchCurrentTargets(athleteId!),
+      fetchTargetsHistory(athleteId!),
+      fetchLimitations(athleteId!),
+      fetchCoachNotes(athleteId!, 12),
     ])
 
-    return { athlete, logs, measurements, plans, dietPlans, feedback, ficha }
+    return {
+      athlete,
+      logs,
+      measurements,
+      plans,
+      dietPlans,
+      feedback,
+      ficha,
+      targets,
+      targetsHistory,
+      limitations,
+      notes,
+    }
   }, [athleteId])
 
   if (loading) return <Loading label="A carregar aluno" />
@@ -59,11 +92,19 @@ export function AthleteDetail() {
     )
   }
 
-  const { athlete, logs, measurements, plans, dietPlans, feedback, ficha } = data
-
-  const weights = logs.map((log) => log.weight_kg)
-  const present = weights.filter((value): value is number => value !== null)
-  const change = present.length > 1 ? present[present.length - 1] - present[0] : null
+  const {
+    athlete,
+    logs,
+    measurements,
+    plans,
+    dietPlans,
+    feedback,
+    ficha,
+    targets,
+    targetsHistory,
+    limitations,
+    notes,
+  } = data
 
   return (
     <div className="screen">
@@ -71,17 +112,15 @@ export function AthleteDetail() {
         back
         eyebrow={athlete.email ?? undefined}
         title={athlete.full_name ?? 'Aluno'}
-        action={
-          <Avatar name={athlete.full_name} url={athlete.avatar_url} size={40} />
-        }
+        action={<Avatar name={athlete.full_name} url={athlete.avatar_url} size={40} />}
       />
 
       <div className="row detail__tabs">
         {(
           [
             ['resumo', 'Resumo'],
+            ['metas', 'Metas'],
             ['planos', 'Planos'],
-            ['ficha', 'Ficha'],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -97,47 +136,47 @@ export function AthleteDetail() {
 
       {tab === 'resumo' && (
         <>
+          <IdentityCard athleteId={athlete.id} ficha={ficha} onSaved={reload} />
+
+          <WeightCard logs={logs} measurements={measurements} targets={targets} />
+
           <section className="card">
-            <div className="card__head">
-              <span className="eyebrow">Peso</span>
-              <strong className="detail__weight">
-                {present.length ? `${num(present[present.length - 1], 1)} kg` : '—'}
-              </strong>
-            </div>
-            <Sparkline
-              values={weights}
-              overlay={rollingAverage(weights, 7)}
-              label="Peso do aluno"
-            />
+            <span className="eyebrow">Bem-estar · última semana</span>
             <div className="row">
               <Stat
-                label="Variação"
-                value={change !== null ? `${signed(change)} kg` : '—'}
-                hint="90 dias"
-              />
-              <Stat
-                label="Sono médio"
+                label="Sono"
                 value={hoursLabel(average(logs.slice(-7).map((log) => log.sleep_hours)))}
-                hint="última semana"
               />
-            </div>
-            <div className="row">
               <Stat
                 label="Energia"
-                value={fmtScale(average(logs.slice(-7).map((log) => log.energy)))}
+                value={scale(average(logs.slice(-7).map((log) => log.energy)))}
               />
+            </div>
+            <div className="row">
               <Stat
                 label="Fome"
-                value={fmtScale(average(logs.slice(-7).map((log) => log.hunger)))}
+                value={scale(average(logs.slice(-7).map((log) => log.hunger)))}
               />
               <Stat
                 label="Stress"
-                value={fmtScale(average(logs.slice(-7).map((log) => log.stress)))}
+                value={scale(average(logs.slice(-7).map((log) => log.stress)))}
               />
             </div>
           </section>
 
-          <NoteComposer coachId={coach.id} athleteId={athlete.id} />
+          <LimitationsCard
+            athleteId={athlete.id}
+            coachId={coach.id}
+            limitations={limitations}
+            onChanged={reload}
+          />
+
+          <NotesCard
+            coachId={coach.id}
+            athleteId={athlete.id}
+            notes={notes}
+            onSaved={reload}
+          />
 
           <section className="card">
             <span className="eyebrow">Feedback semanal</span>
@@ -160,24 +199,47 @@ export function AthleteDetail() {
               <ul className="detail__perimeters">
                 {(
                   [
-                    ['Cintura', measurements[0].waist_cm],
-                    ['Glúteo', measurements[0].glute_cm],
-                    ['Coxa drt.', measurements[0].thigh_r_cm],
-                    ['Braço drt.', measurements[0].arm_r_cm],
-                    ['Gémeo drt.', measurements[0].calf_r_cm],
+                    ['Cintura', measurements[0].waist_cm, measurements[1]?.waist_cm],
+                    ['Glúteo', measurements[0].glute_cm, measurements[1]?.glute_cm],
+                    ['Coxa drt.', measurements[0].thigh_r_cm, measurements[1]?.thigh_r_cm],
+                    ['Braço drt.', measurements[0].arm_r_cm, measurements[1]?.arm_r_cm],
+                    ['Gémeo drt.', measurements[0].calf_r_cm, measurements[1]?.calf_r_cm],
                   ] as const
                 )
-                  .filter(([, value]) => value !== null)
-                  .map(([label, value]) => (
+                  .filter(([, value]) => value !== null && value !== undefined)
+                  .map(([label, value, before]) => (
                     <li key={label}>
                       <span>{label}</span>
                       <strong>{num(value, 1)} cm</strong>
+                      <em
+                        className={
+                          before !== null && before !== undefined
+                            ? Number(value) < Number(before)
+                              ? 'is-down'
+                              : 'is-up'
+                            : ''
+                        }
+                      >
+                        {before !== null && before !== undefined
+                          ? signed(Number(value) - Number(before))
+                          : ''}
+                      </em>
                     </li>
                   ))}
               </ul>
             </section>
           )}
         </>
+      )}
+
+      {tab === 'metas' && (
+        <TargetsTab
+          athleteId={athlete.id}
+          coachId={coach.id}
+          current={targets}
+          history={targetsHistory}
+          onChanged={reload}
+        />
       )}
 
       {tab === 'planos' && (
@@ -242,10 +304,10 @@ export function AthleteDetail() {
                         athlete_id: athlete.id,
                         coach_id: coach.id,
                         name: `Plano alimentar ${dietPlans.length + 1}`,
-                        kcal_target: ficha?.kcal_target ?? null,
-                        protein_target_g: ficha?.protein_target_g ?? null,
-                        fat_target_g: ficha?.fat_target_g ?? null,
-                        carb_target_g: ficha?.carb_target_g ?? null,
+                        kcal_target: targets?.kcal_target ?? null,
+                        protein_target_g: targets?.protein_target_g ?? null,
+                        fat_target_g: targets?.fat_target_g ?? null,
+                        carb_target_g: targets?.carb_target_g ?? null,
                       })
                       .select(),
                   )
@@ -264,9 +326,7 @@ export function AthleteDetail() {
                     <Link to={`/dietas/${plan.id}`} className="detail__plan">
                       <span className="detail__plan-name">
                         <strong>{plan.name}</strong>
-                        <em>
-                          {plan.kcal_target ? `${plan.kcal_target} kcal` : 'sem meta'}
-                        </em>
+                        <em>{plan.kcal_target ? `${plan.kcal_target} kcal` : 'sem meta'}</em>
                       </span>
                       <span
                         className={`chip ${
@@ -283,41 +343,128 @@ export function AthleteDetail() {
           </section>
         </>
       )}
-
-      {tab === 'ficha' && (
-        <AthleteForm athleteId={athlete.id} initial={ficha} onSaved={reload} />
-      )}
     </div>
   )
 }
 
-function fmtScale(value: number | null): string {
+function scale(value: number | null): string {
   return value === null ? '—' : `${num(value, 1)} / 5`
 }
 
-function NoteComposer({
+/**
+ * Peso de hoje, a variação desde a pesagem anterior e a tendência. O valor vem
+ * do último registo diário do aluno, não de um campo que alguém tenha de
+ * escrever à mão.
+ */
+function WeightCard({
+  logs,
+  measurements,
+  targets,
+}: {
+  logs: { log_date: string; weight_kg: number | null }[]
+  measurements: { measured_on: string; weight_kg: number | null }[]
+  targets: { weight_target_kg: number | null } | null
+}) {
+  const weighed = logs.filter((log) => log.weight_kg !== null)
+  const latest = weighed[weighed.length - 1] ?? null
+  const previous = weighed[weighed.length - 2] ?? null
+
+  // A comparação que interessa é com a pesagem oficial anterior; sem ela,
+  // serve o registo diário anterior.
+  const baseline =
+    measurements.find((m) => m.weight_kg !== null && m.measured_on !== latest?.log_date) ??
+    (previous ? { measured_on: previous.log_date, weight_kg: previous.weight_kg } : null)
+
+  const change =
+    latest?.weight_kg != null && baseline?.weight_kg != null
+      ? Number(latest.weight_kg) - Number(baseline.weight_kg)
+      : null
+
+  const toTarget =
+    latest?.weight_kg != null && targets?.weight_target_kg != null
+      ? Number(targets.weight_target_kg) - Number(latest.weight_kg)
+      : null
+
+  const series = logs.map((log) => log.weight_kg)
+
+  return (
+    <section className="card">
+      <div className="card__head">
+        <span className="eyebrow">Peso</span>
+        {latest && (
+          <span className="muted detail__weight-when">
+            {relativeDate(latest.log_date)}
+          </span>
+        )}
+      </div>
+
+      <div className="detail__weight-row">
+        <strong className="detail__weight">
+          {latest?.weight_kg != null ? `${num(latest.weight_kg, 1)} kg` : '—'}
+        </strong>
+        {change !== null && (
+          <span
+            className={`detail__delta ${change < 0 ? 'is-down' : change > 0 ? 'is-up' : ''}`}
+          >
+            {change < 0 ? '▼' : change > 0 ? '▲' : '='} {signed(change)} kg
+          </span>
+        )}
+      </div>
+
+      {baseline && change !== null && (
+        <p className="detail__weight-note muted">
+          face a {num(baseline.weight_kg, 1)} kg em {shortDate(baseline.measured_on)}
+        </p>
+      )}
+
+      <Sparkline
+        values={series}
+        overlay={rollingAverage(series, 7)}
+        label="Peso do aluno"
+      />
+
+      {toTarget !== null && (
+        <div className="row">
+          <Stat
+            label="Meta"
+            value={`${num(targets?.weight_target_kg, 1)} kg`}
+            hint={`faltam ${num(Math.abs(toTarget), 1)} kg`}
+            tone={Math.abs(toTarget) <= 0.5 ? 'good' : 'default'}
+          />
+        </div>
+      )}
+    </section>
+  )
+}
+
+/** Notas do dia, com o rasto do que já foi dito. */
+function NotesCard({
   coachId,
   athleteId,
+  notes,
+  onSaved,
 }: {
   coachId: string
   athleteId: string
+  notes: { id: string; note_date: string; body: string; read_at: string | null }[]
+  onSaved: () => void
 }) {
   const [body, setBody] = useState('')
-  const [sent, setSent] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [showAll, setShowAll] = useState(false)
+
+  const visible = showAll ? notes : notes.slice(0, 3)
 
   return (
     <section className="card card--accent">
-      <span className="eyebrow">Nota para o aluno</span>
-      <p className="subtitle">Aparece no ecrã "Hoje" dele.</p>
+      <span className="eyebrow">Notas e conselhos</span>
+      <p className="subtitle">A mais recente aparece no ecrã "Hoje" do aluno.</p>
+
       <textarea
         className="textarea"
         value={body}
         placeholder="Hoje sobe 2,5 kg no supino. Se a perna incomodar, avisa-me."
-        onChange={(event) => {
-          setBody(event.target.value)
-          setSent(false)
-        }}
+        onChange={(event) => setBody(event.target.value)}
       />
       <button
         type="button"
@@ -328,14 +475,39 @@ function NoteComposer({
           try {
             await saveCoachNote(coachId, athleteId, body.trim())
             setBody('')
-            setSent(true)
+            onSaved()
           } finally {
             setBusy(false)
           }
         }}
       >
-        {busy ? 'A enviar…' : sent ? 'Enviada ✓' : 'Enviar nota'}
+        {busy ? 'A enviar…' : 'Enviar nota'}
       </button>
+
+      {notes.length > 0 && (
+        <ul className="detail__notes">
+          {visible.map((note) => (
+            <li key={note.id}>
+              <span className="detail__note-date">
+                {shortDate(note.note_date)}
+                {note.read_at ? ' · lida' : ''}
+              </span>
+              <p>{note.body}</p>
+            </li>
+          ))}
+          {notes.length > 3 && (
+            <li>
+              <button
+                type="button"
+                className="detail__more"
+                onClick={() => setShowAll(!showAll)}
+              >
+                {showAll ? 'mostrar menos' : `ver as ${notes.length} notas`}
+              </button>
+            </li>
+          )}
+        </ul>
+      )}
     </section>
   )
 }
@@ -426,152 +598,5 @@ function FeedbackCard({
         </div>
       )}
     </li>
-  )
-}
-
-function AthleteForm({
-  athleteId,
-  initial,
-  onSaved,
-}: {
-  athleteId: string
-  initial: AthleteProfile | null
-  onSaved: () => void
-}) {
-  const [form, setForm] = useState<Partial<AthleteProfile>>(initial ?? {})
-  const [busy, setBusy] = useState(false)
-
-  const set = (patch: Partial<AthleteProfile>) =>
-    setForm((current) => ({ ...current, ...patch }))
-
-  const numberOrNull = (value: string) => (value === '' ? null : Number(value))
-
-  return (
-    <section className="card">
-      <span className="eyebrow">Ficha do aluno</span>
-
-      <div className="grid-2">
-        <label className="field">
-          <span className="field__label">Altura (cm)</span>
-          <input
-            className="input"
-            type="number"
-            inputMode="decimal"
-            value={form.height_cm ?? ''}
-            onChange={(event) => set({ height_cm: numberOrNull(event.target.value) })}
-          />
-        </label>
-        <label className="field">
-          <span className="field__label">Data de nascimento</span>
-          <input
-            className="input"
-            type="date"
-            value={form.birth_date ?? ''}
-            onChange={(event) => set({ birth_date: event.target.value || null })}
-          />
-        </label>
-        <label className="field">
-          <span className="field__label">Meta de passos</span>
-          <input
-            className="input"
-            type="number"
-            inputMode="numeric"
-            value={form.steps_goal ?? ''}
-            onChange={(event) => set({ steps_goal: numberOrNull(event.target.value) })}
-          />
-        </label>
-        <label className="field">
-          <span className="field__label">Fim do pack</span>
-          <input
-            className="input"
-            type="date"
-            value={form.pack_end_date ?? ''}
-            onChange={(event) => set({ pack_end_date: event.target.value || null })}
-          />
-        </label>
-      </div>
-
-      <label className="field">
-        <span className="field__label">Objetivo</span>
-        <textarea
-          className="textarea"
-          value={form.goal ?? ''}
-          onChange={(event) => set({ goal: event.target.value })}
-        />
-      </label>
-
-      <label className="field">
-        <span className="field__label">Limitações</span>
-        <textarea
-          className="textarea"
-          placeholder="Lesões, condições, o que evitar"
-          value={form.limitations ?? ''}
-          onChange={(event) => set({ limitations: event.target.value })}
-        />
-      </label>
-
-      <span className="eyebrow">Metas diárias</span>
-      <div className="grid-2">
-        <label className="field">
-          <span className="field__label">Kcal</span>
-          <input
-            className="input"
-            type="number"
-            inputMode="numeric"
-            value={form.kcal_target ?? ''}
-            onChange={(event) => set({ kcal_target: numberOrNull(event.target.value) })}
-          />
-        </label>
-        <label className="field">
-          <span className="field__label">Proteína (g)</span>
-          <input
-            className="input"
-            type="number"
-            inputMode="numeric"
-            value={form.protein_target_g ?? ''}
-            onChange={(event) =>
-              set({ protein_target_g: numberOrNull(event.target.value) })
-            }
-          />
-        </label>
-        <label className="field">
-          <span className="field__label">Gordura (g)</span>
-          <input
-            className="input"
-            type="number"
-            inputMode="numeric"
-            value={form.fat_target_g ?? ''}
-            onChange={(event) => set({ fat_target_g: numberOrNull(event.target.value) })}
-          />
-        </label>
-        <label className="field">
-          <span className="field__label">Hidratos (g)</span>
-          <input
-            className="input"
-            type="number"
-            inputMode="numeric"
-            value={form.carb_target_g ?? ''}
-            onChange={(event) => set({ carb_target_g: numberOrNull(event.target.value) })}
-          />
-        </label>
-      </div>
-
-      <button
-        type="button"
-        className="btn btn--primary btn--block"
-        disabled={busy}
-        onClick={async () => {
-          setBusy(true)
-          try {
-            await saveAthleteProfile(athleteId, form)
-            onSaved()
-          } finally {
-            setBusy(false)
-          }
-        }}
-      >
-        {busy ? 'A guardar…' : 'Guardar ficha'}
-      </button>
-    </section>
   )
 }

@@ -4,7 +4,7 @@ import { Avatar } from '@/components/Avatar'
 import { Loading, ScreenHeader, Stat } from '@/components/Screen'
 import {
   createInvite,
-  fetchAthleteProfile,
+  fetchCurrentTargets,
   fetchCoach,
   fetchInvites,
   revokeInvite,
@@ -30,7 +30,7 @@ export function Profile() {
     }
     const [coach, targets] = await Promise.all([
       profile.coach_id ? fetchCoach(profile.coach_id) : Promise.resolve(null),
-      fetchAthleteProfile(profile.id),
+      fetchCurrentTargets(profile.id),
     ])
     return { invites: [], coach, targets }
   }, [profile.id, isCoach])
@@ -359,7 +359,7 @@ function AthleteSection({
   targets,
 }: {
   coach: { full_name: string | null; email: string | null } | null
-  targets: Awaited<ReturnType<typeof fetchAthleteProfile>>
+  targets: Awaited<ReturnType<typeof fetchCurrentTargets>>
 }) {
   return (
     <>
@@ -406,10 +406,10 @@ function AthleteSection({
               value={targets.sleep_goal_hours ? `${targets.sleep_goal_hours} h` : '—'}
             />
           </div>
-          {targets.goal && (
+          {targets.objective && (
             <div className="profile__goal">
               <span className="field__label">Objetivo</span>
-              <p>{targets.goal}</p>
+              <p>{targets.objective}</p>
             </div>
           )}
         </section>

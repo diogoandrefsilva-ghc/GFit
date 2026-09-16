@@ -101,8 +101,11 @@ telemóvel ou a app de email com o texto já escrito.
 
 ```
 profiles ─┬─ coach_id → profiles        perfis e a ligação treinador/aluno
-          └─ athlete_profiles           ficha: objetivo, limitações, metas
-invites                                 convites por email
+          ├─ athlete_profiles           o que não muda: nascimento, sexo,
+          │                             altura, profissão
+          ├─ athlete_targets            metas, revisão a revisão
+          └─ athlete_limitations        lesões e restrições, com início e fim
+invites                                 convites por email, de aluno ou treinador
 
 plans ─── plan_days ─── plan_exercises  o plano que o treinador escreve
 workout_sessions ─── set_logs           o que o aluno fez (C / R / F)
@@ -115,6 +118,12 @@ coach_notes                             notas que aparecem no "Hoje" do aluno
 
 exercises, foods, muscles               bibliotecas partilhadas
 ```
+
+Quase nada se sobrescreve. As metas são revisões datadas — a vista
+`athlete_current_targets` devolve a que está em vigor —, as limitações têm
+`started_on` e `resolved_on` em vez de serem apagadas quando saram, e as notas
+do treinador ficam todas. Assim consegue ver-se, meses depois, que metas estavam
+postas quando o peso começou a descer.
 
 O RLS segue uma regra só: o aluno vê e escreve o que é dele, o treinador vê os
 alunos que tem associados e é o único que escreve planos. Rascunhos de plano e
