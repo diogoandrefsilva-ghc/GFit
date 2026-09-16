@@ -87,3 +87,8 @@
   white-space: nowrap;
   font-weight: 600;
 }
+
+.athletes__pending {
+  font-size: 13px;
+  padding: 2px 2px 0;
+}

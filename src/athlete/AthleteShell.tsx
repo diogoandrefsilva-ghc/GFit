@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom'
+import { AppBar } from '@/components/AppBar'
 import { TabBar, type Tab } from '@/components/TabBar'
 
 const TABS: Tab[] = [
@@ -13,6 +14,7 @@ const TABS: Tab[] = [
 export function AthleteShell() {
   return (
     <div className="app">
+      <AppBar />
       <Outlet />
       <TabBar tabs={TABS} />
     </div>

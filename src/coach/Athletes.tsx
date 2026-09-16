@@ -1,50 +1,20 @@
 import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useProfile } from '@/auth/useAuth'
 import { Avatar } from '@/components/Avatar'
 import { Empty, Loading, ScreenHeader } from '@/components/Screen'
-import {
-  createInvite,
-  fetchAthleteSummaries,
-  fetchInvites,
-  revokeInvite,
-  type AthleteSummary,
-} from '@/lib/api'
-import { describeError } from '@/lib/supabase'
-import { daysBetween, isoDate, num, plural, relativeDate, signed } from '@/lib/format'
+import { attentionReason, fetchAthleteSummaries, fetchInvites } from '@/lib/api'
+import { num, plural, relativeDate, signed } from '@/lib/format'
 import { useQuery } from '@/lib/useQuery'
 import './athletes.css'
 
 type Filter = 'attention' | 'all' | 'paused'
 
-/** Um aluno precisa de atenção quando há feedback por ler, o plano está a
- *  acabar, faltam treinos ou desapareceu há dias. */
-function needsAttention(summary: AthleteSummary): string | null {
-  if (summary.unreadFeedback) return 'Feedback por ler'
-  if (!summary.plan) return 'Sem plano publicado'
-
-  const endsIn =
-    summary.plan.num_weeks - summary.week
-  if (endsIn <= 0) return 'Plano a acabar'
-
-  const missed = summary.sessionsPlanned - summary.sessionsDone
-  const weekDay = new Date().getDay() // 0 domingo
-  if (weekDay >= 5 && missed > 1) return `${missed} treinos em falta`
-
-  if (summary.lastSeen && daysBetween(summary.lastSeen, isoDate()) >= 4) {
-    return `Sem registos há ${daysBetween(summary.lastSeen, isoDate())} dias`
-  }
-  if (!summary.lastSeen) return 'Ainda sem registos'
-  return null
-}
-
 export function Athletes() {
   const profile = useProfile()
-  const navigate = useNavigate()
   const [filter, setFilter] = useState<Filter>('attention')
-  const [inviting, setInviting] = useState(false)
 
-  const { data, loading, error, reload } = useQuery(async () => {
+  const { data, loading, error } = useQuery(async () => {
     const [summaries, invites] = await Promise.all([
       fetchAthleteSummaries(profile.id),
       fetchInvites(profile.id),
@@ -56,7 +26,7 @@ export function Athletes() {
     if (!data) return new Map<string, string>()
     const map = new Map<string, string>()
     for (const summary of data.summaries) {
-      const reason = needsAttention(summary)
+      const reason = attentionReason(summary)
       if (reason) map.set(summary.profile.id, reason)
     }
     return map
@@ -89,16 +59,6 @@ export function Athletes() {
         subtitle={`${plural(active, 'aluno activo', 'alunos activos')} · ${flagged.size} ${
           flagged.size === 1 ? 'precisa' : 'precisam'
         } de ti`}
-        action={
-          <button
-            type="button"
-            className="today__me"
-            onClick={() => navigate('/perfil')}
-            aria-label="Perfil e definições"
-          >
-            <Avatar name={profile.full_name} url={profile.avatar_url} size={38} />
-          </button>
-        }
       />
 
       <div className="row row--wrap athletes__filters">
@@ -118,47 +78,16 @@ export function Athletes() {
             {label}
           </button>
         ))}
-        <button
-          type="button"
-          className="chip chip--accent"
-          onClick={() => setInviting((value) => !value)}
-        >
+        <Link className="chip chip--accent" to="/perfil">
           + Aluno
-        </button>
+        </Link>
       </div>
 
-      {inviting && (
-        <InviteForm
-          coachId={profile.id}
-          onDone={() => {
-            setInviting(false)
-            reload()
-          }}
-        />
-      )}
-
       {pendingInvites.length > 0 && (
-        <section className="card card--flat">
-          <span className="eyebrow">Convites por aceitar</span>
-          <ul className="invites">
-            {pendingInvites.map((invite) => (
-              <li key={invite.id} className="invite">
-                <span className="invite__email">{invite.email}</span>
-                <span className="muted">{relativeDate(invite.created_at.slice(0, 10))}</span>
-                <button
-                  type="button"
-                  className="btn btn--sm btn--quiet"
-                  onClick={async () => {
-                    await revokeInvite(invite.id)
-                    reload()
-                  }}
-                >
-                  Anular
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <p className="athletes__pending muted">
+          {plural(pendingInvites.length, 'convite', 'convites')} por aceitar ·{' '}
+          <Link to="/perfil">ver</Link>
+        </p>
       )}
 
       {visible.length === 0 ? (
@@ -219,76 +148,5 @@ export function Athletes() {
         </ul>
       )}
     </div>
-  )
-}
-
-function InviteForm({
-  coachId,
-  onDone,
-}: {
-  coachId: string
-  onDone: () => void
-}) {
-  const [email, setEmail] = useState('')
-  const [name, setName] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [failure, setFailure] = useState<string | null>(null)
-
-  return (
-    <section className="card">
-      <span className="eyebrow">Convidar aluno</span>
-      <p className="subtitle">
-        O aluno entra com este email — Google ou palavra-passe — e fica logo
-        ligado a ti.
-      </p>
-
-      <label className="field">
-        <span className="field__label">Email</span>
-        <input
-          className="input"
-          type="email"
-          value={email}
-          inputMode="email"
-          placeholder="aluno@exemplo.pt"
-          onChange={(event) => setEmail(event.target.value)}
-        />
-      </label>
-
-      <label className="field">
-        <span className="field__label">Nome (opcional)</span>
-        <input
-          className="input"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-        />
-      </label>
-
-      {failure && <p className="error-banner">{failure}</p>}
-
-      <button
-        type="button"
-        className="btn btn--primary btn--block"
-        disabled={busy || !email.includes('@')}
-        onClick={async () => {
-          setBusy(true)
-          setFailure(null)
-          try {
-            await createInvite(coachId, email, name.trim() || null)
-            onDone()
-          } catch (caught) {
-            const message = describeError(caught)
-            setFailure(
-              /duplicate key|invites_pending_email_uq/i.test(message)
-                ? 'Já existe um convite pendente para este email.'
-                : message,
-            )
-          } finally {
-            setBusy(false)
-          }
-        }}
-      >
-        {busy ? 'A convidar…' : 'Criar convite'}
-      </button>
-    </section>
   )
 }

@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { describeError, supabase } from '@/lib/supabase'
 import { AuthContext, type AuthValue } from './context'
 import type { Profile } from '@/lib/database.types'
 
@@ -18,15 +18,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Evita correr o onboarding duas vezes para o mesmo utilizador quando o
-  // Supabase dispara TOKEN_REFRESHED logo a seguir ao SIGNED_IN.
   const onboarded = useRef<string | null>(null)
 
-  const loadProfile = useCallback(async (userId: string) => {
+  // No primeiro login, getSession() e o evento SIGNED_IN do redirect do OAuth
+  // chegavam a pedir o onboarding ao mesmo tempo. Guardar o pedido em curso faz
+  // com que o segundo espere pelo primeiro em vez de criar outro perfil.
+  const inFlight = useRef<Promise<void> | null>(null)
+
+  const runOnboarding = useCallback(async (userId: string) => {
     // ensure_profile() cria o perfil no primeiro login e consome o convite.
     const { data, error: rpcError } = await supabase.rpc('ensure_profile')
     if (rpcError) {
-      setError(rpcError.message)
+      setError(describeError(rpcError))
       setProfile(null)
       return
     }
@@ -44,6 +47,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(current)
     setError(null)
   }, [])
+
+  const loadProfile = useCallback(
+    (userId: string) => {
+      if (inFlight.current) return inFlight.current
+      const request = runOnboarding(userId).finally(() => {
+        inFlight.current = null
+      })
+      inFlight.current = request
+      return request
+    },
+    [runOnboarding],
+  )
 
   useEffect(() => {
     let active = true

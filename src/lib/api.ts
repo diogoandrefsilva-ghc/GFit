@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 import { unwrap } from './useQuery'
-import { isoDate, weekStart } from './format'
+import { daysBetween, isoDate, weekStart } from './format'
 import { weekOfPlan } from './calc'
 import type {
   AthleteProfile,
@@ -18,6 +18,7 @@ import type {
   PlanDay,
   PlanExercise,
   Profile,
+  Role,
   SetLog,
   WeeklyFeedback,
   WorkoutSession,
@@ -459,6 +460,25 @@ export interface AthleteSummary {
   lastSeen: string | null
 }
 
+/** Porque é que um aluno precisa de atenção — null quando está tudo em dia. */
+export function attentionReason(summary: AthleteSummary): string | null {
+  if (summary.unreadFeedback) return 'Feedback por ler'
+  if (!summary.plan) return 'Sem plano publicado'
+  if (summary.plan.num_weeks - summary.week <= 0) return 'Plano a acabar'
+
+  const missed = summary.sessionsPlanned - summary.sessionsDone
+  // Só a partir de sexta é que faltarem treinos quer mesmo dizer alguma coisa.
+  if (new Date().getDay() >= 5 && missed > 1) {
+    return `${missed} treinos em falta`
+  }
+
+  if (!summary.lastSeen) return 'Ainda sem registos'
+  const silent = daysBetween(summary.lastSeen, isoDate())
+  if (silent >= 4) return `Sem registos há ${silent} dias`
+
+  return null
+}
+
 export async function fetchAthletes(coachId: string): Promise<Profile[]> {
   return unwrap(
     await supabase
@@ -789,11 +809,17 @@ export async function createInvite(
   coachId: string,
   email: string,
   fullName: string | null,
+  role: Role = 'athlete',
 ): Promise<Invite> {
   const rows = unwrap(
     await supabase
       .from('invites')
-      .insert({ coach_id: coachId, email: email.trim().toLowerCase(), full_name: fullName })
+      .insert({
+        coach_id: coachId,
+        email: email.trim().toLowerCase(),
+        full_name: fullName,
+        role,
+      })
       .select(),
   )
   return rows[0]

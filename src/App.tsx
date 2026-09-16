@@ -19,6 +19,9 @@ const WorkoutSession = lazy(() =>
 const CoachShell = lazy(() =>
   import('@/coach/CoachShell').then((m) => ({ default: m.CoachShell })),
 )
+const Dashboard = lazy(() =>
+  import('@/coach/Dashboard').then((m) => ({ default: m.Dashboard })),
+)
 const Athletes = lazy(() =>
   import('@/coach/Athletes').then((m) => ({ default: m.Athletes })),
 )
@@ -82,6 +85,7 @@ export function App() {
       {isCoach ? (
         <Routes>
           <Route element={<CoachShell />}>
+            <Route path="/inicio" element={<Dashboard />} />
             <Route path="/alunos" element={<Athletes />} />
             <Route path="/alunos/:athleteId" element={<AthleteDetail />} />
             <Route path="/exercicios" element={<ExerciseLibrary />} />
@@ -89,7 +93,7 @@ export function App() {
           </Route>
           <Route path="/planos/:planId" element={<PlanEditor />} />
           <Route path="/dietas/:dietPlanId" element={<DietEditor />} />
-          <Route path="*" element={<Navigate to="/alunos" replace />} />
+          <Route path="*" element={<Navigate to="/inicio" replace />} />
         </Routes>
       ) : (
         <Routes>

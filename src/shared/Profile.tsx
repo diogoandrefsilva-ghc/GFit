@@ -9,8 +9,9 @@ import {
   fetchInvites,
   revokeInvite,
 } from '@/lib/api'
-import { supabase } from '@/lib/supabase'
-import { describeError } from '@/lib/supabase'
+import { describeError, supabase } from '@/lib/supabase'
+import { copyInvite, shareInvite } from '@/lib/invite'
+import type { Invite, Role } from '@/lib/database.types'
 import { int, plural, relativeDate, shortDate } from '@/lib/format'
 import { unwrap, useQuery } from '@/lib/useQuery'
 import './profile.css'
@@ -54,6 +55,7 @@ export function Profile() {
       ) : isCoach ? (
         <CoachSection
           coachId={profile.id}
+          coachName={profile.full_name}
           invites={data?.invites ?? []}
           onChanged={reload}
         />
@@ -151,17 +153,21 @@ function NameField() {
 
 function CoachSection({
   coachId,
+  coachName,
   invites,
   onChanged,
 }: {
   coachId: string
-  invites: Awaited<ReturnType<typeof fetchInvites>>
+  coachName: string | null
+  invites: Invite[]
   onChanged: () => void
 }) {
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
+  const [role, setRole] = useState<Role>('athlete')
   const [busy, setBusy] = useState(false)
   const [failure, setFailure] = useState<string | null>(null)
+  const [justCreated, setJustCreated] = useState<Invite | null>(null)
 
   const pending = invites.filter((invite) => invite.status === 'pending')
   const accepted = invites.filter((invite) => invite.status === 'accepted')
@@ -169,10 +175,30 @@ function CoachSection({
   return (
     <>
       <section className="card">
-        <span className="eyebrow">Convidar aluno</span>
+        <span className="eyebrow">Convidar</span>
+
+        <div className="row profile__roles">
+          {(
+            [
+              ['athlete', 'Aluno'],
+              ['coach', 'Treinador'],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={`chip ${role === value ? 'chip--on' : ''}`}
+              onClick={() => setRole(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         <p className="subtitle">
-          O aluno entra com este email — Google ou palavra-passe — e fica logo
-          ligado a ti.
+          {role === 'athlete'
+            ? 'O aluno entra com este email — Google ou palavra-passe — e fica logo ligado a ti.'
+            : 'Um treinador tem os seus próprios alunos e vê a base de exercícios e alimentos. Não vê os teus alunos.'}
         </p>
 
         <label className="field">
@@ -182,7 +208,7 @@ function CoachSection({
             type="email"
             inputMode="email"
             value={email}
-            placeholder="aluno@exemplo.pt"
+            placeholder={role === 'athlete' ? 'aluno@exemplo.pt' : 'treinador@exemplo.pt'}
             onChange={(event) => setEmail(event.target.value)}
           />
         </label>
@@ -206,9 +232,15 @@ function CoachSection({
             setBusy(true)
             setFailure(null)
             try {
-              await createInvite(coachId, email, name.trim() || null)
+              const invite = await createInvite(
+                coachId,
+                email,
+                name.trim() || null,
+                role,
+              )
               setEmail('')
               setName('')
+              setJustCreated(invite)
               onChanged()
             } catch (caught) {
               const message = describeError(caught)
@@ -222,8 +254,18 @@ function CoachSection({
             }
           }}
         >
-          {busy ? 'A convidar…' : 'Criar convite'}
+          {busy ? 'A criar…' : 'Criar convite'}
         </button>
+
+        {justCreated && (
+          <div className="profile__created">
+            <p>
+              Convite criado para <strong>{justCreated.email}</strong>. Falta
+              avisá-lo — a app não envia emails sozinha.
+            </p>
+            <SendButtons invite={justCreated} coachName={coachName} />
+          </div>
+        )}
       </section>
 
       <section className="card">
@@ -241,44 +283,74 @@ function CoachSection({
           <ul className="profile__invites">
             {invites.map((invite) => (
               <li key={invite.id} className="profile__invite">
-                <span className="profile__invite-text">
-                  <strong>{invite.email}</strong>
-                  <em>
-                    {invite.status === 'pending' && 'por aceitar'}
-                    {invite.status === 'accepted' &&
-                      `aceite ${relativeDate((invite.accepted_at ?? invite.created_at).slice(0, 10))}`}
-                    {invite.status === 'revoked' && 'anulado'}
-                    {' · '}
-                    {shortDate(invite.created_at.slice(0, 10))}
-                  </em>
-                </span>
+                <div className="profile__invite-head">
+                  <span className="profile__invite-text">
+                    <strong>{invite.email}</strong>
+                    <em>
+                      {invite.role === 'coach' ? 'treinador · ' : ''}
+                      {invite.status === 'pending' && 'por aceitar'}
+                      {invite.status === 'accepted' &&
+                        `aceite ${relativeDate((invite.accepted_at ?? invite.created_at).slice(0, 10))}`}
+                      {invite.status === 'revoked' && 'anulado'}
+                      {' · '}
+                      {shortDate(invite.created_at.slice(0, 10))}
+                    </em>
+                  </span>
+                  {invite.status === 'pending' && (
+                    <button
+                      type="button"
+                      className="btn btn--sm btn--quiet"
+                      onClick={async () => {
+                        await revokeInvite(invite.id)
+                        onChanged()
+                      }}
+                    >
+                      Anular
+                    </button>
+                  )}
+                </div>
                 {invite.status === 'pending' && (
-                  <button
-                    type="button"
-                    className="btn btn--sm btn--quiet"
-                    onClick={async () => {
-                      await revokeInvite(invite.id)
-                      onChanged()
-                    }}
-                  >
-                    Anular
-                  </button>
+                  <SendButtons invite={invite} coachName={coachName} />
                 )}
               </li>
             ))}
           </ul>
         )}
       </section>
-
-      <section className="card card--flat">
-        <span className="eyebrow">Outro treinador</span>
-        <p className="subtitle">
-          Só se acrescenta na base de dados, de propósito: é a chave que dá
-          acesso a todos os alunos. Em <em>gfit.app_config</em>, chave{' '}
-          <em>coach_emails</em>.
-        </p>
-      </section>
     </>
+  )
+}
+
+/** Entrega do convite: a app é estática, quem manda a mensagem és tu. */
+function SendButtons({
+  invite,
+  coachName,
+}: {
+  invite: Invite
+  coachName: string | null
+}) {
+  const [copied, setCopied] = useState(false)
+
+  return (
+    <div className="row profile__send">
+      <button
+        type="button"
+        className="btn btn--sm btn--accent"
+        onClick={() => shareInvite(invite, coachName)}
+      >
+        Enviar convite
+      </button>
+      <button
+        type="button"
+        className="btn btn--sm btn--quiet"
+        onClick={async () => {
+          setCopied(await copyInvite(invite, coachName))
+          window.setTimeout(() => setCopied(false), 2000)
+        }}
+      >
+        {copied ? 'Copiado ✓' : 'Copiar texto'}
+      </button>
+    </div>
   )
 }
 

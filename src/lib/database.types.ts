@@ -36,6 +36,8 @@ export type Invite = {
   coach_id: string
   email: string
   full_name: string | null
+  /** Com que perfil a pessoa entra ao aceitar. */
+  role: Role
   code: string
   status: InviteStatus
   accepted_by: string | null

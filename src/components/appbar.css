@@ -1,0 +1,36 @@
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 52px;
+  padding: 0 16px;
+  padding-top: var(--safe-top);
+  height: calc(52px + var(--safe-top));
+  background: rgba(244, 241, 236, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+
+.appbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0;
+}
+
+.appbar__word {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.appbar__me {
+  display: flex;
+  padding: 0;
+  border-radius: 50%;
+}

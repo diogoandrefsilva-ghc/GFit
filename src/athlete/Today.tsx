@@ -108,16 +108,6 @@ export function Today() {
             : 'Sem plano activo'
         }
         title={longDate(today)}
-        action={
-          <button
-            type="button"
-            className="today__me"
-            onClick={() => navigate('/perfil')}
-            aria-label="Perfil e definições"
-          >
-            <Avatar name={profile.full_name} url={profile.avatar_url} size={38} />
-          </button>
-        }
       />
 
       {/* ── treino ─────────────────────────────────────── */}

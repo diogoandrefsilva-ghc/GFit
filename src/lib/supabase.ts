@@ -53,6 +53,9 @@ export function describeError(error: unknown): string {
   if (/Password should be at least/i.test(message)) {
     return 'A palavra-passe precisa de pelo menos 6 caracteres.'
   }
+  if (/duplicate key.*profiles_pkey/i.test(message)) {
+    return 'A conta já tinha sido criada. Recarrega a página.'
+  }
   if (/row-level security|violates row-level/i.test(message)) {
     return 'Sem permissões para esta operação.'
   }
