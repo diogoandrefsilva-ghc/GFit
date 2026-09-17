@@ -184,11 +184,25 @@ export type PlanExercise = {
   work_seconds: number | null
 }
 
+/** Um treino do plano marcado numa data do calendário. */
+export type ScheduledWorkout = {
+  id: string
+  athlete_id: string
+  coach_id: string
+  plan_id: string
+  plan_day_id: string
+  scheduled_on: string
+  notes: string | null
+  created_at: string
+}
+
 export type WorkoutSession = {
   id: string
   athlete_id: string
   plan_id: string | null
   plan_day_id: string | null
+  /** A marcação que deu origem à sessão. Nulo quando o aluno treinou por sua conta. */
+  scheduled_id: string | null
   week_number: number
   session_date: string
   started_at: string | null
@@ -344,6 +358,7 @@ export type Database = {
       plans: Table<Plan>
       plan_days: Table<PlanDay>
       plan_exercises: Table<PlanExercise>
+      scheduled_workouts: Table<ScheduledWorkout>
       workout_sessions: Table<WorkoutSession>
       set_logs: Table<SetLog>
       daily_logs: Table<DailyLog>

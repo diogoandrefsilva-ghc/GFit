@@ -2,18 +2,20 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Loading, ScreenHeader } from '@/components/Screen'
 import { ExercisePicker } from '@/coach/ExercisePicker'
+import { PlanSchedule } from '@/coach/PlanSchedule'
 import {
   addExerciseToDay,
   fetchLimitations,
   fetchMuscles,
   fetchPlanDetail,
+  fetchPlanSchedule,
   publishPlan,
   removePlanExercise,
   updatePlanExercise,
 } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { weeklyVolume } from '@/lib/calc'
-import { num, plural, repRange } from '@/lib/format'
+import { num, plural, repRange, restLabel } from '@/lib/format'
 import { unwrap, useQuery } from '@/lib/useQuery'
 import type { Exercise, PlanDay, PlanExercise, WorkMode } from '@/lib/database.types'
 import './plan-editor.css'
@@ -26,12 +28,18 @@ export function PlanEditor() {
 
   const { data, loading, error, reload } = useQuery(async () => {
     const detail = await fetchPlanDetail(planId!)
-    const [muscles, limitations] = await Promise.all([
+    const [muscles, limitations, schedules] = await Promise.all([
       fetchMuscles(),
       fetchLimitations(detail.plan.athlete_id),
+      fetchPlanSchedule(planId!),
     ])
     // Só as que ainda vigoram: é o que condiciona o plano que se vai escrever.
-    return { ...detail, muscles, limitations: limitations.filter((l) => !l.resolved_on) }
+    return {
+      ...detail,
+      muscles,
+      schedules,
+      limitations: limitations.filter((l) => !l.resolved_on),
+    }
   }, [planId])
 
   const dayId = activeDay ?? data?.days[0]?.id ?? null
@@ -52,7 +60,8 @@ export function PlanEditor() {
     )
   }
 
-  const { plan, days, exercisesByDay, library, muscles, athlete, limitations } = data
+  const { plan, days, exercisesByDay, library, muscles, athlete, limitations, schedules } =
+    data
   const day = days.find((item) => item.id === dayId) ?? null
   const items = day ? exercisesByDay.get(day.id) ?? [] : []
   const muscleNames = new Map(muscles.map((muscle) => [muscle.slug, muscle.name]))
@@ -172,6 +181,14 @@ export function PlanEditor() {
           </section>
         )}
 
+        <PlanSchedule
+          plan={plan}
+          days={days}
+          activeDay={day}
+          schedules={schedules}
+          onChanged={reload}
+        />
+
         <div className="row plan__actions">
           <button
             type="button"
@@ -206,6 +223,84 @@ export function PlanEditor() {
     </div>
   )
 }
+
+const SETS = [1, 2, 3, 4, 5, 6, 8, 10]
+const REP_RANGES = [
+  [4, 6], [5, 8], [6, 8], [6, 10], [8, 10], [8, 12],
+  [10, 12], [10, 15], [12, 15], [12, 20], [15, 20], [20, 30],
+]
+const WORK_SECONDS = [15, 20, 30, 40, 45, 60, 75, 90, 120, 180]
+const REST_SECONDS = [0, 15, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300]
+const DEFAULT_WORK_SECONDS = 45
+
+/** O valor que já lá está entra sempre na lista, por mais fora do comum que seja. */
+function numberOptions(
+  values: number[],
+  current: number,
+  label: (value: number) => string,
+): Option[] {
+  const all = values.includes(current) ? values : [...values, current].sort((a, b) => a - b)
+  return all.map((value) => ({ value: String(value), label: label(value) }))
+}
+
+function repKey(min: number | null, max: number | null): string {
+  return `${min ?? ''}-${max ?? ''}`
+}
+
+function repOptions(min: number | null, max: number | null): Option[] {
+  const options = REP_RANGES.map(([from, to]) => ({
+    value: `${from}-${to}`,
+    label: `${from}-${to}`,
+  }))
+  const current = repKey(min, max)
+  if (!options.some((option) => option.value === current)) {
+    options.unshift({ value: current, label: repRange(min, max) })
+  }
+  return options
+}
+
+interface Option {
+  value: string
+  label: string
+}
+
+/** Um número do exercício, escolhido de uma lista curta em vez de escrito. */
+function Picker({
+  label,
+  value,
+  options,
+  onChange,
+  onCustom,
+}: {
+  label: string
+  value: string
+  options: Option[]
+  onChange: (value: string) => void
+  onCustom: () => void
+}) {
+  return (
+    <label className="plan-ex__pick">
+      <select
+        className="plan-ex__select"
+        value={value}
+        aria-label={label}
+        onChange={(event) =>
+          event.target.value === CUSTOM ? onCustom() : onChange(event.target.value)
+        }
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+        <option value={CUSTOM}>outro…</option>
+      </select>
+      <em>{label}</em>
+    </label>
+  )
+}
+
+const CUSTOM = '__custom__'
 
 function PlanExerciseRow({
   item,
@@ -253,27 +348,61 @@ function PlanExerciseRow({
         </button>
       </div>
 
+      {/*
+        Séries, repetições e descanso mudam-se aqui mesmo, sem abrir nada: são
+        os três números que se mexem a toda a hora e quase sempre para valores
+        do costume. O que fugir à lista escolhe-se em "outro…", que abre o
+        painel com os campos livres.
+      */}
       <div className="plan-ex__numbers">
-        <span>
-          <strong>{item.sets}</strong>
-          <em>sér</em>
-        </span>
-        <span>
-          <strong>
-            {mode === 'time'
-              ? `${item.work_seconds ?? 45}s`
-              : repRange(item.rep_min, item.rep_max)}
-          </strong>
-          <em>{mode === 'time' ? 'tempo' : 'reps'}</em>
-        </span>
-        <span>
-          <strong>{item.rest_seconds}s</strong>
-          <em>desc</em>
-        </span>
+        <Picker
+          label="séries"
+          value={String(item.sets)}
+          options={numberOptions(SETS, item.sets, (value) => String(value))}
+          onChange={(value) => patch({ sets: Number(value) })}
+          onCustom={() => setOpen(true)}
+        />
+        {mode === 'time' ? (
+          <Picker
+            label="tempo"
+            value={String(item.work_seconds ?? DEFAULT_WORK_SECONDS)}
+            options={numberOptions(
+              WORK_SECONDS,
+              item.work_seconds ?? DEFAULT_WORK_SECONDS,
+              (value) => `${value}s`,
+            )}
+            onChange={(value) => patch({ work_seconds: Number(value) })}
+            onCustom={() => setOpen(true)}
+          />
+        ) : (
+          <Picker
+            label="reps"
+            value={repKey(item.rep_min, item.rep_max)}
+            options={repOptions(item.rep_min, item.rep_max)}
+            onChange={(value) => {
+              const [min, max] = value.split('-')
+              patch({
+                rep_min: min === '' ? null : Number(min),
+                rep_max: max === '' ? null : Number(max),
+              })
+            }}
+            onCustom={() => setOpen(true)}
+          />
+        )}
+        <Picker
+          label="descanso"
+          value={String(item.rest_seconds)}
+          options={numberOptions(REST_SECONDS, item.rest_seconds, restLabel)}
+          onChange={(value) => patch({ rest_seconds: Number(value) })}
+          onCustom={() => setOpen(true)}
+        />
       </div>
 
       {open && (
         <div className="plan-ex__edit">
+          <p className="field__hint">
+            Aqui ficam o modo, a nota, a ordem e os números que fogem à lista.
+          </p>
           <div className="field">
             <span className="field__label">Conta-se em</span>
             <div className="row row--wrap">
@@ -310,6 +439,7 @@ function PlanExerciseRow({
                 type="number"
                 min={1}
                 max={20}
+                key={item.sets}
                 defaultValue={item.sets}
                 onBlur={(event) => patch({ sets: Number(event.target.value) })}
               />
@@ -322,6 +452,7 @@ function PlanExerciseRow({
                 min={0}
                 max={600}
                 step={15}
+                key={item.rest_seconds}
                 defaultValue={item.rest_seconds}
                 onBlur={(event) => patch({ rest_seconds: Number(event.target.value) })}
               />
@@ -335,7 +466,8 @@ function PlanExerciseRow({
                   min={1}
                   max={3600}
                   step={5}
-                  defaultValue={item.work_seconds ?? 45}
+                  key={item.work_seconds ?? DEFAULT_WORK_SECONDS}
+                  defaultValue={item.work_seconds ?? DEFAULT_WORK_SECONDS}
                   onBlur={(event) => patch({ work_seconds: Number(event.target.value) })}
                 />
               </label>
@@ -349,6 +481,7 @@ function PlanExerciseRow({
                     type="number"
                     min={1}
                     max={60}
+                    key={item.rep_min ?? ''}
                     defaultValue={item.rep_min ?? ''}
                     onBlur={(event) =>
                       patch({
@@ -365,6 +498,7 @@ function PlanExerciseRow({
                     type="number"
                     min={1}
                     max={60}
+                    key={item.rep_max ?? ''}
                     defaultValue={item.rep_max ?? ''}
                     onBlur={(event) =>
                       patch({

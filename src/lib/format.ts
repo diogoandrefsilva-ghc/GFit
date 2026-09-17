@@ -3,6 +3,10 @@ const MONTHS = [
   'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
   'jul', 'ago', 'set', 'out', 'nov', 'dez',
 ]
+const LONG_MONTHS = [
+  'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+]
 
 /** Data local em ISO (YYYY-MM-DD), sem passar por UTC. */
 export function isoDate(date = new Date()): string {
@@ -29,6 +33,56 @@ export function weekStart(value: string = isoDate()): string {
   const shift = (date.getDay() + 6) % 7
   date.setDate(date.getDate() - shift)
   return isoDate(date)
+}
+
+/** Segunda a domingo da semana a que a data pertence. */
+export function weekDates(value: string = isoDate()): string[] {
+  const monday = weekStart(value)
+  return Array.from({ length: 7 }, (_, index) => addDays(monday, index))
+}
+
+/** Primeiro dia do mês a que a data pertence. */
+export function monthStart(value: string = isoDate()): string {
+  const date = parseIso(value)
+  return isoDate(new Date(date.getFullYear(), date.getMonth(), 1))
+}
+
+export function addMonths(value: string, months: number): string {
+  const date = parseIso(value)
+  return isoDate(new Date(date.getFullYear(), date.getMonth() + months, 1))
+}
+
+/**
+ * A grelha de um mês: semanas inteiras de segunda a domingo, com os dias do
+ * mês vizinho a preencher as pontas, como em qualquer calendário de parede.
+ */
+export function monthGrid(value: string = isoDate()): string[][] {
+  const first = parseIso(monthStart(value))
+  const lastDay = isoDate(new Date(first.getFullYear(), first.getMonth() + 1, 0))
+  const weeks: string[][] = []
+  for (let monday = weekStart(isoDate(first)); monday <= lastDay; monday = addDays(monday, 7)) {
+    weeks.push(weekDates(monday))
+  }
+  return weeks
+}
+
+/** "setembro 2026" */
+export function monthLabel(value: string): string {
+  const date = parseIso(value)
+  return `${LONG_MONTHS[date.getMonth()]} ${date.getFullYear()}`
+}
+
+export function isSameMonth(a: string, b: string): boolean {
+  return a.slice(0, 7) === b.slice(0, 7)
+}
+
+/** "seg" */
+export function weekdayShort(value: string): string {
+  return WEEKDAYS[parseIso(value).getDay()].slice(0, 3)
+}
+
+export function dayOfMonth(value: string): number {
+  return parseIso(value).getDate()
 }
 
 export function daysBetween(from: string, to: string): number {

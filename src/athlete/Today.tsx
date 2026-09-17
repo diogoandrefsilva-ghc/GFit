@@ -7,6 +7,7 @@ import { Stepper } from '@/components/Stepper'
 import { Loading, ScreenHeader } from '@/components/Screen'
 import {
   fetchActivePlan,
+  fetchAthleteCalendar,
   fetchCurrentTargets,
   fetchCoach,
   fetchDailyLog,
@@ -17,7 +18,19 @@ import {
   startSession,
 } from '@/lib/api'
 import { average, weekOfPlan } from '@/lib/calc'
-import { hoursLabel, int, isoDate, longDate, num, plural, signed } from '@/lib/format'
+import {
+  addDays,
+  hoursLabel,
+  int,
+  isoDate,
+  longDate,
+  num,
+  plural,
+  shortDate,
+  signed,
+  weekStart,
+  weekdayShort,
+} from '@/lib/format'
 import { useQuery } from '@/lib/useQuery'
 import type { DailyLog } from '@/lib/database.types'
 import './today.css'
@@ -28,13 +41,17 @@ export function Today() {
   const today = isoDate()
 
   const { data, loading, error, reload } = useQuery(async () => {
-    const [plan, log, recent, note, targets, coach] = await Promise.all([
+    const monday = weekStart(today)
+    const [plan, log, recent, note, targets, coach, calendar] = await Promise.all([
       fetchActivePlan(profile.id),
       fetchDailyLog(profile.id, today),
       fetchRecentLogs(profile.id, 14),
       fetchLatestCoachNote(profile.id),
       fetchCurrentTargets(profile.id),
       profile.coach_id ? fetchCoach(profile.coach_id) : Promise.resolve(null),
+      // A semana toda, e não só hoje: é o que permite dizer quando é o próximo
+      // treino num dia de descanso.
+      fetchAthleteCalendar(profile.id, monday, addDays(monday, 6)),
     ])
 
     const week = plan ? weekOfPlan(plan.plan.start_date, today) : 1
@@ -42,7 +59,7 @@ export function Today() {
       ? await fetchWeekSessions(profile.id, plan.plan.id, week)
       : []
 
-    return { plan, log, recent, note, targets, coach, week, sessions }
+    return { plan, log, recent, note, targets, coach, week, sessions, calendar }
   }, [profile.id, today])
 
   const [draft, setDraft] = useState<Partial<DailyLog> | null>(null)
@@ -79,7 +96,16 @@ export function Today() {
     )
   }
 
-  const { plan, recent, note, targets, coach, week, sessions } = data!
+  const { plan, recent, note, targets, coach, week, sessions, calendar } = data!
+
+  // O que o treinador marcou para hoje manda sobre o palpite do plano.
+  const todayMarks = calendar.filter((entry) => entry.schedule.scheduled_on === today)
+  const marked = todayMarks.find((entry) => entry.session?.status !== 'done') ?? null
+  const nextMark =
+    calendar.find(
+      (entry) =>
+        entry.schedule.scheduled_on > today && entry.session?.status !== 'done',
+    ) ?? null
 
   const doneDayIds = new Set(
     sessions.filter((session) => session.status === 'done').map((s) => s.plan_day_id),
@@ -111,7 +137,75 @@ export function Today() {
       />
 
       {/* ── treino ─────────────────────────────────────── */}
-      {nextDay ? (
+      {marked ? (
+        <section className="card card--ink today__workout">
+          <div className="card__head">
+            <span className="eyebrow today__workout-eyebrow">Treino de hoje</span>
+            {marked.session?.status === 'in_progress' && (
+              <span className="chip chip--accent">a meio</span>
+            )}
+          </div>
+          <h2 className="today__workout-title">
+            Treino {marked.day?.label ?? '?'}
+            {marked.day?.title ? ` · ${marked.day.title}` : ''}
+          </h2>
+          <p className="today__workout-meta">
+            marcado pelo treinador ·{' '}
+            {plural(marked.exerciseCount, 'exercício', 'exercícios')}
+          </p>
+          <button
+            type="button"
+            className="btn btn--accent btn--block"
+            disabled={marked.exerciseCount === 0 || !marked.plan || !marked.day}
+            onClick={async () => {
+              const session = await startSession(
+                profile.id,
+                marked.plan!,
+                marked.day!.id,
+                marked.schedule,
+              )
+              navigate(`/treino/${session.id}`)
+            }}
+          >
+            {marked.exerciseCount === 0
+              ? 'Treino ainda sem exercícios'
+              : marked.session
+                ? 'Continuar treino'
+                : 'Começar treino'}
+          </button>
+        </section>
+      ) : todayMarks.length > 0 ? (
+        <section className="card card--good today__workout">
+          <div className="card__head">
+            <span className="eyebrow">Treino de hoje</span>
+            <span className="chip chip--good">feito ✓</span>
+          </div>
+          <p className="subtitle">
+            {todayMarks.length === 1
+              ? `Treino ${todayMarks[0].day?.label ?? ''} arrumado.`
+              : 'Os treinos marcados para hoje estão feitos.'}
+          </p>
+        </section>
+      ) : calendar.length > 0 ? (
+        <section className="card card--flat today__workout">
+          <span className="eyebrow">Treino de hoje</span>
+          <h2 className="today__workout-title">Dia de descanso</h2>
+          <p className="today__workout-meta">
+            {nextMark
+              ? `O próximo é ${weekdayShort(nextMark.schedule.scheduled_on)}, ${shortDate(
+                  nextMark.schedule.scheduled_on,
+                )} — treino ${nextMark.day?.label ?? ''}.`
+              : 'Não tens mais treinos marcados esta semana.'}
+          </p>
+          <button
+            type="button"
+            className="btn btn--ghost btn--block"
+            onClick={() => navigate('/treino')}
+          >
+            Ver a semana
+          </button>
+        </section>
+      ) : nextDay ? (
         <section className="card card--ink today__workout">
           <div className="card__head">
             <span className="eyebrow today__workout-eyebrow">Treino de hoje</span>

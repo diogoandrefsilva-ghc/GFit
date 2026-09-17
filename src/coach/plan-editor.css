@@ -63,20 +63,45 @@
   gap: 8px;
 }
 
-.plan-ex__numbers span {
+.plan-ex__pick {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 4px;
+  gap: 2px;
+  padding: 6px 4px 7px;
   background: var(--paper-2);
   border-radius: var(--radius-sm);
 }
 
-.plan-ex__numbers strong {
+/*
+ * A caixa do número é o próprio selector: fica com o ar das outras caixas do
+ * cartão, mas abre a lista de valores ao toque. Sem seta desenhada, porque a
+ * lista fechada tem de caber em três colunas num telemóvel.
+ */
+.plan-ex__select {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: 2px 4px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: center;
+  text-align-last: center;
+  -webkit-appearance: none;
+  appearance: none;
+  font-family: inherit;
   font-size: 16px;
   font-weight: 800;
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
+}
+
+.plan-ex__select:focus {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
 }
 
 .plan-ex__numbers em {
@@ -87,6 +112,139 @@
   text-transform: uppercase;
   color: var(--muted);
   font-weight: 700;
+}
+
+/* ── calendário do plano ───────────────────────────────── */
+
+.plan-cal__count {
+  font-size: 12px;
+}
+
+.plan-cal__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.plan-cal__arrow {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--paper-2);
+  color: var(--muted-strong);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.plan-cal__month {
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.plan-cal__hint {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.plan-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr) 26px;
+  gap: 3px;
+}
+
+.plan-cal__weekday {
+  font-family: var(--font-narrow);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+  text-align: center;
+  padding-bottom: 2px;
+}
+
+.plan-cal__day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+
+.plan-cal__day.is-outside .plan-cal__number,
+.plan-cal__day.is-beyond .plan-cal__number {
+  color: var(--muted-soft);
+}
+
+/* Fora do plano continua a poder marcar-se, mas vê-se que é fora. */
+.plan-cal__day.is-beyond {
+  background: var(--paper-2);
+  border-style: dashed;
+}
+
+.plan-cal__day.is-today {
+  border-color: var(--ink);
+}
+
+.plan-cal__day.has-marks {
+  background: var(--paper-3);
+}
+
+.plan-cal__number {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-cal__marks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+}
+
+.plan-cal__marks em {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 5px;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.plan-cal__marks em.is-active {
+  background: var(--accent);
+}
+
+.plan-cal__repeat {
+  align-self: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  background: var(--paper-2);
+  color: var(--muted-strong);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.plan-cal__repeat:disabled {
+  opacity: 0.35;
+}
+
+.plan-cal__note {
+  font-size: 12px;
+  color: var(--muted-soft);
+  line-height: 1.45;
 }
 
 .plan-ex__edit {

@@ -7,6 +7,7 @@ import { TimedSession } from '@/athlete/TimedSession'
 import { VideoModal } from '@/components/VideoModal'
 import {
   fetchActivePlan,
+  fetchPlanById,
   fetchPreviousSets,
   fetchSessionSets,
   finishSession,
@@ -37,7 +38,11 @@ export function WorkoutSession() {
     const session = sessions[0]
     if (!session) throw new Error('Treino não encontrado.')
 
-    const plan = await fetchActivePlan(profile.id)
+    // O plano da sessão, e não o mais recente: um treino marcado há semanas
+    // pode ser de um plano que entretanto deixou de ser o último.
+    const plan = session.plan_id
+      ? await fetchPlanById(session.plan_id)
+      : await fetchActivePlan(profile.id)
     const day = plan?.days.find((item) => item.id === session.plan_day_id) ?? null
     const exercises = day ? plan!.exercisesByDay.get(day.id) ?? [] : []
     const sets = await fetchSessionSets(session.id)

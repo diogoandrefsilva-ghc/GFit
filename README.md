@@ -6,13 +6,13 @@ feedback semanal. Substitui a planilha de Excel que o Treinador usa hoje.
 Funciona como PWA (instalável no telemóvel, com os dados em cache para o
 ginásio onde a rede é fraca) e está publicada no GitHub Pages.
 
-- **Aluno** — vê o treino do dia e regista cada série (carga, repetições, reps
-  em reserva) com o que fez da última vez ao lado; nos treinos por tempo a app
-  conduz com temporizador; regista peso, passos, sono, energia, fome e stress;
-  consulta a dieta; envia o feedback da semana.
+- **Aluno** — vê a semana de treinos que o treinador marcou e regista cada série
+  (carga, repetições, reps em reserva) com o que fez da última vez ao lado; nos
+  treinos por tempo a app conduz com temporizador; regista peso, passos, sono,
+  energia, fome e stress; consulta a dieta; envia o feedback da semana.
 - **Treinador** — vê quem precisa de atenção, escreve o plano de treino a partir
-  da base de exercícios e publica-o, monta o plano alimentar a partir da base de
-  alimentos, deixa notas e responde ao feedback.
+  da base de exercícios, publica-o e marca-o no calendário, monta o plano
+  alimentar a partir da base de alimentos, deixa notas e responde ao feedback.
 
 ## De onde vêm os dados
 
@@ -109,6 +109,7 @@ profiles ─┬─ coach_id → profiles        perfis e a ligação treinador/a
 invites                                 convites por email, de aluno ou treinador
 
 plans ─── plan_days ─── plan_exercises  o plano que o treinador escreve
+scheduled_workouts                      o plano marcado no calendário
 workout_sessions ─── set_logs           o que o aluno fez (C / R / F)
 
 daily_logs                              peso, passos, sono, energia, fome, stress
@@ -158,9 +159,11 @@ login com Google voltar ao sítio certo.
 ```
 src/
   auth/        login, contexto de sessão, ecrã de espera por convite
-  athlete/     Hoje, Treino, Sessão de treino, Medidas, Dieta, Semana
-  coach/       Alunos, Detalhe do aluno, Editor de plano, Editor de dieta,
-               Biblioteca de exercícios
+  athlete/     Hoje, Treino (semana marcada), Sessão de treino, Medidas,
+               Dieta, Semana
+  coach/       Alunos, Detalhe do aluno, Calendário, Editor de plano (com a
+               marcação no calendário), Editor de dieta, Biblioteca de
+               exercícios
   components/  peças partilhadas (steppers, escalas, gráfico, tab bar)
   lib/         cliente Supabase, tipos, consultas, formatação, cálculos
   styles/      tokens e folha de estilo base
@@ -168,6 +171,30 @@ src/
 
 Os protótipos do Claude Design (`FG Coach App.dc.html`,
 `FG Coach Protótipo.dc.html`) ficam no repositório como referência do desenho.
+
+## Calendário de treinos
+
+O plano diz o que se faz; o calendário diz quando. Depois de publicado, o plano
+marca-se: no editor escolhe-se o treino e tocam-se os dias em que ele se faz, e
+o ⟳ de cada semana repete essas marcações até ao fim do plano. Rascunhos não se
+marcam — ainda vão mudar, e o aluno nem os vê.
+
+Cada marcação é uma linha em `scheduled_workouts`: um treino do plano numa data.
+O mesmo treino pode ir a várias datas e a mesma data pode levar mais do que um
+treino. A sessão que o aluno faz guarda a marcação que a originou
+(`workout_sessions.scheduled_id`), e é assim que se sabe o que foi feito no dia,
+o que foi feito mais tarde e o que ficou por fazer.
+
+Daí saem as duas vistas de semana:
+
+- **Aluno** (separador *Treino*) — os sete dias com o que está marcado, e o
+  treino do dia começa-se ali. Adiantar trabalho faz-se pela lista do plano, que
+  fica por baixo; treinos de dias futuros mostram-se mas não se abrem.
+- **Treinador** (separador *Calendário*) — a semana dos alunos todos, com filtro
+  por aluno e o estado de cada treino: feito, a meio ou em falta.
+
+Sem marcações nenhumas nada disto estorva: o aluno continua a escolher o treino
+da lista do plano, como antes.
 
 ## Treinos por repetições e por tempo
 

@@ -25,6 +25,9 @@ const Dashboard = lazy(() =>
 const Athletes = lazy(() =>
   import('@/coach/Athletes').then((m) => ({ default: m.Athletes })),
 )
+const CoachCalendar = lazy(() =>
+  import('@/coach/Calendar').then((m) => ({ default: m.CoachCalendar })),
+)
 const AthleteDetail = lazy(() =>
   import('@/coach/AthleteDetail').then((m) => ({ default: m.AthleteDetail })),
 )
@@ -88,6 +91,7 @@ export function App() {
             <Route path="/inicio" element={<Dashboard />} />
             <Route path="/alunos" element={<Athletes />} />
             <Route path="/alunos/:athleteId" element={<AthleteDetail />} />
+            <Route path="/calendario" element={<CoachCalendar />} />
             <Route path="/exercicios" element={<ExerciseLibrary />} />
             <Route path="/perfil" element={<Profile />} />
           </Route>
