@@ -21,6 +21,7 @@ import type {
   PlanExercise,
   Profile,
   Role,
+  ScheduledWorkout,
   SetLog,
   WeightDirection,
   WeeklyFeedback,
@@ -54,6 +55,20 @@ export async function fetchActivePlan(
   const plan = plans[0]
   if (!plan) return null
 
+  return loadPlanContents(plan)
+}
+
+/**
+ * Um plano concreto, e não o mais recente. É o que a sessão a decorrer precisa:
+ * um treino marcado há três semanas pode ser de um plano que entretanto deixou
+ * de ser o último.
+ */
+export async function fetchPlanById(planId: string): Promise<ActivePlan | null> {
+  const plans = unwrap(await supabase.from('plans').select('*').eq('id', planId).limit(1))
+  return plans[0] ? loadPlanContents(plans[0]) : null
+}
+
+async function loadPlanContents(plan: Plan): Promise<ActivePlan> {
   const days = unwrap(
     await supabase
       .from('plan_days')
@@ -379,21 +394,47 @@ export async function startSession(
   athleteId: string,
   plan: Plan,
   dayId: string,
+  schedule?: ScheduledWorkout | null,
 ): Promise<WorkoutSession> {
-  const week = weekOfPlan(plan.start_date, isoDate())
+  const today = isoDate()
+  const week = weekOfPlan(plan.start_date, today)
 
-  // Se já houver uma sessão desta semana para este treino, continua-se essa em
-  // vez de começar outra — o índice único na base garante o mesmo.
+  // Uma marcação dá uma sessão só, mesmo que o aluno a abra em dias diferentes.
+  if (schedule) {
+    const linked = unwrap(
+      await supabase
+        .from('workout_sessions')
+        .select('*')
+        .eq('scheduled_id', schedule.id)
+        .limit(1),
+    )
+    if (linked[0]) return linked[0]
+  }
+
+  // Se já se começou hoje este treino, continua-se essa sessão em vez de
+  // começar outra — o índice único na base garante o mesmo.
   const existing = unwrap(
     await supabase
       .from('workout_sessions')
       .select('*')
       .eq('athlete_id', athleteId)
       .eq('plan_day_id', dayId)
-      .eq('week_number', week)
+      .eq('session_date', today)
       .limit(1),
   )
-  if (existing[0]) return existing[0]
+  if (existing[0]) {
+    if (!schedule || existing[0].scheduled_id) return existing[0]
+    // O aluno abriu o treino pela lista e só depois pelo calendário: liga-se a
+    // sessão que já existe à marcação, em vez de ficarem as duas soltas.
+    const linked = unwrap(
+      await supabase
+        .from('workout_sessions')
+        .update({ scheduled_id: schedule.id })
+        .eq('id', existing[0].id)
+        .select(),
+    )
+    return linked[0] ?? existing[0]
+  }
 
   const rows = unwrap(
     await supabase
@@ -402,14 +443,188 @@ export async function startSession(
         athlete_id: athleteId,
         plan_id: plan.id,
         plan_day_id: dayId,
+        scheduled_id: schedule?.id ?? null,
         week_number: week,
-        session_date: isoDate(),
+        session_date: today,
         started_at: new Date().toISOString(),
         status: 'in_progress',
       })
       .select(),
   )
   return rows[0]
+}
+
+// ── calendário ───────────────────────────────────────────────────────
+
+/** Uma marcação do calendário com o treino a que se refere e o que se fez. */
+export interface CalendarEntry {
+  schedule: ScheduledWorkout
+  plan: Plan | null
+  day: PlanDay | null
+  /** A sessão que a cumpriu, se já houver. */
+  session: WorkoutSession | null
+  exerciseCount: number
+  /** Só no calendário do treinador, onde há vários alunos à mistura. */
+  athlete: Profile | null
+}
+
+export async function fetchAthleteCalendar(
+  athleteId: string,
+  from: string,
+  to: string,
+): Promise<CalendarEntry[]> {
+  const schedules = unwrap(
+    await supabase
+      .from('scheduled_workouts')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .gte('scheduled_on', from)
+      .lte('scheduled_on', to)
+      .order('scheduled_on'),
+  )
+  return decorateSchedules(schedules, { withAthletes: false })
+}
+
+export async function fetchCoachCalendar(
+  coachId: string,
+  from: string,
+  to: string,
+): Promise<CalendarEntry[]> {
+  const schedules = unwrap(
+    await supabase
+      .from('scheduled_workouts')
+      .select('*')
+      .eq('coach_id', coachId)
+      .gte('scheduled_on', from)
+      .lte('scheduled_on', to)
+      .order('scheduled_on'),
+  )
+  return decorateSchedules(schedules, { withAthletes: true })
+}
+
+/**
+ * Junta a cada marcação o treino, o plano e a sessão que a cumpriu. São
+ * consultas em lote sobre a janela toda, para uma semana de calendário não
+ * disparar um pedido por dia.
+ */
+async function decorateSchedules(
+  schedules: ScheduledWorkout[],
+  { withAthletes }: { withAthletes: boolean },
+): Promise<CalendarEntry[]> {
+  if (schedules.length === 0) return []
+
+  const dayIds = [...new Set(schedules.map((row) => row.plan_day_id))]
+  const planIds = [...new Set(schedules.map((row) => row.plan_id))]
+  const athleteIds = [...new Set(schedules.map((row) => row.athlete_id))]
+  const dates = schedules.map((row) => row.scheduled_on).sort()
+
+  const [days, plans, exercises, inRange, linked, athletes] = await Promise.all([
+    unwrap(await supabase.from('plan_days').select('*').in('id', dayIds)),
+    unwrap(await supabase.from('plans').select('*').in('id', planIds)),
+    unwrap(
+      await supabase.from('plan_exercises').select('id, plan_day_id').in('plan_day_id', dayIds),
+    ),
+    // As sessões do intervalo: uma sessão começada antes de a marcação existir
+    // não lhe aponta, e reconhece-se pelo treino e pelo dia.
+    unwrap(
+      await supabase
+        .from('workout_sessions')
+        .select('*')
+        .in('athlete_id', athleteIds)
+        .gte('session_date', dates[0])
+        .lte('session_date', dates[dates.length - 1]),
+    ),
+    // E as que apontam à marcação, tenham acontecido no dia ou não: um treino
+    // de segunda feito na quarta continua a ser o treino de segunda.
+    unwrap(
+      await supabase
+        .from('workout_sessions')
+        .select('*')
+        .in(
+          'scheduled_id',
+          schedules.map((row) => row.id),
+        ),
+    ),
+    withAthletes
+      ? unwrap(await supabase.from('profiles').select('*').in('id', athleteIds))
+      : Promise.resolve([] as Profile[]),
+  ])
+
+  const sessions = [
+    ...linked,
+    ...inRange.filter((session) => !linked.some((row) => row.id === session.id)),
+  ]
+
+  const dayById = new Map(days.map((day) => [day.id, day]))
+  const planById = new Map(plans.map((plan) => [plan.id, plan]))
+  const athleteById = new Map(athletes.map((profile) => [profile.id, profile]))
+
+  const exerciseCounts = new Map<string, number>()
+  for (const item of exercises) {
+    exerciseCounts.set(item.plan_day_id, (exerciseCounts.get(item.plan_day_id) ?? 0) + 1)
+  }
+
+  const byScheduleId = new Map(
+    sessions
+      .filter((session) => session.scheduled_id)
+      .map((session) => [session.scheduled_id as string, session]),
+  )
+
+  return schedules.map((schedule) => ({
+    schedule,
+    plan: planById.get(schedule.plan_id) ?? null,
+    day: dayById.get(schedule.plan_day_id) ?? null,
+    exerciseCount: exerciseCounts.get(schedule.plan_day_id) ?? 0,
+    athlete: athleteById.get(schedule.athlete_id) ?? null,
+    session:
+      byScheduleId.get(schedule.id) ??
+      sessions.find(
+        (session) =>
+          !session.scheduled_id &&
+          session.athlete_id === schedule.athlete_id &&
+          session.plan_day_id === schedule.plan_day_id &&
+          session.session_date === schedule.scheduled_on,
+      ) ??
+      null,
+  }))
+}
+
+/** As marcações de um plano, que é o que o editor do plano mostra. */
+export async function fetchPlanSchedule(planId: string): Promise<ScheduledWorkout[]> {
+  return unwrap(
+    await supabase
+      .from('scheduled_workouts')
+      .select('*')
+      .eq('plan_id', planId)
+      .order('scheduled_on'),
+  )
+}
+
+/**
+ * Marca treinos no calendário. Repetir uma marcação que já existe não é erro
+ * nem duplica — é o que acontece ao aplicar um padrão semanal por cima do que
+ * já estava marcado.
+ */
+export async function scheduleWorkouts(
+  rows: {
+    athlete_id: string
+    coach_id: string
+    plan_id: string
+    plan_day_id: string
+    scheduled_on: string
+  }[],
+): Promise<void> {
+  if (rows.length === 0) return
+  unwrap(
+    await supabase
+      .from('scheduled_workouts')
+      .upsert(rows, { onConflict: 'plan_day_id,scheduled_on', ignoreDuplicates: true })
+      .select(),
+  )
+}
+
+export async function unscheduleWorkout(id: string): Promise<void> {
+  unwrap(await supabase.from('scheduled_workouts').delete().eq('id', id).select())
 }
 
 export async function saveSet(

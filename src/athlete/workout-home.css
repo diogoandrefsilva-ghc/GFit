@@ -76,3 +76,140 @@
   color: var(--muted-strong);
   white-space: pre-wrap;
 }
+
+/* ── semana marcada ────────────────────────────────────── */
+
+.week-days {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.week-day {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.week-day.is-empty {
+  background: var(--paper-2);
+  border-style: dashed;
+}
+
+.week-day.is-today {
+  border-color: var(--ink);
+}
+
+.week-day__date {
+  flex-shrink: 0;
+  width: 42px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 0;
+  border-radius: var(--radius-sm);
+  background: var(--paper-2);
+}
+
+.week-day.is-today .week-day__date {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.week-day__date em {
+  font-style: normal;
+  font-family: var(--font-narrow);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.week-day.is-today .week-day__date em {
+  color: var(--paper);
+}
+
+.week-day__date strong {
+  font-size: 17px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.week-day__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.week-day__rest {
+  font-size: 13px;
+  color: var(--muted-soft);
+}
+
+.week-day__card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  background: var(--paper-2);
+  border-radius: var(--radius-sm);
+  text-align: left;
+}
+
+/* Marcado para outro dia, ou ainda sem exercícios: mostra-se, não se abre. */
+.week-day__card.is-locked {
+  opacity: 0.75;
+}
+
+.week-day__tag {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.week-day__tag.is-done {
+  background: var(--good);
+}
+
+.week-day__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.week-day__text strong {
+  font-size: 14px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.week-day__text em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.week-day__state {
+  flex-shrink: 0;
+}

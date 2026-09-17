@@ -1,0 +1,46 @@
+.week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.week-nav__arrow {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  background: var(--paper-2);
+  color: var(--muted-strong);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.week-nav__text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  text-align: center;
+}
+
+.week-nav__text strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.week-nav__text em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.week-nav__today {
+  font-size: 11px;
+  color: var(--accent-dark);
+  text-decoration: underline;
+}
