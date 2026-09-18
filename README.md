@@ -164,8 +164,9 @@ src/
   coach/       Alunos, Detalhe do aluno, Calendário, Editor de plano (com a
                marcação no calendário), Editor de dieta, Biblioteca de
                exercícios
-  components/  peças partilhadas (steppers, escalas, gráfico, tab bar)
+  components/  peças partilhadas (steppers, escalas, gráfico, corpo, tab bar)
   lib/         cliente Supabase, tipos, consultas, formatação, cálculos
+  assets/      o SVG do corpo
   styles/      tokens e folha de estilo base
 ```
 
@@ -235,6 +236,73 @@ números:
 - `sets` — cada exercício esgota as suas séries antes de se passar ao seguinte.
 - `circuit` — percorre-se a lista toda, descansa-se mais, e repete-se a volta.
   As voltas são do treino (`rounds`), não do exercício.
+
+## O corpo dos músculos
+
+Cada exercício da base diz que músculos trabalha e com que peso — série
+inteira para o principal, 0,5 ou 0,3 para os auxiliares. Esse volume, que já
+se somava em números, passa também a pintar-se num corpo.
+
+O desenho é `src/assets/corpo-gfit.svg`: duas vistas (frente e costas) e 15
+regiões, cada uma num `<g data-muscle="…">`. **Os 15 identificadores são,
+letra a letra, os slugs da tabela `gfit.muscles`** — não há tabela de conversão
+pelo meio, o que o exercício diz é o que o corpo acende.
+
+```
+abs · adutores · biceps · dorsal · gemeos · gluteo · lombares · ombro_frontal
+ombro_medio · ombro_posterior · peito · posterior_de_coxa · quadriceps
+trapezio · triceps
+```
+
+`trapezio` e `ombro_medio` aparecem nas duas vistas, de propósito: pintam-se as
+duas ao mesmo tempo.
+
+### Como se usa
+
+`<BodyMap>` desenha uma vista; `<MuscleWork>` é o cartão feito — as duas
+vistas, a legenda com os números e a escolha de um músculo ao toque.
+
+```tsx
+<MuscleWork
+  volume={weeklyVolume(exercicios, biblioteca)}  // slug → séries
+  names={nomesDosMusculos}                       // da tabela `muscles`
+  sex={ficha?.sex}                               // silhueta do aluno
+  reference={WEEKLY_FULL_SETS}                   // opcional: escala fixa
+/>
+```
+
+A intensidade sai de `muscleIntensities()`: sem `reference` a escala é relativa
+ao músculo mais trabalhado, que é como se lê um treino; com `reference` é fixa,
+que é como se lê uma semana (`WEEKLY_FULL_SETS`, 20 séries, pinta cheio). Há
+sempre um piso de 0,2 — um músculo que foi trabalhado tem de se ver, mesmo que
+tenha levado uma série contra as vinte de outro.
+
+O SVG tem de ficar inline no DOM, senão o CSS da app não lhe chega: `BodyMap`
+importa o ficheiro como texto, parte-o nas duas vistas uma única vez e injecta
+a que precisa. A cor vem de `--accent` e a intensidade de cada grupo entra numa
+variável CSS no contentor (`--bm-<slug>`), o que deixa o React fora do DOM do
+desenho e mantém a transição de cor a funcionar.
+
+### Onde aparece
+
+| Ecrã | O que mostra |
+| --- | --- |
+| Editor de plano (treinador) | O volume do treino aberto ou da semana toda, com um botão a trocar entre os dois |
+| Treino (aluno) | O que a semana marcada trabalha — ou o plano inteiro, se ainda não houver marcações |
+| Fim da sessão (aluno) | O que acabou de trabalhar, contando só as séries que ficaram registadas |
+
+### Aluno e aluna
+
+A silhueta segue o `sex` da ficha: sem ficha ou com `M` fica a masculina, com
+`F` a feminina — ombros e cintura mais estreitos, ancas mais largas, contorno do
+peito e cabelo apanhado. É a classe `body-map--fem`, e as duas partilham
+exactamente a mesma grelha muscular: não há geometria duplicada nem lógica
+diferente por sexo.
+
+O desenho ainda não está no ponto. `docs/corpo-gfit/` guarda o `LEIAME.md` do
+ficheiro e um `exemplo.html` que se abre no browser para o ver isolado — é por
+aí que se itera sem mexer na app. Substituir o SVG chega, desde que os 15
+`data-muscle` e as classes `gfit-*` se mantenham.
 
 ## Vídeos
 

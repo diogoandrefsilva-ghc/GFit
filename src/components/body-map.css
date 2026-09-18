@@ -1,0 +1,183 @@
+/*
+ * Contrato de pintura do corpo (o mesmo que vem no `corpo-gfit.svg`, aqui
+ * ligado aos tokens da app). Nenhuma região tem cor fixa: a cor vem de
+ * `--accent` e a intensidade de `--i`, 0 a 1, por grupo muscular.
+ *
+ * A intensidade entra por variável no contentor — `--bm-<slug>` — para o
+ * React não ter de tocar no DOM do SVG depois de o desenhar.
+ */
+.body-map {
+  display: block;
+  width: 100%;
+  color: var(--accent);
+}
+
+.body-map .gfit-shape {
+  fill: var(--paper);
+}
+
+.body-map .gfit-muscle {
+  /* Nunca `opacity`: com ela o traço da região desaparecia junto com o
+     preenchimento e deixava de se ver onde *não* houve volume. */
+  fill-opacity: var(--i, 0);
+  stroke: var(--line-2);
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+  transition: fill-opacity 0.25s ease;
+}
+
+.body-map .gfit-line {
+  fill: none;
+  stroke: var(--line-2);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.body-map .gfit-detail {
+  fill: none;
+  stroke: var(--line-2);
+  stroke-width: 1;
+  stroke-linecap: round;
+  opacity: 0.7;
+}
+
+.body-map .gfit-hair {
+  fill: var(--line);
+  stroke: var(--line-2);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+/* ── silhueta por sexo ──────────────────────────────────────────── */
+.body-map .gfit-v-f,
+.body-map .gfit-hair--f {
+  display: none;
+}
+
+.body-map--fem .gfit-v-m,
+.body-map--fem .gfit-hair--m {
+  display: none;
+}
+
+.body-map--fem .gfit-v-f,
+.body-map--fem .gfit-hair--f {
+  display: inline;
+}
+
+/* ── miniatura ──────────────────────────────────────────────────── */
+.body-map--sm .gfit-muscle {
+  stroke-width: 1.4;
+}
+
+.body-map--sm .gfit-line {
+  stroke-width: 2.4;
+}
+
+.body-map--sm .gfit-hair {
+  stroke-width: 1.8;
+}
+
+.body-map--sm .gfit-detail {
+  display: none;
+}
+
+/* ── intensidade, grupo a grupo ─────────────────────────────────── */
+.body-map [data-muscle='abs'] { --i: var(--bm-abs, 0); }
+.body-map [data-muscle='adutores'] { --i: var(--bm-adutores, 0); }
+.body-map [data-muscle='biceps'] { --i: var(--bm-biceps, 0); }
+.body-map [data-muscle='dorsal'] { --i: var(--bm-dorsal, 0); }
+.body-map [data-muscle='gemeos'] { --i: var(--bm-gemeos, 0); }
+.body-map [data-muscle='gluteo'] { --i: var(--bm-gluteo, 0); }
+.body-map [data-muscle='lombares'] { --i: var(--bm-lombares, 0); }
+.body-map [data-muscle='ombro_frontal'] { --i: var(--bm-ombro_frontal, 0); }
+.body-map [data-muscle='ombro_medio'] { --i: var(--bm-ombro_medio, 0); }
+.body-map [data-muscle='ombro_posterior'] { --i: var(--bm-ombro_posterior, 0); }
+.body-map [data-muscle='peito'] { --i: var(--bm-peito, 0); }
+.body-map [data-muscle='posterior_de_coxa'] { --i: var(--bm-posterior_de_coxa, 0); }
+.body-map [data-muscle='quadriceps'] { --i: var(--bm-quadriceps, 0); }
+.body-map [data-muscle='trapezio'] { --i: var(--bm-trapezio, 0); }
+.body-map [data-muscle='triceps'] { --i: var(--bm-triceps, 0); }
+
+.body-map--pickable [data-muscle] {
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .body-map .gfit-muscle {
+    transition: none;
+  }
+}
+
+/* ── cartão: corpo + legenda ────────────────────────────────────── */
+.muscle-work__bodies {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin: 2px 0 6px;
+}
+
+.muscle-work__bodies .body-map {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 190px;
+}
+
+.muscle-work__legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  margin: 0;
+  list-style: none;
+}
+
+@media (max-width: 380px) {
+  .muscle-work__legend {
+    grid-template-columns: 1fr;
+  }
+}
+
+.muscle-work__legend button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 3px 4px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink-2);
+  text-align: left;
+  cursor: pointer;
+}
+
+.muscle-work__legend button.is-picked {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.muscle-work__legend i {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--line-2);
+  background: var(--accent);
+}
+
+.muscle-work__legend em {
+  margin-left: auto;
+  font-style: normal;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.muscle-work__note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}

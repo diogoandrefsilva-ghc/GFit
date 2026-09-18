@@ -3,8 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Loading, ScreenHeader } from '@/components/Screen'
 import { ExercisePicker } from '@/coach/ExercisePicker'
 import { PlanSchedule } from '@/coach/PlanSchedule'
+import { MuscleWork } from '@/components/MuscleWork'
 import {
   addExerciseToDay,
+  fetchAthleteProfile,
   fetchLimitations,
   fetchMuscles,
   fetchPlanDetail,
@@ -14,8 +16,8 @@ import {
   updatePlanExercise,
 } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
-import { weeklyVolume } from '@/lib/calc'
-import { num, plural, repRange, restLabel } from '@/lib/format'
+import { WEEKLY_FULL_SETS, weeklyVolume } from '@/lib/calc'
+import { plural, repRange, restLabel } from '@/lib/format'
 import { unwrap, useQuery } from '@/lib/useQuery'
 import type { Exercise, PlanDay, PlanExercise, WorkMode } from '@/lib/database.types'
 import './plan-editor.css'
@@ -25,29 +27,39 @@ export function PlanEditor() {
   const { planId } = useParams<{ planId: string }>()
   const [activeDay, setActiveDay] = useState<string | null>(null)
   const [picking, setPicking] = useState(false)
+  const [scope, setScope] = useState<'day' | 'plan'>('day')
 
   const { data, loading, error, reload, mutate } = useQuery(['plano', planId], async () => {
     const detail = await fetchPlanDetail(planId!)
-    const [muscles, limitations, schedules] = await Promise.all([
+    const [muscles, limitations, schedules, ficha] = await Promise.all([
       fetchMuscles(),
       fetchLimitations(detail.plan.athlete_id),
       fetchPlanSchedule(planId!),
+      fetchAthleteProfile(detail.plan.athlete_id),
     ])
     // Só as que ainda vigoram: é o que condiciona o plano que se vai escrever.
     return {
       ...detail,
       muscles,
       schedules,
+      ficha,
       limitations: limitations.filter((l) => !l.resolved_on),
     }
   })
 
   const dayId = activeDay ?? data?.days[0]?.id ?? null
 
-  const volume = useMemo(() => {
+  const dayVolume = useMemo(() => {
     if (!data || !dayId) return new Map<string, number>()
     return weeklyVolume(data.exercisesByDay.get(dayId) ?? [], data.library)
   }, [data, dayId])
+
+  // Os dias do plano são o microciclo: somados, dão o volume da semana.
+  const planVolume = useMemo(() => {
+    if (!data) return new Map<string, number>()
+    const all = data.days.flatMap((item) => data.exercisesByDay.get(item.id) ?? [])
+    return weeklyVolume(all, data.library)
+  }, [data])
 
   if (loading) return <Loading label="A carregar o plano" />
   if (error || !data) {
@@ -60,11 +72,12 @@ export function PlanEditor() {
     )
   }
 
-  const { plan, days, exercisesByDay, library, muscles, athlete, limitations, schedules } =
+  const { plan, days, exercisesByDay, library, muscles, athlete, limitations, schedules, ficha } =
     data
   const day = days.find((item) => item.id === dayId) ?? null
   const items = day ? exercisesByDay.get(day.id) ?? [] : []
   const muscleNames = new Map(muscles.map((muscle) => [muscle.slug, muscle.name]))
+  const volume = scope === 'day' ? dayVolume : planVolume
 
   return (
     <div className="app">
@@ -179,25 +192,46 @@ export function PlanEditor() {
         </button>
 
         {/* ── volume ─────────────────────────────────── */}
-        {volume.size > 0 && (
+        {(dayVolume.size > 0 || planVolume.size > 0) && (
           <section className="card card--flat">
-            <span className="eyebrow">
-              Volume do treino {day?.label} · {plural(items.length, 'exercício', 'exercícios')}
-            </span>
-            <ul className="plan__volume">
-              {[...volume.entries()]
-                .sort((a, b) => b[1] - a[1])
-                .map(([slug, sets]) => (
-                  <li key={slug}>
-                    <strong>{num(sets, sets % 1 === 0 ? 0 : 1)}</strong>
-                    <span>{muscleNames.get(slug) ?? slug}</span>
-                  </li>
+            <div className="card__head">
+              <span className="eyebrow">
+                {scope === 'day'
+                  ? `Volume do treino ${day?.label ?? ''} · ${plural(items.length, 'exercício', 'exercícios')}`
+                  : `Volume da semana · ${plural(days.length, 'treino', 'treinos')}`}
+              </span>
+              <div className="row plan__scope">
+                {(
+                  [
+                    ['day', 'Este treino'],
+                    ['plan', 'Semana toda'],
+                  ] as const
+                ).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`chip ${scope === key ? 'chip--on' : ''}`}
+                    onClick={() => setScope(key)}
+                  >
+                    {label}
+                  </button>
                 ))}
-            </ul>
-            <p className="plan__volume-note">
-              Séries por músculo, com os auxiliares a contar 0,5 ou 0,3 como na
-              planilha.
-            </p>
+              </div>
+            </div>
+
+            <MuscleWork
+              volume={volume}
+              names={muscleNames}
+              sex={ficha?.sex}
+              /* Um treino lê-se em relação ao músculo mais trabalhado; a semana
+                 em relação ao que se considera uma semana servida. */
+              reference={scope === 'plan' ? WEEKLY_FULL_SETS : undefined}
+              note={
+                scope === 'plan'
+                  ? `A cor cheia são ${WEEKLY_FULL_SETS} séries na semana. Os auxiliares contam 0,5 ou 0,3 como na planilha.`
+                  : 'Séries por músculo, com os auxiliares a contar 0,5 ou 0,3 como na planilha.'
+              }
+            />
           </section>
         )}
 
