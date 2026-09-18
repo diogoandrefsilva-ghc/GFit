@@ -32,9 +32,11 @@ export function MuscleThumb({ muscles, names, sex }: Props) {
   // proporção do peso que a planilha lhes deu.
   const intensities = useMemo(() => muscleIntensities(weights, 1), [weights])
 
-  if (weights.size === 0) return null
-
-  const label = [...weights.keys()].map((slug) => names?.get(slug) ?? slug).join(', ')
+  // Sem músculos atribuídos o corpo fica neutro, mas fica: desaparecer a
+  // miniatura desalinhava a coluna do resto da lista.
+  const label = weights.size
+    ? `Trabalha ${[...weights.keys()].map((slug) => names?.get(slug) ?? slug).join(', ')}`
+    : 'Sem músculos atribuídos'
 
   return (
     <div className="muscle-thumb">
@@ -43,7 +45,7 @@ export function MuscleThumb({ muscles, names, sex }: Props) {
         intensities={intensities}
         sex={sex}
         small
-        label={`Trabalha ${label}`}
+        label={label}
       />
     </div>
   )

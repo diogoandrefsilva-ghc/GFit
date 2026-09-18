@@ -290,13 +290,23 @@ desenho e mantém a transição de cor a funcionar.
 | Editor de plano (treinador) | O volume do treino aberto ou da semana toda, com um botão a trocar entre os dois. Cada exercício do treino leva a sua miniatura |
 | Treino (aluno) | O que a semana marcada trabalha — ou o plano inteiro, se ainda não houver marcações |
 | Fim da sessão (aluno) | O que acabou de trabalhar, contando só as séries que ficaram registadas |
-| Biblioteca e escolha de exercícios (treinador) | O corpo escolhe o filtro: toca-se num músculo para ver só os exercícios que o trabalham. Abrir uma linha da biblioteca mostra o corpo desse exercício e os pesos |
+| Biblioteca e escolha de exercícios (treinador) | Cada exercício da lista leva o seu corpo, e o corpo grande escolhe o filtro: toca-se num músculo para ver só os exercícios que o trabalham. Abrir uma linha mostra os pesos |
 
 `MuscleThumb` é a miniatura de um exercício: mostra **uma** vista, a que apanha
-mais do que ele trabalha. Não vai em listas longas de propósito — a 44 px não
-se distingue peito de ombro, e 120 corpos punham a lista a demorar 1,3 s a
-desenhar a cada tecla da pesquisa. Nas listas longas o corpo aparece a pedido,
-ao abrir a linha.
+mais do que ele trabalha, e vai em todas as linhas — incluindo a lista de 120
+da biblioteca. Para lá caber, a miniatura não recebe as linhas anatómicas:
+`markup()` entrega-as de fora, e são 46 dos 81 paths de uma vista. Escondê-las
+por CSS não servia, porque continuavam a custar a criar. As linhas da lista
+levam ainda `content-visibility: auto`, para o browser só desenhar as que estão
+à vista.
+
+Juntas, as duas coisas põem a lista de 120 exercícios a aparecer em 284 ms com
+a CPU travada 4x, contra 1281 ms sem elas, e o scroll mantém-se nos 60 fps.
+Tirar o detalhe também tornou a miniatura mais legível a 52 px, não menos: o
+que lá estava a essa escala era ruído.
+
+Um exercício sem músculos atribuídos desenha o corpo neutro em vez de nada —
+some-lo desalinhava a coluna da lista.
 
 `MuscleFilter` é o corpo que filtra. Num telemóvel cada vista fica com uns
 160 px e um deltóide não chega a 10 px de lado, muito abaixo do que um polegar

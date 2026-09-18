@@ -66,6 +66,8 @@
 }
 
 /* ── miniatura ──────────────────────────────────────────────────── */
+/* As linhas de detalhe não são escondidas aqui: `markup()` nem sequer as
+   entrega em miniatura, que é mais de metade dos paths poupados. */
 .body-map--sm .gfit-muscle {
   stroke-width: 1.4;
 }
@@ -76,10 +78,6 @@
 
 .body-map--sm .gfit-hair {
   stroke-width: 1.8;
-}
-
-.body-map--sm .gfit-detail {
-  display: none;
 }
 
 /* ── intensidade, grupo a grupo ─────────────────────────────────── */

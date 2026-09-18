@@ -75,7 +75,9 @@ export function BodyMap({
   label,
   onPick,
 }: Props) {
-  const html = useMemo(() => markup(view), [view])
+  // Em miniatura o desenho vai sem as linhas anatómicas: não se viam e são
+  // mais de metade dos paths.
+  const html = useMemo(() => markup(view, small ? 'plain' : 'full'), [view, small])
 
   const style = useMemo(() => {
     const vars: Record<string, string> = {}

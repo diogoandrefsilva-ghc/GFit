@@ -267,6 +267,11 @@ function NewExerciseForm({
  * distinguiria peito de ombro, e 120 deles punham a lista a demorar mais de um
  * segundo a aparecer a cada tecla da pesquisa. Abre-se o que se quer ver.
  */
+/**
+ * Uma linha da lista, com o corpo à vista como nos cartões do treino. Abrir a
+ * linha já não serve para ver o boneco — serve para ver os pesos, que é o que
+ * o desenho não consegue dizer.
+ */
 function LibraryRow({
   exercise,
   muscleNames,
@@ -282,6 +287,8 @@ function LibraryRow({
   return (
     <li className={`library__item ${open ? 'is-open' : ''}`}>
       <div className="library__row">
+        <MuscleThumb muscles={shares} names={muscleNames} />
+
         <button
           type="button"
           className="library__text"
@@ -300,7 +307,11 @@ function LibraryRow({
               .filter(Boolean)
               .join(' · ')}
           </em>
+          {shares.length === 0 && (
+            <em className="library__nomuscle">sem músculos na base</em>
+          )}
         </button>
+
         {hasPlayableVideo(exercise.video_url) ? (
           <button type="button" className="library__video" onClick={onVideo}>
             ▸ vídeo
@@ -310,27 +321,17 @@ function LibraryRow({
         )}
       </div>
 
-      {open && (
-        <div className="library__muscles">
-          <MuscleThumb muscles={shares} names={muscleNames} />
-          {shares.length > 0 ? (
-            <ul className="library__shares">
-              {[...shares]
-                .sort((a, b) => Number(b.weight) - Number(a.weight))
-                .map((share) => (
-                  <li key={share.muscle}>
-                    <span>{muscleNames.get(share.muscle) ?? share.muscle}</span>
-                    <em>{num(Number(share.weight), 1)}</em>
-                  </li>
-                ))}
-            </ul>
-          ) : (
-            <p className="muted">
-              Este exercício não tem músculos atribuídos na base, por isso não
-              acende nada nem conta para o volume.
-            </p>
-          )}
-        </div>
+      {open && shares.length > 0 && (
+        <ul className="library__shares">
+          {[...shares]
+            .sort((a, b) => Number(b.weight) - Number(a.weight))
+            .map((share) => (
+              <li key={share.muscle}>
+                <span>{muscleNames.get(share.muscle) ?? share.muscle}</span>
+                <em>{num(Number(share.weight), 1)}</em>
+              </li>
+            ))}
+        </ul>
       )}
     </li>
   )

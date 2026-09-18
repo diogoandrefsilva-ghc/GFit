@@ -29,22 +29,35 @@ export const BODY_MUSCLES = [
 /** As duas vistas vivem no mesmo ficheiro, nas mesmas coordenadas locais. */
 export const VIEW_BOX = '-10 0 220 460'
 
-let views: Record<BodyView, string> | null = null
+type Cut = 'full' | 'plain'
+
+const views: Partial<Record<`${BodyView}:${Cut}`, string>> = {}
 let inView: Record<BodyView, Set<string>> | null = null
 
 /**
- * O SVG entra como texto e é partido uma vez nas duas vistas. Tem de ficar
- * inline no DOM — com `<img src>` o CSS da app não lhe chegava e não havia
- * como pintar nada.
+ * O SVG entra como texto e é partido nas duas vistas. Tem de ficar inline no
+ * DOM — com `<img src>` o CSS da app não lhe chegava e não havia como pintar
+ * nada.
+ *
+ * Em `plain` saem as linhas anatómicas. São 46 dos 81 paths de uma vista, mais
+ * de metade do desenho, e em miniatura já não se viam: escondê-las por CSS
+ * deixava-as na mesma a custar a criar. Numa lista de 120 exercícios é a
+ * diferença entre a lista aparecer e a lista demorar.
  */
-export function markup(view: BodyView): string {
-  if (!views) {
-    const doc = new DOMParser().parseFromString(raw, 'image/svg+xml')
-    const inner = (id: string) =>
-      doc.querySelector(`[id="${id}"]`)?.innerHTML ?? ''
-    views = { front: inner('body-front'), back: inner('body-back') }
+export function markup(view: BodyView, cut: Cut = 'full'): string {
+  const key = `${view}:${cut}` as const
+  const cached = views[key]
+  if (cached !== undefined) return cached
+
+  const doc = new DOMParser().parseFromString(raw, 'image/svg+xml')
+  const group = doc.querySelector(`[id="${view === 'front' ? 'body-front' : 'body-back'}"]`)
+  if (!group) return ''
+  if (cut === 'plain') {
+    group.querySelectorAll('.gfit-detail').forEach((node) => node.remove())
   }
-  return views[view]
+  const html = group.innerHTML
+  views[key] = html
+  return html
 }
 
 /**
