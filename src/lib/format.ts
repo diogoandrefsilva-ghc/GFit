@@ -185,3 +185,34 @@ export function restLabel(seconds: number): string {
 export function plural(count: number, one: string, many: string): string {
   return `${count} ${count === 1 ? one : many}`
 }
+
+/**
+ * Palavras que ficam em minúsculas no meio de um título. No princípio sobem
+ * na mesma — "de Costas" está errado, "De Costas" também, mas "Peso Morto de
+ * Costas" e "De Pé" estão ambos certos.
+ */
+const MINUSCULAS = new Set([
+  'a', 'à', 'ao', 'aos', 'as', 'às', 'com', 'da', 'das', 'de', 'do', 'dos',
+  'e', 'em', 'na', 'nas', 'no', 'nos', 'o', 'os', 'ou', 'para', 'pela',
+  'pelas', 'pelo', 'pelos', 'por', 'sem', 'sob', 'sobre', 'um', 'uma',
+])
+
+/**
+ * Maiúscula inicial em cada palavra, para os textos que vieram da planilha
+ * escritos à pressa ("leg curl", "peso morto terra/sumo").
+ *
+ * Só mexe em palavras que estão **todas** em minúsculas. É o que salva o TRX,
+ * o Z da barra e o Scott de serem achatados — se alguém já escreveu uma
+ * maiúscula, escreveu-a de propósito.
+ */
+export function titleCase(value: string | null | undefined): string {
+  if (!value) return ''
+  let first = true
+  return value.replace(/[\p{L}\p{N}][\p{L}\p{N}'’]*/gu, (word) => {
+    const isFirst = first
+    first = false
+    if (word !== word.toLocaleLowerCase('pt-PT')) return word
+    if (!isFirst && MINUSCULAS.has(word)) return word
+    return word[0].toLocaleUpperCase('pt-PT') + word.slice(1)
+  })
+}

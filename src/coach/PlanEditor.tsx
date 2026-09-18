@@ -18,7 +18,7 @@ import {
 } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { WEEKLY_FULL_SETS, weeklyVolume } from "@/lib/calc";
-import { plural, repRange, restLabel } from "@/lib/format";
+import { plural, repRange, restLabel, titleCase } from "@/lib/format";
 import { unwrap, useQuery } from "@/lib/useQuery";
 import type {
   Exercise,
@@ -450,12 +450,14 @@ function PlanExerciseRow({
           <div className="plan-ex__head">
             <span className="plan-ex__text">
               <strong>
-                {item.name_override ?? exercise?.name ?? "Exercício"}
+                {titleCase(item.name_override ?? exercise?.name ?? "Exercício")}
               </strong>
               <em>
-                {[exercise?.category, exercise?.equipment]
-                  .filter(Boolean)
-                  .join(" · ") || "sem categoria"}
+                {titleCase(
+                  [exercise?.category, exercise?.equipment]
+                    .filter(Boolean)
+                    .join(" · "),
+                ) || "sem categoria"}
                 {exercise?.video_url ? " · vídeo" : ""}
               </em>
             </span>

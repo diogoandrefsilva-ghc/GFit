@@ -46,6 +46,22 @@ python3 scripts/extract_excel.py
 > aparecia com 49,5 g de hidratos. O extrator corrige o desvio, mas convém
 > corrigir também a planilha se ela continuar a ser usada.
 
+### Texto vindo da planilha
+
+Os nomes foram escritos à pressa numa folha de Excel: "leg curl", "geral",
+"peso morto terra/sumo". A app não lhes toca na base — capitaliza-os ao mostrar,
+com `titleCase()` em `src/lib/format.ts`.
+
+A regra tem duas partes. As preposições e artigos ficam em minúsculas no meio do
+título ("Biceps Curl **nos** Cabos Cross"), mas sobem se calharem no princípio.
+E **só se mexe em palavras que estão todas em minúsculas** — é isso que salva o
+`TRX`, o `Z` da barra e o `Scott` de serem achatados: se alguém já escreveu uma
+maiúscula, escreveu-a de propósito.
+
+Fica no ecrã e não na base de propósito: é reversível numa linha, não estraga a
+pesquisa (que compara em minúsculas sem acentos) e não mexe no que o Treinador
+escreveu.
+
 ## Arrancar localmente
 
 ```bash
@@ -290,7 +306,7 @@ desenho e mantém a transição de cor a funcionar.
 | Editor de plano (treinador) | O volume do treino aberto ou da semana toda, com um botão a trocar entre os dois. Cada exercício do treino leva a sua miniatura |
 | Treino (aluno) | O que a semana marcada trabalha — ou o plano inteiro, se ainda não houver marcações |
 | Fim da sessão (aluno) | O que acabou de trabalhar, contando só as séries que ficaram registadas |
-| Biblioteca e escolha de exercícios (treinador) | Cada exercício da lista leva o seu corpo, e o corpo grande escolhe o filtro: toca-se num músculo para ver só os exercícios que o trabalham. Abrir uma linha mostra os pesos |
+| Biblioteca e escolha de exercícios (treinador) | Cada exercício da lista leva o seu corpo à esquerda e o que trabalha, com os pesos, à direita. O corpo grande escolhe o filtro: toca-se num músculo para ver só os exercícios que o trabalham |
 
 `MuscleThumb` é a miniatura de um exercício: mostra **uma** vista, a que apanha
 mais do que ele trabalha, e vai em todas as linhas — incluindo a lista de 120

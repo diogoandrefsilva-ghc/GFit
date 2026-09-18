@@ -11,36 +11,6 @@
   overflow: hidden;
 }
 
-.library__item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--line);
-}
-
-.library__item:last-child {
-  border-bottom: none;
-}
-
-.library__text {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.library__text strong {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.library__text em {
-  font-style: normal;
-  font-size: 12px;
-  color: var(--muted);
-}
-
 .library__video {
   flex-shrink: 0;
   font-size: 12px;
@@ -57,7 +27,7 @@
   color: var(--muted-soft);
 }
 
-/* ── o corpo na linha, e os pesos quando se abre ────────────────── */
+/* ── o cartão de um exercício ───────────────────────────────────── */
 
 /*
  * Com um corpo por linha, a lista passa a ter milhares de paths. O browser só
@@ -65,61 +35,100 @@
  * scroll ande aos saltos enquanto se rola.
  */
 .library__item {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 96px;
-}
-
-.library__row {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 104px;
 }
 
-.library__item .library__text {
+.library__item:last-child {
+  border-bottom: none;
+}
+
+.library__main {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
+  justify-content: center;
+  gap: 3px;
+  padding: 2px 0;
+}
+
+.library__name {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.library__meta {
+  font-style: normal;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* O vídeo vai para o fim do bloco, e não a meio do cartão. */
+.library__main .library__video,
+.library__main .library__novideo {
+  align-self: flex-start;
+  margin-top: 3px;
+}
+
+/* A coluna do que o exercício trabalha, com a régua a delimitá-la. */
+.library__work {
+  flex: none;
+  width: 104px;
+  padding-left: 10px;
+  border-left: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.library__work ul {
+  margin: 0;
   padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.library__nomuscle {
-  color: var(--muted-soft);
-}
-
-.library__shares {
-  margin: 8px 0 0;
-  padding: 10px 0 2px;
-  border-top: 1px solid var(--line);
   list-style: none;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2px 18px;
+  gap: 2px;
 }
 
-@media (max-width: 380px) {
-  .library__shares {
-    grid-template-columns: 1fr;
-  }
-}
-
-.library__shares li {
+.library__work li {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  font-size: 13px;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--ink-2);
 }
 
-.library__shares em {
+.library__work li span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.library__work em {
   margin-left: auto;
   font-style: normal;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+}
+
+.library__nomuscle {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--muted-soft);
+}
+
+/* Em ecrãs estreitos a coluna encolhe antes de espremer o nome. */
+@media (max-width: 360px) {
+  .library__work {
+    width: 96px;
+    padding-left: 8px;
+  }
 }

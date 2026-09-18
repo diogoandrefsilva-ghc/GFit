@@ -3,6 +3,7 @@ import { MuscleFilter } from '@/components/MuscleFilter'
 import { VideoModal } from '@/components/VideoModal'
 import { fetchMuscles, searchExercises } from '@/lib/api'
 import { hasPlayableVideo } from '@/lib/video'
+import { titleCase } from '@/lib/format'
 import { useQuery } from '@/lib/useQuery'
 import type { Exercise } from '@/lib/database.types'
 import './exercise-picker.css'
@@ -102,16 +103,18 @@ export function ExercisePicker({
                 {hasPlayableVideo(exercise.video_url) ? '▸' : 's/v'}
               </button>
               <span className="picker__text">
-                <strong>{exercise.name}</strong>
+                <strong>{titleCase(exercise.name)}</strong>
                 <em>
-                  {[
-                    exercise.primary_muscle
-                      ? muscleNames.get(exercise.primary_muscle)
-                      : null,
-                    exercise.equipment,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
+                  {titleCase(
+                    [
+                      exercise.primary_muscle
+                        ? muscleNames.get(exercise.primary_muscle)
+                        : null,
+                      exercise.equipment,
+                    ]
+                      .filter(Boolean)
+                      .join(' · '),
+                  )}
                 </em>
               </span>
               <button

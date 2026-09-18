@@ -22,7 +22,7 @@ import { hasPlayableVideo } from '@/lib/video'
 import { isTimedWorkout } from '@/lib/workout'
 import { supabase } from '@/lib/supabase'
 import { unwrap, useQuery } from '@/lib/useQuery'
-import { clock, num, plural, repRange, restLabel, signed } from '@/lib/format'
+import { clock, num, plural, repRange, restLabel, signed, titleCase } from '@/lib/format'
 import type { Exercise, PlanExercise, SetLog } from '@/lib/database.types'
 import './workout-session.css'
 
@@ -236,11 +236,11 @@ export function WorkoutSession() {
           athleteId={profile.id}
           sessionId={session.id}
           planExercise={current}
-          name={
+          name={titleCase(
             current.name_override ??
-            (current.exercise_id ? plan?.library.get(current.exercise_id)?.name : null) ??
-            'Exercício'
-          }
+              (current.exercise_id ? plan?.library.get(current.exercise_id)?.name : null) ??
+              'Exercício',
+          )}
           videoUrl={
             current.exercise_id
               ? plan?.library.get(current.exercise_id)?.video_url ?? null
@@ -248,7 +248,7 @@ export function WorkoutSession() {
           }
           muscleLabel={
             current.exercise_id
-              ? plan?.library.get(current.exercise_id)?.category ?? null
+              ? titleCase(plan?.library.get(current.exercise_id)?.category) || null
               : null
           }
           sets={logged.filter((set) => set.plan_exercise_id === current.id)}

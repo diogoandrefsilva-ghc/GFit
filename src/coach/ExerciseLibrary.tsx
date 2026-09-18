@@ -7,7 +7,7 @@ import { hasPlayableVideo } from '@/lib/video'
 import type { Exercise } from '@/lib/database.types'
 import { fetchMuscles, searchExercises } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
-import { num, plural } from '@/lib/format'
+import { num, plural, titleCase } from '@/lib/format'
 import { unwrap, useQuery } from '@/lib/useQuery'
 import '@/coach/exercise-picker.css'
 import './exercise-library.css'
@@ -267,10 +267,15 @@ function NewExerciseForm({
  * distinguiria peito de ombro, e 120 deles punham a lista a demorar mais de um
  * segundo a aparecer a cada tecla da pesquisa. Abre-se o que se quer ver.
  */
+/** 1 em vez de 1,0; 0,5 e 0,3 mantêm a casa decimal. */
+function formatWeight(weight: number): string {
+  return num(weight, weight % 1 === 0 ? 0 : 1)
+}
+
 /**
- * Uma linha da lista, com o corpo à vista como nos cartões do treino. Abrir a
- * linha já não serve para ver o boneco — serve para ver os pesos, que é o que
- * o desenho não consegue dizer.
+ * Uma linha da lista: o corpo à esquerda, o exercício no meio com o vídeo por
+ * baixo, e à direita o que ele trabalha com os pesos da planilha. Deixou de
+ * haver expansão — o que ela escondia está agora todo à vista.
  */
 function LibraryRow({
   exercise,
@@ -281,36 +286,16 @@ function LibraryRow({
   muscleNames: Map<string, string>
   onVideo: () => void
 }) {
-  const [open, setOpen] = useState(false)
   const shares = Array.isArray(exercise.muscles) ? exercise.muscles : []
+  const meta = [exercise.pattern, exercise.equipment].filter(Boolean).join(' · ')
 
   return (
-    <li className={`library__item ${open ? 'is-open' : ''}`}>
-      <div className="library__row">
-        <MuscleThumb muscles={shares} names={muscleNames} />
+    <li className="library__item">
+      <MuscleThumb muscles={shares} names={muscleNames} />
 
-        <button
-          type="button"
-          className="library__text"
-          onClick={() => setOpen((value) => !value)}
-          aria-expanded={open}
-        >
-          <strong>{exercise.name}</strong>
-          <em>
-            {[
-              exercise.pattern,
-              exercise.primary_muscle
-                ? muscleNames.get(exercise.primary_muscle)
-                : null,
-              exercise.equipment,
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </em>
-          {shares.length === 0 && (
-            <em className="library__nomuscle">sem músculos na base</em>
-          )}
-        </button>
+      <div className="library__main">
+        <strong className="library__name">{titleCase(exercise.name)}</strong>
+        {meta && <em className="library__meta">{titleCase(meta)}</em>}
 
         {hasPlayableVideo(exercise.video_url) ? (
           <button type="button" className="library__video" onClick={onVideo}>
@@ -321,18 +306,22 @@ function LibraryRow({
         )}
       </div>
 
-      {open && shares.length > 0 && (
-        <ul className="library__shares">
-          {[...shares]
-            .sort((a, b) => Number(b.weight) - Number(a.weight))
-            .map((share) => (
-              <li key={share.muscle}>
-                <span>{muscleNames.get(share.muscle) ?? share.muscle}</span>
-                <em>{num(Number(share.weight), 1)}</em>
-              </li>
-            ))}
-        </ul>
-      )}
+      <div className="library__work">
+        {shares.length > 0 ? (
+          <ul>
+            {[...shares]
+              .sort((a, b) => Number(b.weight) - Number(a.weight))
+              .map((share) => (
+                <li key={share.muscle}>
+                  <span>{titleCase(muscleNames.get(share.muscle) ?? share.muscle)}</span>
+                  <em>{formatWeight(Number(share.weight))}</em>
+                </li>
+              ))}
+          </ul>
+        ) : (
+          <p className="library__nomuscle">sem músculos na base</p>
+        )}
+      </div>
     </li>
   )
 }

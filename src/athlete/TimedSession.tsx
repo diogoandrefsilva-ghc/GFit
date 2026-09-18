@@ -3,7 +3,7 @@ import { VideoModal } from '@/components/VideoModal'
 import { cueFinish, cueRest, cueStart, cueTick, primeAudio } from '@/lib/cues'
 import { useWakeLock } from '@/lib/useWakeLock'
 import { buildTimeline, durationLabel, timelineDuration, type TimedStep } from '@/lib/workout'
-import { clock } from '@/lib/format'
+import { clock, titleCase } from '@/lib/format'
 import { hasPlayableVideo } from '@/lib/video'
 import type { Exercise, PlanDay, PlanExercise } from '@/lib/database.types'
 import './timed-session.css'
@@ -127,7 +127,7 @@ export function TimedSession({ day, planExercises, library, onFinish, onExit }: 
               <li key={item.id}>
                 <span className="timed__preview-n">{position + 1}</span>
                 <span className="timed__preview-text">
-                  <strong>{item.name_override ?? exercise?.name ?? 'Exercício'}</strong>
+                  <strong>{titleCase(item.name_override ?? exercise?.name ?? 'Exercício')}</strong>
                   <em>
                     {item.work_seconds ?? 45}s
                     {day.flow === 'circuit' ? '' : ` × ${item.sets}`} · descanso{' '}
