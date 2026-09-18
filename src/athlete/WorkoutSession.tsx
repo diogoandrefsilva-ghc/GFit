@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProfile } from '@/auth/useAuth'
+import { MuscleWork } from '@/components/MuscleWork'
 import { Loading, ScreenHeader } from '@/components/Screen'
 import { Stepper } from '@/components/Stepper'
 import { TimedSession } from '@/athlete/TimedSession'
 import { VideoModal } from '@/components/VideoModal'
 import {
   fetchActivePlan,
+  fetchAthleteProfile,
+  fetchMuscles,
   fetchPlanById,
   fetchPreviousSets,
   fetchSessionSets,
@@ -14,13 +17,38 @@ import {
   saveSet,
   saveTimedSets,
 } from '@/lib/api'
+import { weeklyVolume } from '@/lib/calc'
 import { hasPlayableVideo } from '@/lib/video'
 import { isTimedWorkout } from '@/lib/workout'
 import { supabase } from '@/lib/supabase'
 import { unwrap, useQuery } from '@/lib/useQuery'
-import { clock, num, repRange, restLabel, signed } from '@/lib/format'
-import type { PlanExercise, SetLog } from '@/lib/database.types'
+import { clock, num, plural, repRange, restLabel, signed } from '@/lib/format'
+import type { Exercise, PlanExercise, SetLog } from '@/lib/database.types'
 import './workout-session.css'
+
+/** O resumo que fica no ecrã quando o treino acaba. */
+interface Summary {
+  /** Séries por músculo, contando só o que foi mesmo registado. */
+  volume: Map<string, number>
+  sets: number
+  seconds: number
+}
+
+/**
+ * O volume do que se fez, e não do que estava escrito: cada exercício conta as
+ * séries que ficaram registadas, e daí saem os músculos pelos mesmos pesos da
+ * planilha.
+ */
+function volumeDone(
+  exercises: PlanExercise[],
+  library: Map<string, Exercise>,
+  setsByExercise: Map<string, number>,
+): Map<string, number> {
+  const done = exercises
+    .map((item) => ({ ...item, sets: setsByExercise.get(item.id) ?? 0 }))
+    .filter((item) => item.sets > 0)
+  return weeklyVolume(done, library)
+}
 
 /**
  * O treino a decorrer. Cada série grava carga, repetições e reps em reserva —
@@ -45,14 +73,20 @@ export function WorkoutSession() {
       : await fetchActivePlan(profile.id)
     const day = plan?.days.find((item) => item.id === session.plan_day_id) ?? null
     const exercises = day ? plan!.exercisesByDay.get(day.id) ?? [] : []
-    const sets = await fetchSessionSets(session.id)
+    const [sets, muscles, ficha] = await Promise.all([
+      fetchSessionSets(session.id),
+      fetchMuscles(),
+      fetchAthleteProfile(profile.id),
+    ])
 
-    return { session, plan, day, exercises, sets }
+    return { session, plan, day, exercises, sets, muscles, ficha }
   })
 
   const [index, setIndex] = useState(0)
   const [logged, setLogged] = useState<SetLog[]>([])
   const [elapsed, setElapsed] = useState(0)
+  /** O treino acabado: fica no ecrã em vez de saltar logo para a lista. */
+  const [finished, setFinished] = useState<Summary | null>(null)
 
   useEffect(() => {
     if (data?.sets) setLogged(data.sets)
@@ -81,7 +115,47 @@ export function WorkoutSession() {
     )
   }
 
-  const { session, plan, day, exercises } = data
+  const { session, plan, day, exercises, muscles, ficha } = data
+  const muscleNames = new Map(muscles.map((muscle) => [muscle.slug, muscle.name]))
+
+  if (finished) {
+    return (
+      <div className="app">
+        <div className="screen screen--plain">
+          <ScreenHeader
+            back={() => navigate('/treino')}
+            eyebrow="Treino concluído ✓"
+            title={day ? `Treino ${day.label}${day.title ? ` · ${day.title}` : ''}` : 'Treino'}
+            subtitle={`${clock(finished.seconds)} · ${plural(finished.sets, 'série registada', 'séries registadas')}`}
+          />
+
+          <section className="card card--flat">
+            <span className="eyebrow">O que trabalhaste</span>
+            {finished.volume.size > 0 ? (
+              <MuscleWork
+                volume={finished.volume}
+                names={muscleNames}
+                sex={ficha?.sex}
+                note="Séries por músculo, com os auxiliares a contar 0,5 ou 0,3 como na planilha."
+              />
+            ) : (
+              <p className="subtitle">
+                Não ficou nenhuma série registada, por isso não há nada a acender.
+              </p>
+            )}
+          </section>
+
+          <button
+            type="button"
+            className="btn btn--accent btn--block"
+            onClick={() => navigate('/treino')}
+          >
+            Voltar aos treinos
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   // Um treino todo por tempo corre no temporizador guiado; um treino de cargas
   // continua a registar-se série a série. Misturados, manda o registo manual e
@@ -104,7 +178,17 @@ export function WorkoutSession() {
             })),
           )
           await finishSession(session.id, session.started_at)
-          navigate('/treino')
+
+          const counts = new Map<string, number>()
+          for (const item of done) {
+            const id = item.step.planExercise.id
+            counts.set(id, (counts.get(id) ?? 0) + 1)
+          }
+          setFinished({
+            volume: volumeDone(exercises, plan?.library ?? new Map(), counts),
+            sets: done.length,
+            seconds: elapsed,
+          })
         }}
       />
     )
@@ -206,7 +290,20 @@ export function WorkoutSession() {
               className="btn btn--accent"
               onClick={async () => {
                 await finishSession(session.id, session.started_at)
-                navigate('/treino')
+
+                const counts = new Map<string, number>()
+                for (const set of logged) {
+                  if (!set.plan_exercise_id) continue
+                  counts.set(
+                    set.plan_exercise_id,
+                    (counts.get(set.plan_exercise_id) ?? 0) + 1,
+                  )
+                }
+                setFinished({
+                  volume: volumeDone(exercises, plan?.library ?? new Map(), counts),
+                  sets: logged.length,
+                  seconds: elapsed,
+                })
               }}
             >
               Terminar treino

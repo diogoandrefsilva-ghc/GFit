@@ -1,16 +1,19 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProfile } from '@/auth/useAuth'
+import { MuscleWork } from '@/components/MuscleWork'
 import { Empty, Loading, ScreenHeader } from '@/components/Screen'
 import { WeekNav } from '@/components/WeekNav'
 import {
   fetchActivePlan,
   fetchAthleteCalendar,
+  fetchAthleteProfile,
+  fetchMuscles,
   fetchWeekSessions,
   startSession,
   type CalendarEntry,
 } from '@/lib/api'
-import { weekOfPlan } from '@/lib/calc'
+import { WEEKLY_FULL_SETS, weekOfPlan, weeklyVolume } from '@/lib/calc'
 import {
   dayOfMonth,
   isoDate,
@@ -35,16 +38,41 @@ export function WorkoutHome() {
 
   const { data, loading, error } = useQuery(['treino', profile.id, monday, today], async () => {
     const dates = weekDates(monday)
-    const [plan, calendar] = await Promise.all([
+    const [plan, calendar, muscles, ficha] = await Promise.all([
       fetchActivePlan(profile.id),
       fetchAthleteCalendar(profile.id, dates[0], dates[6]),
+      fetchMuscles(),
+      fetchAthleteProfile(profile.id),
     ])
-    if (!plan) return { plan: null, calendar, sessions: [], week: 1 }
+    if (!plan) return { plan: null, calendar, sessions: [], week: 1, muscles, ficha }
 
     const week = weekOfPlan(plan.plan.start_date, today)
     const sessions = await fetchWeekSessions(profile.id, plan.plan.id, week)
-    return { plan, calendar, sessions, week }
+    return { plan, calendar, sessions, week, muscles, ficha }
   })
+
+  /**
+   * O que a semana trabalha. Se houver treinos marcados, são eles que contam —
+   * um treino marcado duas vezes conta duas vezes. Sem marcações, mostra-se o
+   * plano inteiro, que é o que a semana daria se fosse cumprida.
+   */
+  const weekWork = useMemo(() => {
+    const plan = data?.plan
+    if (!plan) return { volume: new Map<string, number>(), scheduled: false }
+
+    const scheduledDays = (data?.calendar ?? [])
+      .filter((entry) => entry.plan?.id === plan.plan.id && entry.day)
+      .map((entry) => entry.day!.id)
+    const dayIds = scheduledDays.length
+      ? scheduledDays
+      : plan.days.map((item) => item.id)
+
+    const exercises = dayIds.flatMap((id) => plan.exercisesByDay.get(id) ?? [])
+    return {
+      volume: weeklyVolume(exercises, plan.library),
+      scheduled: scheduledDays.length > 0,
+    }
+  }, [data?.plan, data?.calendar])
 
   async function open(entry: CalendarEntry) {
     if (!entry.plan || !entry.day) return
@@ -66,7 +94,8 @@ export function WorkoutHome() {
     )
   }
 
-  const { plan, calendar, sessions, week } = data!
+  const { plan, calendar, sessions, week, muscles, ficha } = data!
+  const muscleNames = new Map(muscles.map((muscle) => [muscle.slug, muscle.name]))
   const dates = weekDates(monday)
   const doneMarks = calendar.filter((entry) => entry.session?.status === 'done').length
 
@@ -121,6 +150,24 @@ export function WorkoutHome() {
           )
         })}
       </ul>
+
+      {plan && weekWork.volume.size > 0 && (
+        <section className="card card--flat">
+          <span className="eyebrow">O que esta semana trabalha</span>
+          <p className="subtitle">
+            {weekWork.scheduled
+              ? 'Somando os treinos marcados para esta semana.'
+              : 'Ainda sem treinos marcados — é o que o plano inteiro dá numa semana.'}
+          </p>
+          <MuscleWork
+            volume={weekWork.volume}
+            names={muscleNames}
+            sex={ficha?.sex}
+            reference={WEEKLY_FULL_SETS}
+            note={`A cor cheia são ${WEEKLY_FULL_SETS} séries na semana.`}
+          />
+        </section>
+      )}
 
       {!plan ? (
         <Empty

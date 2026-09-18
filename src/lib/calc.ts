@@ -79,6 +79,45 @@ export function weeklyVolume(
   return volume
 }
 
+/**
+ * Piso de intensidade: um músculo que foi trabalhado tem sempre de se ver no
+ * desenho, mesmo que tenha levado uma série contra as vinte de outro.
+ */
+const MIN_INTENSITY = 0.2
+
+/**
+ * Séries por músculo que se considera uma semana bem servida. Serve de escala
+ * ao desenho do corpo: com 20 séries o grupo pinta cheio.
+ */
+export const WEEKLY_FULL_SETS = 20
+
+/**
+ * Volume por músculo → intensidade de 0 a 1 para pintar o corpo.
+ *
+ * Sem `reference`, a escala é relativa: o músculo mais trabalhado fica cheio e
+ * os outros à volta dele. É o que serve para ler um treino. Para uma semana
+ * passa-se a referência (as séries que se considera volume cheio), senão um
+ * plano leve pintava tão forte como um plano pesado.
+ */
+export function muscleIntensities(
+  volume: Map<string, number>,
+  reference?: number,
+): Map<string, number> {
+  const top =
+    reference && reference > 0
+      ? reference
+      : Math.max(0, ...[...volume.values()].filter((value) => value > 0))
+  const intensities = new Map<string, number>()
+  if (top <= 0) return intensities
+
+  for (const [slug, sets] of volume) {
+    if (sets <= 0) continue
+    const share = Math.min(1, sets / top)
+    intensities.set(slug, MIN_INTENSITY + (1 - MIN_INTENSITY) * share)
+  }
+  return intensities
+}
+
 /** Carga total movida numa sessão (kg × reps), o "tonelagem" do treino. */
 export function sessionTonnage(sets: SetLog[]): number {
   return sets.reduce(
