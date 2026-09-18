@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import type { Session } from '@supabase/supabase-js'
+import { clearCache, setScope } from '@/lib/cache'
 import { describeError, supabase } from '@/lib/supabase'
 import { AuthContext, type AuthValue } from './context'
 import type { Profile } from '@/lib/database.types'
@@ -65,6 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     supabase.auth.getSession().then(async ({ data }) => {
       if (!active) return
+      // Antes de qualquer ecrã montar: é o que deixa a app abrir já com o que
+      // sabia da última vez, em vez de um spinner à espera do servidor.
+      setScope(data.session?.user.id ?? null)
       setSession(data.session)
       if (data.session?.user) {
         await loadProfile(data.session.user.id)
@@ -75,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: listener } = supabase.auth.onAuthStateChange(
       (event, nextSession) => {
         if (!active) return
+        setScope(nextSession?.user.id ?? null)
         setSession(nextSession)
 
         if (!nextSession?.user) {
@@ -100,6 +105,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut()
+    // Num telemóvel partilhado, quem entrar a seguir não pode apanhar os dados
+    // de quem saiu.
+    clearCache()
+    setScope(null)
     onboarded.current = null
     setProfile(null)
     setSession(null)

@@ -31,10 +31,11 @@ export function ExercisePicker({
     return () => window.clearTimeout(timer)
   }, [term])
 
-  const { data: muscles } = useQuery(fetchMuscles, [])
+  const { data: muscles } = useQuery(['musculos'], fetchMuscles)
   const { data: results, loading } = useQuery(
+    ['exercicios', debounced, muscle, pattern],
     () => searchExercises(debounced, { muscle, pattern }),
-    [debounced, muscle, pattern],
+    { persist: false },
   )
 
   const muscleNames = useMemo(

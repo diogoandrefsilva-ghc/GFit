@@ -40,7 +40,7 @@ export function Today() {
   const navigate = useNavigate()
   const today = isoDate()
 
-  const { data, loading, error, reload } = useQuery(async () => {
+  const { data, loading, error, reload } = useQuery(['hoje', profile.id, today], async () => {
     const monday = weekStart(today)
     const [plan, log, recent, note, targets, coach, calendar] = await Promise.all([
       fetchActivePlan(profile.id),
@@ -60,7 +60,7 @@ export function Today() {
       : []
 
     return { plan, log, recent, note, targets, coach, week, sessions, calendar }
-  }, [profile.id, today])
+  })
 
   const [draft, setDraft] = useState<Partial<DailyLog> | null>(null)
   const [saving, setSaving] = useState(false)

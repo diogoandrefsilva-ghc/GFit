@@ -26,18 +26,18 @@ export function ExerciseLibrary() {
     return () => window.clearTimeout(timer)
   }, [term])
 
-  const { data: muscles } = useQuery(fetchMuscles, [])
+  const { data: muscles } = useQuery(['musculos'], fetchMuscles)
   const {
     data: results,
     loading,
     reload,
-  } = useQuery(() => searchExercises(debounced, { muscle, pattern }), [
-    debounced,
-    muscle,
-    pattern,
-  ])
+  } = useQuery(
+    ['exercicios', debounced, muscle, pattern],
+    () => searchExercises(debounced, { muscle, pattern }),
+    { persist: false },
+  )
 
-  const { data: counts } = useQuery(async () => {
+  const { data: counts } = useQuery(['exercicios-contagem'], async () => {
     const total = await supabase
       .from('exercises')
       .select('id', { count: 'exact', head: true })
@@ -46,7 +46,7 @@ export function ExerciseLibrary() {
       .select('id', { count: 'exact', head: true })
       .not('video_url', 'is', null)
     return { total: total.count ?? 0, withVideo: withVideo.count ?? 0 }
-  }, [])
+  })
 
   const muscleNames = useMemo(
     () => new Map((muscles ?? []).map((item) => [item.slug, item.name])),

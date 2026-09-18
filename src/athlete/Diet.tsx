@@ -13,14 +13,14 @@ export function Diet() {
   const [open, setOpen] = useState<string | null>(null)
   const [logging, setLogging] = useState(false)
 
-  const { data, loading, error, reload } = useQuery(async () => {
+  const { data, loading, error, reload } = useQuery(['dieta', profile.id, today], async () => {
     const [diet, targets, log] = await Promise.all([
       fetchDietPlan(profile.id),
       fetchCurrentTargets(profile.id),
       fetchDailyLog(profile.id, today),
     ])
     return { diet, targets, log }
-  }, [profile.id, today])
+  })
 
   const totals = useMemo(() => {
     if (!data?.diet) return EMPTY_MACROS

@@ -14,14 +14,14 @@ export function DietEditor() {
   const { dietPlanId } = useParams<{ dietPlanId: string }>()
   const [addingTo, setAddingTo] = useState<string | null>(null)
 
-  const { data, loading, error, reload } = useQuery(async () => {
+  const { data, loading, error, reload } = useQuery(['dieta-editor', dietPlanId], async () => {
     const plans = unwrap(
       await supabase.from('diet_plans').select('*').eq('id', dietPlanId!).limit(1),
     )
     const plan = plans[0]
     if (!plan) throw new Error('Plano alimentar não encontrado.')
     return { plan, ...(await fetchDietContents(plan.id)) }
-  }, [dietPlanId])
+  })
 
   const totals = useMemo(() => {
     if (!data) return EMPTY_MACROS
@@ -372,7 +372,11 @@ function FoodPicker({
     return () => window.clearTimeout(timer)
   }, [term])
 
-  const { data: results, loading } = useQuery(() => searchFoods(debounced), [debounced])
+  const { data: results, loading } = useQuery(
+    ['alimentos', debounced],
+    () => searchFoods(debounced),
+    { persist: false },
+  )
 
   const preview = picked ? scaleFood(picked, Number(quantity) || 0) : null
 

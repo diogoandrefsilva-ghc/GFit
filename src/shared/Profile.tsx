@@ -24,7 +24,7 @@ export function Profile() {
   const profile = useProfile()
   const { isCoach, signOut } = useAuth()
 
-  const { data, loading, reload } = useQuery(async () => {
+  const { data, loading, reload } = useQuery(['perfil', profile.id, isCoach], async () => {
     if (isCoach) {
       return { invites: await fetchInvites(profile.id), coach: null, targets: null }
     }
@@ -33,7 +33,7 @@ export function Profile() {
       fetchCurrentTargets(profile.id),
     ])
     return { invites: [], coach, targets }
-  }, [profile.id, isCoach])
+  })
 
   return (
     <div className="screen">

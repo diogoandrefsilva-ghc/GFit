@@ -16,9 +16,8 @@ import './dashboard.css'
 export function Dashboard() {
   const profile = useProfile()
 
-  const { data, loading, error } = useQuery(
-    () => fetchAthleteSummaries(profile.id),
-    [profile.id],
+  const { data, loading, error } = useQuery(['inicio-treinador', profile.id], () =>
+    fetchAthleteSummaries(profile.id),
   )
 
   const view = useMemo(() => {

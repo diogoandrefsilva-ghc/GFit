@@ -35,6 +35,7 @@ export function Measurements() {
   const [adding, setAdding] = useState(false)
 
   const { data, loading, error, reload } = useQuery(
+    ['medidas', profile.id],
     async () => {
       const [logs, measurements, athlete, targets] = await Promise.all([
         fetchRecentLogs(profile.id, 120),
@@ -44,7 +45,6 @@ export function Measurements() {
       ])
       return { logs, measurements, athlete, targets }
     },
-    [profile.id],
   )
 
   if (loading) return <Loading label="A carregar medidas" />

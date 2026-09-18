@@ -26,7 +26,7 @@ export function PlanEditor() {
   const [activeDay, setActiveDay] = useState<string | null>(null)
   const [picking, setPicking] = useState(false)
 
-  const { data, loading, error, reload } = useQuery(async () => {
+  const { data, loading, error, reload, mutate } = useQuery(['plano', planId], async () => {
     const detail = await fetchPlanDetail(planId!)
     const [muscles, limitations, schedules] = await Promise.all([
       fetchMuscles(),
@@ -40,7 +40,7 @@ export function PlanEditor() {
       schedules,
       limitations: limitations.filter((l) => !l.resolved_on),
     }
-  }, [planId])
+  })
 
   const dayId = activeDay ?? data?.days[0]?.id ?? null
 
@@ -139,11 +139,31 @@ export function PlanEditor() {
               onMove={async (direction) => {
                 const other = items[index + direction]
                 if (!other) return
-                await Promise.all([
-                  updatePlanExercise(item.id, { sort_order: other.sort_order }),
-                  updatePlanExercise(other.id, { sort_order: item.sort_order }),
-                ])
-                reload()
+                // A troca aparece no toque e o servidor confirma por baixo.
+                // Se falhar, relê-se: o ecrã não pode ficar a mostrar uma
+                // ordem que não chegou a ficar gravada.
+                mutate((current) => {
+                  const reordered = (current.exercisesByDay.get(day!.id) ?? [])
+                    .map((row) =>
+                      row.id === item.id
+                        ? { ...row, sort_order: other.sort_order }
+                        : row.id === other.id
+                          ? { ...row, sort_order: item.sort_order }
+                          : row,
+                    )
+                    .sort((a, b) => a.sort_order - b.sort_order)
+                  const exercisesByDay = new Map(current.exercisesByDay)
+                  exercisesByDay.set(day!.id, reordered)
+                  return { ...current, exercisesByDay }
+                })
+                try {
+                  await Promise.all([
+                    updatePlanExercise(item.id, { sort_order: other.sort_order }),
+                    updatePlanExercise(other.id, { sort_order: item.sort_order }),
+                  ])
+                } catch {
+                  reload()
+                }
               }}
             />
           ))}

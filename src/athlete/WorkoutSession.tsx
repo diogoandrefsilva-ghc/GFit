@@ -31,7 +31,7 @@ export function WorkoutSession() {
   const navigate = useNavigate()
   const { sessionId } = useParams<{ sessionId: string }>()
 
-  const { data, loading, error } = useQuery(async () => {
+  const { data, loading, error } = useQuery(['treino-sessao', sessionId, profile.id], async () => {
     const sessions = unwrap(
       await supabase.from('workout_sessions').select('*').eq('id', sessionId!).limit(1),
     )
@@ -48,7 +48,7 @@ export function WorkoutSession() {
     const sets = await fetchSessionSets(session.id)
 
     return { session, plan, day, exercises, sets }
-  }, [sessionId, profile.id])
+  })
 
   const [index, setIndex] = useState(0)
   const [logged, setLogged] = useState<SetLog[]>([])

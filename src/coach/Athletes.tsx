@@ -14,13 +14,13 @@ export function Athletes() {
   const profile = useProfile()
   const [filter, setFilter] = useState<Filter>('attention')
 
-  const { data, loading, error } = useQuery(async () => {
+  const { data, loading, error } = useQuery(['alunos', profile.id], async () => {
     const [summaries, invites] = await Promise.all([
       fetchAthleteSummaries(profile.id),
       fetchInvites(profile.id),
     ])
     return { summaries, invites }
-  }, [profile.id])
+  })
 
   const flagged = useMemo(() => {
     if (!data) return new Map<string, string>()

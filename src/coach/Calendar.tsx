@@ -19,14 +19,14 @@ export function CoachCalendar() {
   const [monday, setMonday] = useState(() => weekStart(today))
   const [athleteId, setAthleteId] = useState<string | null>(null)
 
-  const { data, loading, error } = useQuery(async () => {
+  const { data, loading, error } = useQuery(['calendario-treinador', coach.id, monday], async () => {
     const dates = weekDates(monday)
     const [calendar, athletes] = await Promise.all([
       fetchCoachCalendar(coach.id, dates[0], dates[6]),
       fetchAthletes(coach.id),
     ])
     return { calendar, athletes }
-  }, [coach.id, monday])
+  })
 
   if (loading) return <Loading label="A carregar o calendário" />
   if (error) {

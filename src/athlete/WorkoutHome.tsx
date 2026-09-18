@@ -33,7 +33,7 @@ export function WorkoutHome() {
   const today = isoDate()
   const [monday, setMonday] = useState(() => weekStart(today))
 
-  const { data, loading, error } = useQuery(async () => {
+  const { data, loading, error } = useQuery(['treino', profile.id, monday, today], async () => {
     const dates = weekDates(monday)
     const [plan, calendar] = await Promise.all([
       fetchActivePlan(profile.id),
@@ -44,7 +44,7 @@ export function WorkoutHome() {
     const week = weekOfPlan(plan.plan.start_date, today)
     const sessions = await fetchWeekSessions(profile.id, plan.plan.id, week)
     return { plan, calendar, sessions, week }
-  }, [profile.id, monday, today])
+  })
 
   async function open(entry: CalendarEntry) {
     if (!entry.plan || !entry.day) return

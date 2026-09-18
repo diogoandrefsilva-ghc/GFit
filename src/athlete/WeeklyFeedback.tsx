@@ -43,7 +43,7 @@ export function WeeklyFeedbackScreen() {
   const profile = useProfile()
   const week = weekStart()
 
-  const { data, loading, error, reload } = useQuery(async () => {
+  const { data, loading, error, reload } = useQuery(['semana', profile.id, week], async () => {
     const [existing, logs, plan, history] = await Promise.all([
       fetchWeeklyFeedback(profile.id, week),
       fetchRecentLogs(profile.id, 7),
@@ -57,7 +57,7 @@ export function WeeklyFeedbackScreen() {
       : []
 
     return { existing, logs, plan, sessions, weekNumber, history }
-  }, [profile.id, week])
+  })
 
   const [draft, setDraft] = useState<Partial<WeeklyFeedback>>({})
   const [saving, setSaving] = useState(false)

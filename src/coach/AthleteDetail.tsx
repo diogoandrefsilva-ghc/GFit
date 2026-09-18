@@ -42,7 +42,7 @@ export function AthleteDetail() {
   const { athleteId } = useParams<{ athleteId: string }>()
   const [tab, setTab] = useState<Tab>('resumo')
 
-  const { data, loading, error, reload } = useQuery(async () => {
+  const { data, loading, error, reload } = useQuery(['aluno', athleteId], async () => {
     const profiles = unwrap(
       await supabase.from('profiles').select('*').eq('id', athleteId!).limit(1),
     )
@@ -86,7 +86,7 @@ export function AthleteDetail() {
       limitations,
       notes,
     }
-  }, [athleteId])
+  })
 
   if (loading) return <Loading label="A carregar aluno" />
   if (error || !data) {

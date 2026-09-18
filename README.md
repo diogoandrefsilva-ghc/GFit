@@ -172,6 +172,32 @@ src/
 Os protótipos do Claude Design (`FG Coach App.dc.html`,
 `FG Coach Protótipo.dc.html`) ficam no repositório como referência do desenho.
 
+## Como os dados chegam ao ecrã
+
+A app não volta a pedir ao servidor o que já sabe. Cada consulta tem uma chave
+(`useQuery(['hoje', alunoId, dia], …)`) e o resultado fica em cache: em memória
+enquanto a app está aberta, e no `localStorage` para sobreviver a fechá-la.
+
+O que isso muda, em cada toque:
+
+- **Voltar a um separador** mostra logo o que se sabe e confirma com o servidor
+  por baixo. Sem spinner.
+- **Gravar alguma coisa** relê sem tirar do ecrã o que lá está — o `reload()`
+  nunca apaga os dados. O spinner só aparece quando não há mesmo nada para
+  mostrar, que é a primeira vez que se abre cada ecrã.
+- **Abrir a app** parte do que ficou da última sessão, em vez de esperar pela
+  rede — e no ginásio, onde a rede falha, continua a mostrar o que sabe em vez
+  de um erro.
+- **O que se reordena ou marca** aparece mudado no toque e só depois é gravado;
+  se a gravação falhar, relê-se para o ecrã não mentir.
+
+O cache é por utilizador e esvazia-se ao terminar a sessão. As pesquisas
+(alimentos, exercícios) ficam só em memória: mudam a cada letra escrita e não
+valem disco.
+
+Os ecrãs que vivem em chunks próprios são trazidos enquanto a app está parada,
+para o primeiro toque em cada separador não esperar por um download.
+
 ## Calendário de treinos
 
 O plano diz o que se faz; o calendário diz quando. Depois de publicado, o plano
