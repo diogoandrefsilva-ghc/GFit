@@ -103,6 +103,19 @@
   cursor: pointer;
 }
 
+/*
+ * O contorno e as linhas anatómicas são desenhados por cima das regiões, para
+ * a silhueta ficar nítida. Isso fazia-os apanhar o toque em vez do músculo por
+ * baixo — e nos grupos estreitos, como os deltóides, comiam quase o alvo todo.
+ * São traço, não alvo.
+ */
+.body-map--pickable .gfit-line,
+.body-map--pickable .gfit-detail,
+.body-map--pickable .gfit-hair,
+.body-map--pickable .gfit-shape {
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .body-map .gfit-muscle {
     transition: none;
@@ -180,4 +193,42 @@
   margin: 8px 0 0;
   font-size: 12px;
   color: var(--muted);
+}
+
+/* ── miniatura de um exercício ──────────────────────────────────── */
+.muscle-thumb {
+  flex: none;
+  width: 52px;
+}
+
+.muscle-thumb .body-map {
+  height: 92px;
+}
+
+/* ── escolher o músculo no corpo ────────────────────────────────── */
+.muscle-filter__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.muscle-filter__bodies {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.muscle-filter__bodies .body-map {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 170px;
+}
+
+.muscle-filter__hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
 }

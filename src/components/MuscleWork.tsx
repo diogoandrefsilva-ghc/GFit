@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { BodyMap, type BodySex } from '@/components/BodyMap'
+import { BodyMap } from '@/components/BodyMap'
+import type { BodySex } from '@/lib/body'
 import { muscleIntensities } from '@/lib/calc'
 import { num } from '@/lib/format'
 import './body-map.css'

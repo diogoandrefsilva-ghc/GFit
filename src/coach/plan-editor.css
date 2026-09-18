@@ -23,6 +23,18 @@
   gap: 10px;
 }
 
+.plan-ex__body {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+}
+
+/* O corpo acompanha o cartão todo, não só o título. */
+.plan-ex__main {
+  flex: 1;
+  min-width: 0;
+}
+
 .plan-ex__head {
   display: flex;
   align-items: flex-start;

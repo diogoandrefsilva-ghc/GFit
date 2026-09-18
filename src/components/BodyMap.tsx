@@ -1,52 +1,53 @@
 import { useMemo } from 'react'
 import type { CSSProperties } from 'react'
-import raw from '@/assets/corpo-gfit.svg?raw'
+import {
+  BODY_MUSCLES,
+  VIEW_BOX,
+  markup,
+  type BodySex,
+  type BodyView,
+} from '@/lib/body'
 import './body-map.css'
 
-export type BodyView = 'front' | 'back'
-export type BodySex = 'M' | 'F' | null | undefined
-
 /**
- * Os 15 grupos desenhados no `corpo-gfit.svg`. São, de propósito, exactamente
- * os slugs da tabela `gfit.muscles`: o que o exercício diz que trabalha é o
- * que o corpo acende, sem tabela de conversão pelo meio.
+ * Folga do toque, em unidades do desenho (o viewBox tem 220 de largura). Num
+ * telemóvel o corpo fica com uns 160 px, e aí um deltóide não chega a 10 px de
+ * lado — bem abaixo do que um polegar acerta. Um toque que caia ao lado apanha
+ * o músculo mais próximo dentro desta distância; mais longe não apanha nada,
+ * para tocar fora do corpo continuar a não fazer nada.
  */
-export const BODY_MUSCLES = [
-  'abs',
-  'adutores',
-  'biceps',
-  'dorsal',
-  'gemeos',
-  'gluteo',
-  'lombares',
-  'ombro_frontal',
-  'ombro_medio',
-  'ombro_posterior',
-  'peito',
-  'posterior_de_coxa',
-  'quadriceps',
-  'trapezio',
-  'triceps',
-] as const
+const SNAP = 10
 
-/** As duas vistas vivem no mesmo ficheiro, nas mesmas coordenadas locais. */
-const VIEW_BOX = '-10 0 220 460'
+/** Que músculo é que este ponto do ecrã quer dizer. */
+function muscleAt(svg: SVGSVGElement, clientX: number, clientY: number): string | null {
+  const direct = document.elementFromPoint(clientX, clientY)?.closest?.('[data-muscle]')
+  if (direct) return direct.getAttribute('data-muscle')
 
-let views: Record<BodyView, string> | null = null
+  const ctm = svg.getScreenCTM()
+  if (!ctm) return null
+  const point = new DOMPoint(clientX, clientY).matrixTransform(ctm.inverse())
 
-/**
- * O SVG entra como texto e é partido uma vez nas duas vistas. Tem de ficar
- * inline no DOM — com `<img src>` o CSS da app não lhe chegava e não havia
- * como pintar nada.
- */
-function markup(view: BodyView): string {
-  if (!views) {
-    const doc = new DOMParser().parseFromString(raw, 'image/svg+xml')
-    const inner = (id: string) =>
-      doc.querySelector(`[id="${id}"]`)?.innerHTML ?? ''
-    views = { front: inner('body-front'), back: inner('body-back') }
+  let nearest: string | null = null
+  let shortest = SNAP
+  for (const group of svg.querySelectorAll<SVGGraphicsElement>('[data-muscle]')) {
+    // Lado a lado, e não o grupo inteiro: a caixa de um grupo com esquerdo e
+    // direito abrange o vão do meio e monta-se por cima da dos vizinhos — pelo
+    // esterno, o peito perdia para o deltóide, que nem ali está.
+    for (const shape of group.querySelectorAll<SVGGraphicsElement>('path')) {
+      const box = shape.getBBox()
+      // A silhueta que não está a ser mostrada não tem caixa; ignora-se, senão
+      // ficava um alvo fantasma na origem do desenho.
+      if (box.width === 0 && box.height === 0) continue
+      const dx = Math.max(box.x - point.x, 0, point.x - (box.x + box.width))
+      const dy = Math.max(box.y - point.y, 0, point.y - (box.y + box.height))
+      const distance = Math.hypot(dx, dy)
+      if (distance < shortest) {
+        shortest = distance
+        nearest = group.getAttribute('data-muscle')
+      }
+    }
   }
-  return views[view]
+  return nearest
 }
 
 interface Props {
@@ -105,8 +106,7 @@ export function BodyMap({
       onClick={
         onPick
           ? (event) => {
-              const group = (event.target as Element).closest?.('[data-muscle]')
-              const slug = group?.getAttribute('data-muscle')
+              const slug = muscleAt(event.currentTarget, event.clientX, event.clientY)
               if (slug) onPick(slug)
             }
           : undefined

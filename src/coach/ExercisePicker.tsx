@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { MuscleFilter } from '@/components/MuscleFilter'
 import { VideoModal } from '@/components/VideoModal'
 import { fetchMuscles, searchExercises } from '@/lib/api'
 import { hasPlayableVideo } from '@/lib/video'
@@ -76,17 +77,9 @@ export function ExercisePicker({
               {item}
             </button>
           ))}
-          {(muscles ?? []).map((item) => (
-            <button
-              key={item.slug}
-              type="button"
-              className={`chip ${muscle === item.slug ? 'chip--on' : ''}`}
-              onClick={() => setMuscle(muscle === item.slug ? null : item.slug)}
-            >
-              {item.name}
-            </button>
-          ))}
         </div>
+
+        <MuscleFilter muscles={muscles ?? []} value={muscle} onChange={setMuscle} />
 
         <ul className="picker__list">
           {loading && <li className="picker__empty">A procurar…</li>}

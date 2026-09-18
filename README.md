@@ -287,9 +287,23 @@ desenho e mantém a transição de cor a funcionar.
 
 | Ecrã | O que mostra |
 | --- | --- |
-| Editor de plano (treinador) | O volume do treino aberto ou da semana toda, com um botão a trocar entre os dois |
+| Editor de plano (treinador) | O volume do treino aberto ou da semana toda, com um botão a trocar entre os dois. Cada exercício do treino leva a sua miniatura |
 | Treino (aluno) | O que a semana marcada trabalha — ou o plano inteiro, se ainda não houver marcações |
 | Fim da sessão (aluno) | O que acabou de trabalhar, contando só as séries que ficaram registadas |
+| Biblioteca e escolha de exercícios (treinador) | O corpo escolhe o filtro: toca-se num músculo para ver só os exercícios que o trabalham. Abrir uma linha da biblioteca mostra o corpo desse exercício e os pesos |
+
+`MuscleThumb` é a miniatura de um exercício: mostra **uma** vista, a que apanha
+mais do que ele trabalha. Não vai em listas longas de propósito — a 44 px não
+se distingue peito de ombro, e 120 corpos punham a lista a demorar 1,3 s a
+desenhar a cada tecla da pesquisa. Nas listas longas o corpo aparece a pedido,
+ao abrir a linha.
+
+`MuscleFilter` é o corpo que filtra. Num telemóvel cada vista fica com uns
+160 px e um deltóide não chega a 10 px de lado, muito abaixo do que um polegar
+acerta, por isso um toque que caia ao lado apanha o músculo mais próximo dentro
+de 10 unidades do desenho — medido contra cada lado, não contra a caixa do
+grupo, senão pelo esterno o peito perdia para o deltóide. Fora desse raio não
+apanha nada: cabeça, mãos e pés continuam mudos.
 
 ### Aluno e aluna
 

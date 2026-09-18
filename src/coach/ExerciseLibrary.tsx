@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Loading, ScreenHeader } from '@/components/Screen'
+import { MuscleFilter } from '@/components/MuscleFilter'
+import { MuscleThumb } from '@/components/MuscleThumb'
 import { VideoModal } from '@/components/VideoModal'
 import { hasPlayableVideo } from '@/lib/video'
 import type { Exercise } from '@/lib/database.types'
 import { fetchMuscles, searchExercises } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
-import { plural } from '@/lib/format'
+import { num, plural } from '@/lib/format'
 import { unwrap, useQuery } from '@/lib/useQuery'
 import '@/coach/exercise-picker.css'
 import './exercise-library.css'
@@ -101,17 +103,14 @@ export function ExerciseLibrary() {
             {item}
           </button>
         ))}
-        {(muscles ?? []).map((item) => (
-          <button
-            key={item.slug}
-            type="button"
-            className={`chip ${muscle === item.slug ? 'chip--on' : ''}`}
-            onClick={() => setMuscle(muscle === item.slug ? null : item.slug)}
-          >
-            {item.name}
-          </button>
-        ))}
       </div>
+
+      <MuscleFilter
+        muscles={muscles ?? []}
+        value={muscle}
+        onChange={setMuscle}
+        defaultOpen
+      />
 
       {loading ? (
         <Loading label="A procurar" />
@@ -123,33 +122,12 @@ export function ExerciseLibrary() {
           </p>
           <ul className="library">
             {(results ?? []).map((exercise) => (
-              <li key={exercise.id} className="library__item">
-                <span className="library__text">
-                  <strong>{exercise.name}</strong>
-                  <em>
-                    {[
-                      exercise.pattern,
-                      exercise.primary_muscle
-                        ? muscleNames.get(exercise.primary_muscle)
-                        : null,
-                      exercise.equipment,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </em>
-                </span>
-                {hasPlayableVideo(exercise.video_url) ? (
-                  <button
-                    type="button"
-                    className="library__video"
-                    onClick={() => setVideo(exercise)}
-                  >
-                    ▸ vídeo
-                  </button>
-                ) : (
-                  <span className="library__novideo">sem vídeo</span>
-                )}
-              </li>
+              <LibraryRow
+                key={exercise.id}
+                exercise={exercise}
+                muscleNames={muscleNames}
+                onVideo={() => setVideo(exercise)}
+              />
             ))}
             {(results?.length ?? 0) === 0 && (
               <li className="empty">Nada encontrado{term ? ` para "${term}"` : ''}.</li>
@@ -281,5 +259,79 @@ function NewExerciseForm({
         {busy ? 'A guardar…' : 'Adicionar à base'}
       </button>
     </section>
+  )
+}
+
+/**
+ * Uma linha da lista. O corpo não vem desenhado de origem: a 44 px não se
+ * distinguiria peito de ombro, e 120 deles punham a lista a demorar mais de um
+ * segundo a aparecer a cada tecla da pesquisa. Abre-se o que se quer ver.
+ */
+function LibraryRow({
+  exercise,
+  muscleNames,
+  onVideo,
+}: {
+  exercise: Exercise
+  muscleNames: Map<string, string>
+  onVideo: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const shares = Array.isArray(exercise.muscles) ? exercise.muscles : []
+
+  return (
+    <li className={`library__item ${open ? 'is-open' : ''}`}>
+      <div className="library__row">
+        <button
+          type="button"
+          className="library__text"
+          onClick={() => setOpen((value) => !value)}
+          aria-expanded={open}
+        >
+          <strong>{exercise.name}</strong>
+          <em>
+            {[
+              exercise.pattern,
+              exercise.primary_muscle
+                ? muscleNames.get(exercise.primary_muscle)
+                : null,
+              exercise.equipment,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </em>
+        </button>
+        {hasPlayableVideo(exercise.video_url) ? (
+          <button type="button" className="library__video" onClick={onVideo}>
+            ▸ vídeo
+          </button>
+        ) : (
+          <span className="library__novideo">sem vídeo</span>
+        )}
+      </div>
+
+      {open && (
+        <div className="library__muscles">
+          <MuscleThumb muscles={shares} names={muscleNames} />
+          {shares.length > 0 ? (
+            <ul className="library__shares">
+              {[...shares]
+                .sort((a, b) => Number(b.weight) - Number(a.weight))
+                .map((share) => (
+                  <li key={share.muscle}>
+                    <span>{muscleNames.get(share.muscle) ?? share.muscle}</span>
+                    <em>{num(Number(share.weight), 1)}</em>
+                  </li>
+                ))}
+            </ul>
+          ) : (
+            <p className="muted">
+              Este exercício não tem músculos atribuídos na base, por isso não
+              acende nada nem conta para o volume.
+            </p>
+          )}
+        </div>
+      )}
+    </li>
   )
 }
