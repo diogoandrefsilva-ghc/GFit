@@ -1,17 +1,26 @@
-export function Logo({ size = 36 }: { size?: number }) {
+const BASE = import.meta.env.BASE_URL
+
+/**
+ * A marca. `mark` são as silhuetas (o mesmo desenho do ícone da app), boa a
+ * partir de ~28 px; `full` traz a palavra por baixo, para o ecrã de entrada.
+ */
+export function Logo({
+  size = 36,
+  variant = 'mark',
+}: {
+  size?: number
+  variant?: 'mark' | 'full'
+}) {
+  const src = variant === 'full' ? `${BASE}logo-gfit.png` : `${BASE}icon-192.png`
+
   return (
-    <svg
+    <img
+      className={`logo logo--${variant}`}
+      src={src}
       width={size}
       height={size}
-      viewBox="0 0 48 48"
-      role="img"
-      aria-label="GFit"
-    >
-      <rect width="48" height="48" rx="12" fill="#16150F" />
-      {/* Um haltere: a barra e os dois discos. */}
-      <rect x="10" y="21.5" width="28" height="5" rx="2.5" fill="#F4F1EC" />
-      <rect x="7" y="17" width="6" height="14" rx="2.5" fill="#FF4A1C" />
-      <rect x="35" y="17" width="6" height="14" rx="2.5" fill="#FF4A1C" />
-    </svg>
+      alt="GFit"
+      decoding="async"
+    />
   )
 }

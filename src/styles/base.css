@@ -120,6 +120,19 @@ ul {
   gap: 12px;
 }
 
+/* ── marca ─────────────────────────────────────────────── */
+
+.logo {
+  display: block;
+  object-fit: contain;
+  /* Mesma proporção de canto do ícone da app. */
+  border-radius: 22%;
+}
+
+.logo--full {
+  border-radius: 0;
+}
+
 /* ── cartões ───────────────────────────────────────────── */
 
 .card {

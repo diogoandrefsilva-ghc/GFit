@@ -184,7 +184,19 @@ src/
   lib/         cliente Supabase, tipos, consultas, formatação, cálculos
   assets/      o SVG do corpo
   styles/      tokens e folha de estilo base
+brand/         o logótipo em tamanho grande, de onde saem os ícones
+public/        ícones da app e do separador, gerados a partir do logótipo
 ```
+
+Os ícones não se editam à mão: saem todos de `brand/gfit-logo.png` com
+
+```bash
+pip install pillow && python3 scripts/make_icons.py
+```
+
+O ícone usa só as silhuetas — a palavra *GFit* do logótipo fica ilegível a
+192 px. O `favicon.svg` é à parte: aos 16 px do separador nem as silhuetas se
+lêem, por isso é um haltere nas cores da marca.
 
 Os protótipos do Claude Design (`FG Coach App.dc.html`,
 `FG Coach Protótipo.dc.html`) ficam no repositório como referência do desenho.
