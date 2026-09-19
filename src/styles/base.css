@@ -72,6 +72,22 @@ ul {
   flex-direction: column;
 }
 
+/*
+ * O papel por baixo da barra de estado. Sem ele, o que se faz deslizar passa
+ * por trás das horas e da bateria e lê-se um por cima do outro.
+ */
+.app::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--safe-top);
+  background: var(--paper);
+  z-index: 12;
+  pointer-events: none;
+}
+
 .screen {
   flex: 1;
   padding: 18px 18px calc(var(--tabbar-h) + var(--safe-bottom) + 24px);
@@ -364,6 +380,42 @@ ul {
   font-weight: 600;
   color: var(--muted-strong);
   white-space: nowrap;
+}
+
+/* ── escolha de um entre poucos ────────────────────────
+   Duas ou três hipóteses que se excluem — por repetições ou a tempo, série a
+   série ou em circuito. Ao contrário das etiquetas soltas, o carril fechado
+   mostra à partida quantas são e que só uma vale de cada vez. */
+
+.segmented {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.segmented__opt {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  /* Com três hipóteses num ecrã estreito, "Repetições" só cabe a encolher. */
+  font-size: clamp(12px, 3.4vw, 14px);
+  font-weight: 700;
+  color: var(--muted-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+
+.segmented__opt.is-on {
+  background: var(--ink);
+  color: var(--paper);
 }
 
 .chip--on {
