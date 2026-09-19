@@ -51,6 +51,15 @@
   outline: none;
 }
 
+/*
+ * Nada se espreme para caber: num ecrã curto o cartão desliza. Sem isto, o
+ * texto do cartão mais comprido era encolhido para dentro da sua caixa e
+ * escrevia-se por cima dos pontos e dos botões.
+ */
+.welcome__card > * {
+  flex-shrink: 0;
+}
+
 .welcome__top {
   display: flex;
   align-items: center;
@@ -76,13 +85,28 @@
   text-underline-offset: 3px;
 }
 
+/* O carril que troca de lado. Fica acima do cartão e não muda com ele: é a
+   moldura, não o conteúdo. */
+.welcome__side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.welcome__peek {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--muted);
+  text-align: center;
+}
+
 .welcome__slide {
   display: flex;
   flex-direction: column;
   gap: 6px;
   /* As páginas têm textos de tamanhos diferentes; sem isto o cartão saltava
      de altura a cada toque em "Seguinte". */
-  min-height: 250px;
+  min-height: 230px;
   animation: welcome-slide 0.2s ease;
 }
 

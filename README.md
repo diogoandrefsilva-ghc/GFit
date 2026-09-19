@@ -17,8 +17,10 @@ ginásio onde a rede é fraca) e está publicada no GitHub Pages.
 - **Auto-treino** — quem quer escrever o seu próprio treino escreve-o, tenha
   treinador ou não. Quem tem treinador continua a mostrar-lho.
 - **Primeira vez** — quem entra pela primeira vez leva uma apresentação de seis
-  cartões a dizer o que faz cada separador, diferente para o aluno e para o
-  treinador. Vê-se uma vez, salta-se a qualquer altura, e fica no *Perfil* para
+  cartões a dizer o que faz cada separador. Abre no lado de quem está a ver, e
+  o carril em cima deixa espreitar o outro: o treinador vê o que chega ao
+  telemóvel dos alunos, o aluno percebe o que o treinador faz com o que ele
+  regista. Vê-se uma vez, salta-se a qualquer altura, e fica no *Perfil* para
   quem a quiser rever.
 
 ## De onde vêm os dados

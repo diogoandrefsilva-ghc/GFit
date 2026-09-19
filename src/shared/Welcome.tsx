@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useAuth, useProfile, useTrainsAlone } from '@/auth/useAuth'
 import { Logo } from '@/components/Logo'
+import { Segmented } from '@/components/Segmented'
 import { TabIcon, type Tab } from '@/components/TabBar'
 import { forgetTour, hasSeenTour, markTourSeen } from '@/lib/tour'
 import './welcome.css'
+
+/** Os dois lados da app. Cada um tem a sua apresentação. */
+type Side = 'athlete' | 'coach'
 
 interface Slide {
   /** O símbolo do separador de que o cartão fala; o primeiro traz a marca. */
@@ -23,6 +27,9 @@ interface Slide {
  *
  * O conteúdo muda com quem está a ver: o treinador não tem "Semana" para
  * responder, e quem treina por sua conta escreve o plano em vez de o receber.
+ * Abre no lado de quem está a ver, e o carril em cima deixa espreitar o outro
+ * — o treinador vê o que os alunos veem, o aluno percebe o que chega ao
+ * treinador. É a mesma app; só muda o lugar onde cada um se senta.
  */
 export function Welcome({
   mode = 'first-run',
@@ -35,13 +42,26 @@ export function Welcome({
   const { isCoach } = useAuth()
   const alone = useTrainsAlone()
 
+  const own: Side = isCoach ? 'coach' : 'athlete'
+  const [side, setSide] = useState<Side>(own)
+
   const slides = useMemo(
-    () => (isCoach ? coachSlides() : athleteSlides(alone)),
-    [isCoach, alone],
+    () =>
+      side === 'coach'
+        ? coachSlides()
+        : // Do lado de lá, o aluno a mostrar é o que tem treinador — é esse
+          // que o treinador quer reconhecer no telemóvel de quem acompanha.
+          athleteSlides(side === own ? alone : false),
+    [side, own, alone],
   )
 
   const card = useRef<HTMLDivElement>(null)
-  const [at, setAt] = useState(0)
+  const [step, setStep] = useState(0)
+
+  // Os dois lados têm o mesmo número de cartões e a mesma ordem, por isso
+  // trocar a meio deixa ficar a página: vê-se o cartão equivalente do outro
+  // lado. O limite é por segurança, para o dia em que deixarem de ser iguais.
+  const at = Math.min(step, slides.length - 1)
   // Na primeira vez a caixa vem marcada: a apresentação é para ver uma vez.
   // Ao rever, mostra o que está guardado — desmarcá-la traz o ecrã de volta.
   const [remember, setRemember] = useState(() =>
@@ -79,10 +99,11 @@ export function Welcome({
     return () => document.removeEventListener('keydown', onKey)
   })
 
-  // Num ecrã curto o cartão desliza; ao mudar de página volta ao princípio.
+  // Num ecrã curto o cartão desliza; ao mudar de página — ou de lado — volta
+  // ao princípio.
   useEffect(() => {
     card.current?.scrollTo({ top: 0 })
-  }, [at])
+  }, [at, side])
 
   const slide = slides[at]
 
@@ -107,7 +128,31 @@ export function Welcome({
           )}
         </div>
 
-        <div className="welcome__slide" key={at} aria-live="polite">
+        <div className="welcome__side">
+          <Segmented<Side>
+            value={side}
+            options={[
+              ['athlete', 'Aluno'],
+              ['coach', 'Treinador'],
+            ]}
+            onChange={setSide}
+            label="Ver a app do lado do aluno ou do treinador"
+          />
+          {/* A apresentação trata o lado por "tu". A espreitar o outro, é
+              preciso dizer de quem se está a falar — senão o aluno lê "os
+              planos que escreves" e fica à procura do botão. */}
+          {side !== own && (
+            <p className="welcome__peek">
+              {own === 'coach'
+                ? 'Do lado do aluno — os ecrãs de quem treina contigo.'
+                : alone
+                  ? 'Do lado do treinador — os ecrãs de quem acompanha alunos.'
+                  : 'Do lado do treinador — os ecrãs de quem te escreve o plano.'}
+            </p>
+          )}
+        </div>
+
+        <div className="welcome__slide" key={`${side}-${at}`} aria-live="polite">
           <span className="welcome__icon">
             {slide.icon === 'brand' ? (
               <Logo size={40} />
@@ -134,7 +179,7 @@ export function Welcome({
             <button
               type="button"
               className="btn btn--quiet"
-              onClick={() => setAt(at - 1)}
+              onClick={() => setStep(at - 1)}
             >
               Anterior
             </button>
@@ -142,7 +187,7 @@ export function Welcome({
           <button
             type="button"
             className="btn btn--accent welcome__next"
-            onClick={() => (last ? finish() : setAt(at + 1))}
+            onClick={() => (last ? finish() : setStep(at + 1))}
           >
             {last ? 'Começar' : 'Seguinte'}
           </button>
