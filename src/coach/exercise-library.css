@@ -71,11 +71,40 @@
   color: var(--muted);
 }
 
-/* O vídeo vai para o fim do bloco, e não a meio do cartão. */
-.library__main .library__video,
-.library__main .library__novideo {
+/* O vídeo e as ações vão para o fim do bloco, e não a meio do cartão. */
+.library__main .library__actions {
   align-self: flex-start;
   margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.library__edit,
+.library__delete {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--paper-2);
+  color: var(--muted);
+}
+
+.library__delete {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.library__item--editing {
+  padding: 12px 14px;
+}
+
+.library__item--editing .card {
+  border: none;
+  padding: 0;
+  width: 100%;
 }
 
 /* A coluna do que o exercício trabalha, com a régua a delimitá-la. */

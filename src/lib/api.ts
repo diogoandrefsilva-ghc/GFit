@@ -10,6 +10,7 @@ import type {
   Food,
   Invite,
   Muscle,
+  MuscleShare,
   DailyLog,
   DietItem,
   DietMeal,
@@ -1098,6 +1099,32 @@ export async function searchFoods(term: string): Promise<Food[]> {
 
 export async function fetchMuscles(): Promise<Muscle[]> {
   return unwrap(await supabase.from('muscles').select('*').order('sort_order'))
+}
+
+export type ExerciseInput = {
+  name: string
+  pattern: string | null
+  category: string | null
+  primary_muscle: string | null
+  muscles: MuscleShare[]
+  equipment: string | null
+  video_url: string | null
+}
+
+export async function createExercise(input: ExerciseInput): Promise<Exercise> {
+  const rows = unwrap(await supabase.from('exercises').insert(input).select())
+  return rows[0]
+}
+
+export async function updateExercise(id: string, input: ExerciseInput): Promise<Exercise> {
+  const rows = unwrap(
+    await supabase.from('exercises').update(input).eq('id', id).select(),
+  )
+  return rows[0]
+}
+
+export async function deleteExercise(id: string): Promise<void> {
+  unwrap(await supabase.from('exercises').delete().eq('id', id).select())
 }
 
 export async function addExerciseToDay(

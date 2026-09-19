@@ -4,15 +4,24 @@ import { MuscleFilter } from '@/components/MuscleFilter'
 import { MuscleThumb } from '@/components/MuscleThumb'
 import { VideoModal } from '@/components/VideoModal'
 import { hasPlayableVideo } from '@/lib/video'
-import type { Exercise } from '@/lib/database.types'
-import { fetchMuscles, searchExercises } from '@/lib/api'
-import { supabase } from '@/lib/supabase'
+import type { Exercise, MuscleShare } from '@/lib/database.types'
+import {
+  createExercise,
+  deleteExercise,
+  fetchMuscles,
+  searchExercises,
+  updateExercise,
+  type ExerciseInput,
+} from '@/lib/api'
+import { describeError, supabase } from '@/lib/supabase'
 import { num, plural, titleCase } from '@/lib/format'
-import { unwrap, useQuery } from '@/lib/useQuery'
+import { useQuery } from '@/lib/useQuery'
 import '@/coach/exercise-picker.css'
 import './exercise-library.css'
 
 const PATTERNS = ['Puxar', 'Empurrar', 'Perna', 'Core', 'Geral']
+
+type MuscleOption = { slug: string; name: string }
 
 /** A base de exercícios do Treinador, para consultar e acrescentar. */
 export function ExerciseLibrary() {
@@ -39,21 +48,29 @@ export function ExerciseLibrary() {
     { persist: false },
   )
 
-  const { data: counts } = useQuery(['exercicios-contagem'], async () => {
-    const total = await supabase
-      .from('exercises')
-      .select('id', { count: 'exact', head: true })
-    const withVideo = await supabase
-      .from('exercises')
-      .select('id', { count: 'exact', head: true })
-      .not('video_url', 'is', null)
-    return { total: total.count ?? 0, withVideo: withVideo.count ?? 0 }
-  })
+  const { data: counts, reload: reloadCounts } = useQuery(
+    ['exercicios-contagem'],
+    async () => {
+      const total = await supabase
+        .from('exercises')
+        .select('id', { count: 'exact', head: true })
+      const withVideo = await supabase
+        .from('exercises')
+        .select('id', { count: 'exact', head: true })
+        .not('video_url', 'is', null)
+      return { total: total.count ?? 0, withVideo: withVideo.count ?? 0 }
+    },
+  )
 
   const muscleNames = useMemo(
     () => new Map((muscles ?? []).map((item) => [item.slug, item.name])),
     [muscles],
   )
+
+  const refreshAfterChange = () => {
+    reload()
+    reloadCounts()
+  }
 
   return (
     <div className="screen">
@@ -76,11 +93,12 @@ export function ExerciseLibrary() {
       />
 
       {creating && (
-        <NewExerciseForm
+        <ExerciseForm
+          title="Novo exercício"
           muscles={muscles ?? []}
-          onCreated={() => {
+          onSaved={() => {
             setCreating(false)
-            reload()
+            refreshAfterChange()
           }}
         />
       )}
@@ -125,8 +143,10 @@ export function ExerciseLibrary() {
               <LibraryRow
                 key={exercise.id}
                 exercise={exercise}
+                muscles={muscles ?? []}
                 muscleNames={muscleNames}
                 onVideo={() => setVideo(exercise)}
+                onChanged={refreshAfterChange}
               />
             ))}
             {(results?.length ?? 0) === 0 && (
@@ -147,30 +167,117 @@ export function ExerciseLibrary() {
   )
 }
 
-function NewExerciseForm({
+type ExerciseFormValues = {
+  name: string
+  primary: string
+  pattern: string
+  category: string
+  equipment: string
+  video: string
+  secondary: Record<string, number>
+}
+
+function blankForm(): ExerciseFormValues {
+  return {
+    name: '',
+    primary: '',
+    pattern: '',
+    category: '',
+    equipment: '',
+    video: '',
+    secondary: {},
+  }
+}
+
+function formFromExercise(exercise: Exercise): ExerciseFormValues {
+  const secondary: Record<string, number> = {}
+  for (const share of exercise.muscles ?? []) {
+    if (share.muscle && share.muscle !== exercise.primary_muscle) {
+      secondary[share.muscle] = Number(share.weight)
+    }
+  }
+  return {
+    name: exercise.name,
+    primary: exercise.primary_muscle ?? '',
+    pattern: exercise.pattern ?? '',
+    category: exercise.category ?? '',
+    equipment: exercise.equipment ?? '',
+    video: exercise.video_url ?? '',
+    secondary,
+  }
+}
+
+/** O músculo principal conta série inteira, como na planilha; os secundários entram com o peso escolhido. */
+function buildMuscles(values: ExerciseFormValues): MuscleShare[] {
+  const shares: MuscleShare[] = []
+  if (values.primary) shares.push({ muscle: values.primary, weight: 1 })
+  for (const [muscle, weight] of Object.entries(values.secondary)) {
+    if (muscle !== values.primary) shares.push({ muscle, weight })
+  }
+  return shares
+}
+
+function buildPayload(values: ExerciseFormValues): ExerciseInput {
+  return {
+    name: values.name.trim(),
+    pattern: values.pattern || null,
+    category: values.category.trim() || null,
+    primary_muscle: values.primary || null,
+    equipment: values.equipment.trim() || null,
+    video_url: values.video.trim() || null,
+    muscles: buildMuscles(values),
+  }
+}
+
+/**
+ * Formulário de criar/editar exercício. Sem `initial`, cria um novo; com
+ * `initial`, atualiza esse exercício no lugar.
+ */
+function ExerciseForm({
+  title,
   muscles,
-  onCreated,
+  initial,
+  onSaved,
+  onCancel,
 }: {
-  muscles: { slug: string; name: string }[]
-  onCreated: () => void
+  title: string
+  muscles: MuscleOption[]
+  initial?: Exercise
+  onSaved: () => void
+  onCancel?: () => void
 }) {
-  const [name, setName] = useState('')
-  const [primary, setPrimary] = useState('')
-  const [pattern, setPattern] = useState('')
-  const [video, setVideo] = useState('')
-  const [equipment, setEquipment] = useState('')
+  const [values, setValues] = useState<ExerciseFormValues>(
+    initial ? formFromExercise(initial) : blankForm(),
+  )
   const [busy, setBusy] = useState(false)
+  const [failure, setFailure] = useState<string | null>(null)
+
+  const set = (patch: Partial<ExerciseFormValues>) =>
+    setValues((current) => ({ ...current, ...patch }))
+
+  const cycleSecondary = (slug: string) => {
+    setValues((current) => {
+      const secondary = { ...current.secondary }
+      const weight = secondary[slug]
+      if (weight === undefined) secondary[slug] = 0.5
+      else if (weight === 0.5) secondary[slug] = 0.3
+      else delete secondary[slug]
+      return { ...current, secondary }
+    })
+  }
+
+  const secondaryOptions = muscles.filter((item) => item.slug !== values.primary)
 
   return (
     <section className="card">
-      <span className="eyebrow">Novo exercício</span>
+      <span className="eyebrow">{title}</span>
 
       <label className="field">
         <span className="field__label">Nome</span>
         <input
           className="input"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
+          value={values.name}
+          onChange={(event) => set({ name: event.target.value })}
         />
       </label>
 
@@ -179,13 +286,20 @@ function NewExerciseForm({
           <span className="field__label">Músculo principal</span>
           <select
             className="select"
-            value={primary}
-            onChange={(event) => setPrimary(event.target.value)}
+            value={values.primary}
+            onChange={(event) => {
+              const primary = event.target.value
+              setValues((current) => {
+                const secondary = { ...current.secondary }
+                delete secondary[primary]
+                return { ...current, primary, secondary }
+              })
+            }}
           >
             <option value="">—</option>
-            {muscles.map((muscle) => (
-              <option key={muscle.slug} value={muscle.slug}>
-                {muscle.name}
+            {muscles.map((item) => (
+              <option key={item.slug} value={item.slug}>
+                {item.name}
               </option>
             ))}
           </select>
@@ -195,8 +309,8 @@ function NewExerciseForm({
           <span className="field__label">Padrão</span>
           <select
             className="select"
-            value={pattern}
-            onChange={(event) => setPattern(event.target.value)}
+            value={values.pattern}
+            onChange={(event) => set({ pattern: event.target.value })}
           >
             <option value="">—</option>
             {PATTERNS.map((item) => (
@@ -209,12 +323,45 @@ function NewExerciseForm({
       </div>
 
       <label className="field">
+        <span className="field__label">Músculos secundários</span>
+        <div className="row row--wrap">
+          {secondaryOptions.map((item) => {
+            const weight = values.secondary[item.slug]
+            return (
+              <button
+                key={item.slug}
+                type="button"
+                className={`chip ${weight ? 'chip--on' : ''}`}
+                onClick={() => cycleSecondary(item.slug)}
+              >
+                {item.name}
+                {weight ? ` · ${formatWeight(weight)}` : ''}
+              </button>
+            )
+          })}
+        </div>
+        <span className="field__hint">
+          toca para acrescentar; toca outra vez para baixar o peso (0,5 → 0,3); mais uma para tirar
+        </span>
+      </label>
+
+      <label className="field">
+        <span className="field__label">Categoria</span>
+        <input
+          className="input"
+          value={values.category}
+          placeholder="Bicep curl, Elevações/puxadas vertical…"
+          onChange={(event) => set({ category: event.target.value })}
+        />
+      </label>
+
+      <label className="field">
         <span className="field__label">Equipamento</span>
         <input
           className="input"
-          value={equipment}
+          value={values.equipment}
           placeholder="Halteres, Barra, Cabos…"
-          onChange={(event) => setEquipment(event.target.value)}
+          onChange={(event) => set({ equipment: event.target.value })}
         />
       </label>
 
@@ -223,41 +370,47 @@ function NewExerciseForm({
         <input
           className="input"
           type="url"
-          value={video}
+          value={values.video}
           placeholder="https://youtu.be/…"
-          onChange={(event) => setVideo(event.target.value)}
+          onChange={(event) => set({ video: event.target.value })}
         />
       </label>
 
-      <button
-        type="button"
-        className="btn btn--primary btn--block"
-        disabled={busy || name.trim().length === 0}
-        onClick={async () => {
-          setBusy(true)
-          try {
-            unwrap(
-              await supabase
-                .from('exercises')
-                .insert({
-                  name: name.trim(),
-                  pattern: pattern || null,
-                  primary_muscle: primary || null,
-                  equipment: equipment.trim() || null,
-                  video_url: video.trim() || null,
-                  // O músculo principal conta série inteira, como na planilha.
-                  muscles: primary ? [{ muscle: primary, weight: 1 }] : [],
-                })
-                .select(),
-            )
-            onCreated()
-          } finally {
-            setBusy(false)
-          }
-        }}
-      >
-        {busy ? 'A guardar…' : 'Adicionar à base'}
-      </button>
+      {failure && <p className="error-banner">{failure}</p>}
+
+      <div className="row">
+        {onCancel && (
+          <button
+            type="button"
+            className="btn btn--quiet"
+            disabled={busy}
+            onClick={onCancel}
+          >
+            Cancelar
+          </button>
+        )}
+        <button
+          type="button"
+          className={`btn btn--primary ${onCancel ? '' : 'btn--block'}`}
+          disabled={busy || values.name.trim().length === 0}
+          onClick={async () => {
+            setBusy(true)
+            setFailure(null)
+            try {
+              const payload = buildPayload(values)
+              if (initial) await updateExercise(initial.id, payload)
+              else await createExercise(payload)
+              onSaved()
+            } catch (caught) {
+              setFailure(describeError(caught))
+            } finally {
+              setBusy(false)
+            }
+          }}
+        >
+          {busy ? 'A guardar…' : initial ? 'Guardar' : 'Adicionar à base'}
+        </button>
+      </div>
     </section>
   )
 }
@@ -274,18 +427,43 @@ function formatWeight(weight: number): string {
 
 /**
  * Uma linha da lista: o corpo à esquerda, o exercício no meio com o vídeo por
- * baixo, e à direita o que ele trabalha com os pesos da planilha. Deixou de
- * haver expansão — o que ela escondia está agora todo à vista.
+ * baixo, e à direita o que ele trabalha com os pesos da planilha. A editar,
+ * a linha dá lugar ao mesmo formulário usado para criar.
  */
 function LibraryRow({
   exercise,
+  muscles,
   muscleNames,
   onVideo,
+  onChanged,
 }: {
   exercise: Exercise
+  muscles: MuscleOption[]
   muscleNames: Map<string, string>
   onVideo: () => void
+  onChanged: () => void
 }) {
+  const [editing, setEditing] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [failure, setFailure] = useState<string | null>(null)
+
+  if (editing) {
+    return (
+      <li className="library__item library__item--editing">
+        <ExerciseForm
+          title="Editar exercício"
+          muscles={muscles}
+          initial={exercise}
+          onSaved={() => {
+            setEditing(false)
+            onChanged()
+          }}
+          onCancel={() => setEditing(false)}
+        />
+      </li>
+    )
+  }
+
   const shares = Array.isArray(exercise.muscles) ? exercise.muscles : []
   const meta = [exercise.pattern, exercise.equipment].filter(Boolean).join(' · ')
 
@@ -297,13 +475,42 @@ function LibraryRow({
         <strong className="library__name">{titleCase(exercise.name)}</strong>
         {meta && <em className="library__meta">{titleCase(meta)}</em>}
 
-        {hasPlayableVideo(exercise.video_url) ? (
-          <button type="button" className="library__video" onClick={onVideo}>
-            ▸ vídeo
+        <div className="library__actions">
+          {hasPlayableVideo(exercise.video_url) ? (
+            <button type="button" className="library__video" onClick={onVideo}>
+              ▸ vídeo
+            </button>
+          ) : (
+            <span className="library__novideo">sem vídeo</span>
+          )}
+          <button
+            type="button"
+            className="library__edit"
+            onClick={() => setEditing(true)}
+          >
+            editar
           </button>
-        ) : (
-          <span className="library__novideo">sem vídeo</span>
-        )}
+          <button
+            type="button"
+            className="library__delete"
+            disabled={deleting}
+            onClick={async () => {
+              if (!window.confirm(`Apagar "${exercise.name}" da base de exercícios?`)) return
+              setDeleting(true)
+              setFailure(null)
+              try {
+                await deleteExercise(exercise.id)
+                onChanged()
+              } catch (caught) {
+                setFailure(describeError(caught))
+                setDeleting(false)
+              }
+            }}
+          >
+            {deleting ? 'a apagar…' : 'apagar'}
+          </button>
+        </div>
+        {failure && <p className="error-banner">{failure}</p>}
       </div>
 
       <div className="library__work">
