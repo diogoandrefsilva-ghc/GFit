@@ -4,6 +4,8 @@ import { Loading, ScreenHeader } from "@/components/Screen";
 import { ExercisePicker } from "@/coach/ExercisePicker";
 import { PlanSchedule } from "@/coach/PlanSchedule";
 import { MuscleThumb } from "@/components/MuscleThumb";
+import { NumberSheet, RangeSheet, type Range } from "@/components/NumberSheet";
+import { Segmented } from "@/components/Segmented";
 import { MuscleWork } from "@/components/MuscleWork";
 import {
   addExerciseToDay,
@@ -317,96 +319,53 @@ export function PlanEditor() {
 }
 
 const SETS = [1, 2, 3, 4, 5, 6, 8, 10];
-const REP_RANGES = [
-  [4, 6],
-  [5, 8],
-  [6, 8],
-  [6, 10],
-  [8, 10],
-  [8, 12],
-  [10, 12],
-  [10, 15],
-  [12, 15],
-  [12, 20],
-  [15, 20],
-  [20, 30],
+const REP_RANGES: Range[] = [
+  { min: 4, max: 6 },
+  { min: 5, max: 8 },
+  { min: 6, max: 8 },
+  { min: 6, max: 10 },
+  { min: 8, max: 10 },
+  { min: 8, max: 12 },
+  { min: 10, max: 12 },
+  { min: 10, max: 15 },
+  { min: 12, max: 15 },
+  { min: 12, max: 20 },
+  { min: 15, max: 20 },
+  { min: 20, max: 30 },
 ];
 const WORK_SECONDS = [15, 20, 30, 40, 45, 60, 75, 90, 120, 180];
 const REST_SECONDS = [0, 15, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300];
 const DEFAULT_WORK_SECONDS = 45;
+const DEFAULT_REPS: Range = { min: 8, max: 12 };
 
-/** O valor que já lá está entra sempre na lista, por mais fora do comum que seja. */
-function numberOptions(
-  values: number[],
-  current: number,
-  label: (value: number) => string,
-): Option[] {
-  const all = values.includes(current)
-    ? values
-    : [...values, current].sort((a, b) => a - b);
-  return all.map((value) => ({ value: String(value), label: label(value) }));
-}
+/** Qual dos números do exercício está aberto para ser mudado. */
+type Editing = "sets" | "reps" | "time" | "rest";
 
-function repKey(min: number | null, max: number | null): string {
-  return `${min ?? ""}-${max ?? ""}`;
-}
-
-function repOptions(min: number | null, max: number | null): Option[] {
-  const options = REP_RANGES.map(([from, to]) => ({
-    value: `${from}-${to}`,
-    label: `${from}-${to}`,
-  }));
-  const current = repKey(min, max);
-  if (!options.some((option) => option.value === current)) {
-    options.unshift({ value: current, label: repRange(min, max) });
-  }
-  return options;
-}
-
-interface Option {
-  value: string;
-  label: string;
-}
-
-/** Um número do exercício, escolhido de uma lista curta em vez de escrito. */
-function Picker({
+/**
+ * Um dos três números do exercício. Lê-se de relance na lista e abre-se ao
+ * toque — o valor manda no tamanho, o nome fica por baixo em letra pequena.
+ */
+function NumberCell({
   label,
   value,
-  options,
-  onChange,
-  onCustom,
+  onOpen,
 }: {
   label: string;
   value: string;
-  options: Option[];
-  onChange: (value: string) => void;
-  onCustom: () => void;
+  onOpen: () => void;
 }) {
   return (
-    <label className="plan-ex__pick">
-      <select
-        className="plan-ex__select"
-        value={value}
-        aria-label={label}
-        onChange={(event) =>
-          event.target.value === CUSTOM
-            ? onCustom()
-            : onChange(event.target.value)
-        }
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-        <option value={CUSTOM}>outro…</option>
-      </select>
-      <em>{label}</em>
-    </label>
+    <button
+      type="button"
+      className="plan-ex__num"
+      onClick={onOpen}
+      aria-label={`${label}: ${value}. Alterar.`}
+    >
+      <span className="plan-ex__num-value">{value}</span>
+      <span className="plan-ex__num-label">{label}</span>
+    </button>
   );
 }
-
-const CUSTOM = "__custom__";
 
 function PlanExerciseRow({
   item,
@@ -430,7 +389,10 @@ function PlanExerciseRow({
   onMove: (direction: 1 | -1) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Editing | null>(null);
   const mode = item.mode ?? dayMode;
+  const name = titleCase(item.name_override ?? exercise?.name ?? "Exercício");
+  const work = item.work_seconds ?? DEFAULT_WORK_SECONDS;
 
   async function patch(values: Partial<PlanExercise>) {
     await updatePlanExercise(item.id, values);
@@ -449,9 +411,7 @@ function PlanExerciseRow({
         <div className="plan-ex__main">
           <div className="plan-ex__head">
             <span className="plan-ex__text">
-              <strong>
-                {titleCase(item.name_override ?? exercise?.name ?? "Exercício")}
-              </strong>
+              <strong>{name}</strong>
               <em>
                 {titleCase(
                   [exercise?.category, exercise?.equipment]
@@ -472,181 +432,123 @@ function PlanExerciseRow({
           </div>
 
           {/*
-        Séries, repetições e descanso mudam-se aqui mesmo, sem abrir nada: são
-        os três números que se mexem a toda a hora e quase sempre para valores
-        do costume. O que fugir à lista escolhe-se em "outro…", que abre o
-        painel com os campos livres.
-      */}
+            Séries, repetições e descanso são os três números que se mexem a
+            toda a hora: ficam à vista num carril só, e o toque em qualquer
+            deles abre o painel do fundo com os valores do costume e os
+            botões para afinar o que fugir à lista.
+          */}
           <div className="plan-ex__numbers">
-            <Picker
+            <NumberCell
               label="séries"
               value={String(item.sets)}
-              options={numberOptions(SETS, item.sets, (value) => String(value))}
-              onChange={(value) => patch({ sets: Number(value) })}
-              onCustom={() => setOpen(true)}
+              onOpen={() => setEditing("sets")}
             />
             {mode === "time" ? (
-              <Picker
+              <NumberCell
                 label="tempo"
-                value={String(item.work_seconds ?? DEFAULT_WORK_SECONDS)}
-                options={numberOptions(
-                  WORK_SECONDS,
-                  item.work_seconds ?? DEFAULT_WORK_SECONDS,
-                  (value) => `${value}s`,
-                )}
-                onChange={(value) => patch({ work_seconds: Number(value) })}
-                onCustom={() => setOpen(true)}
+                value={restLabel(work)}
+                onOpen={() => setEditing("time")}
               />
             ) : (
-              <Picker
+              <NumberCell
                 label="reps"
-                value={repKey(item.rep_min, item.rep_max)}
-                options={repOptions(item.rep_min, item.rep_max)}
-                onChange={(value) => {
-                  const [min, max] = value.split("-");
-                  patch({
-                    rep_min: min === "" ? null : Number(min),
-                    rep_max: max === "" ? null : Number(max),
-                  });
-                }}
-                onCustom={() => setOpen(true)}
+                value={repRange(item.rep_min, item.rep_max)}
+                onOpen={() => setEditing("reps")}
               />
             )}
-            <Picker
+            <NumberCell
               label="descanso"
-              value={String(item.rest_seconds)}
-              options={numberOptions(
-                REST_SECONDS,
-                item.rest_seconds,
-                restLabel,
-              )}
-              onChange={(value) => patch({ rest_seconds: Number(value) })}
-              onCustom={() => setOpen(true)}
+              value={restLabel(item.rest_seconds)}
+              onOpen={() => setEditing("rest")}
             />
           </div>
         </div>
       </div>
 
+      {editing === "sets" && (
+        <NumberSheet
+          title="Séries"
+          caption={name}
+          value={item.sets}
+          presets={SETS}
+          min={1}
+          max={20}
+          format={(value) => String(value)}
+          hint="Quantas vezes se repete o exercício antes de passar ao seguinte."
+          onChange={(value) => patch({ sets: value })}
+          onClose={() => setEditing(null)}
+        />
+      )}
+
+      {editing === "reps" && (
+        <RangeSheet
+          title="Repetições"
+          caption={name}
+          value={{
+            min: item.rep_min ?? DEFAULT_REPS.min,
+            max: item.rep_max ?? DEFAULT_REPS.max,
+          }}
+          presets={REP_RANGES}
+          min={1}
+          max={60}
+          hint="Um intervalo, não um número certo: o aluno fica entre as duas pontas conforme o dia."
+          onChange={(range) =>
+            patch({ rep_min: range.min, rep_max: range.max })
+          }
+          onClose={() => setEditing(null)}
+        />
+      )}
+
+      {editing === "time" && (
+        <NumberSheet
+          title="Tempo de trabalho"
+          caption={name}
+          value={work}
+          presets={WORK_SECONDS}
+          min={5}
+          max={1800}
+          step={5}
+          format={restLabel}
+          hint="Quanto tempo dura cada série. É a app que conta."
+          onChange={(value) => patch({ work_seconds: value })}
+          onClose={() => setEditing(null)}
+        />
+      )}
+
+      {editing === "rest" && (
+        <NumberSheet
+          title="Descanso"
+          caption={name}
+          value={item.rest_seconds}
+          presets={REST_SECONDS}
+          min={0}
+          max={600}
+          step={15}
+          format={restLabel}
+          hint="O que fica entre séries. Mais curto aperta o metabólico, mais longo serve a força."
+          onChange={(value) => patch({ rest_seconds: value })}
+          onClose={() => setEditing(null)}
+        />
+      )}
+
       {open && (
         <div className="plan-ex__edit">
-          <p className="field__hint">
-            Aqui ficam o modo, a nota, a ordem e os números que fogem à lista.
-          </p>
           <div className="field">
             <span className="field__label">Conta-se em</span>
-            <div className="row row--wrap">
-              <button
-                type="button"
-                className={`chip ${item.mode === null ? "chip--on" : ""}`}
-                onClick={() => patch({ mode: null })}
-              >
-                Como o treino
-              </button>
-              {(
-                [
-                  ["reps", "Repetições"],
-                  ["time", "Tempo"],
-                ] as const
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={`chip ${item.mode === value ? "chip--on" : ""}`}
-                  onClick={() => patch({ mode: value })}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid-2">
-            <label className="field">
-              <span className="field__label">Séries</span>
-              <input
-                className="input"
-                type="number"
-                min={1}
-                max={20}
-                key={item.sets}
-                defaultValue={item.sets}
-                onBlur={(event) => patch({ sets: Number(event.target.value) })}
-              />
-            </label>
-            <label className="field">
-              <span className="field__label">Descanso (s)</span>
-              <input
-                className="input"
-                type="number"
-                min={0}
-                max={600}
-                step={15}
-                key={item.rest_seconds}
-                defaultValue={item.rest_seconds}
-                onBlur={(event) =>
-                  patch({ rest_seconds: Number(event.target.value) })
-                }
-              />
-            </label>
-            {mode === "time" && (
-              <label className="field">
-                <span className="field__label">Duração (s)</span>
-                <input
-                  className="input"
-                  type="number"
-                  min={1}
-                  max={3600}
-                  step={5}
-                  key={item.work_seconds ?? DEFAULT_WORK_SECONDS}
-                  defaultValue={item.work_seconds ?? DEFAULT_WORK_SECONDS}
-                  onBlur={(event) =>
-                    patch({ work_seconds: Number(event.target.value) })
-                  }
-                />
-              </label>
-            )}
-            {mode === "reps" && (
-              <>
-                <label className="field">
-                  <span className="field__label">Reps mín.</span>
-                  <input
-                    className="input"
-                    type="number"
-                    min={1}
-                    max={60}
-                    key={item.rep_min ?? ""}
-                    defaultValue={item.rep_min ?? ""}
-                    onBlur={(event) =>
-                      patch({
-                        rep_min:
-                          event.target.value === ""
-                            ? null
-                            : Number(event.target.value),
-                      })
-                    }
-                  />
-                </label>
-                <label className="field">
-                  <span className="field__label">Reps máx.</span>
-                  <input
-                    className="input"
-                    type="number"
-                    min={1}
-                    max={60}
-                    key={item.rep_max ?? ""}
-                    defaultValue={item.rep_max ?? ""}
-                    onBlur={(event) =>
-                      patch({
-                        rep_max:
-                          event.target.value === ""
-                            ? null
-                            : Number(event.target.value),
-                      })
-                    }
-                  />
-                </label>
-              </>
-            )}
+            <Segmented<WorkMode | null>
+              value={item.mode}
+              options={[
+                [null, "Do treino"],
+                ["reps", "Repetições"],
+                ["time", "Tempo"],
+              ]}
+              onChange={(value) => patch({ mode: value })}
+              label="Como se conta este exercício"
+            />
+            <span className="field__hint">
+              Por norma segue o treino. Muda-se aqui quando é só este exercício
+              que vai a relógio — ou ao contrário.
+            </span>
           </div>
 
           <label className="field">
@@ -726,23 +628,15 @@ function DaySettings({
 
       <div className="field">
         <span className="field__label">Este treino conta-se em</span>
-        <div className="row">
-          {(
-            [
-              ["reps", "Repetições"],
-              ["time", "Tempo"],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              className={`chip ${day.mode === value ? "chip--on" : ""}`}
-              onClick={() => day.mode !== value && patch({ mode: value })}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <Segmented<WorkMode>
+          value={day.mode}
+          options={[
+            ["reps", "Repetições"],
+            ["time", "Tempo"],
+          ]}
+          onChange={(value) => patch({ mode: value })}
+          label="Este treino conta-se em"
+        />
         <span className="field__hint">
           {day.mode === "time"
             ? "A app conduz o treino com temporizador, e o aluno só tem de seguir."
@@ -754,23 +648,15 @@ function DaySettings({
         <>
           <div className="field">
             <span className="field__label">Ordem</span>
-            <div className="row">
-              {(
-                [
-                  ["sets", "Série a série"],
-                  ["circuit", "Circuito"],
-                ] as const
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={`chip ${day.flow === value ? "chip--on" : ""}`}
-                  onClick={() => day.flow !== value && patch({ flow: value })}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <Segmented
+              value={day.flow}
+              options={[
+                ["sets", "Série a série"],
+                ["circuit", "Circuito"],
+              ]}
+              onChange={(value) => patch({ flow: value })}
+              label="Ordem do treino"
+            />
             <span className="field__hint">
               {day.flow === "circuit"
                 ? "Percorre a lista toda e repete a volta."
