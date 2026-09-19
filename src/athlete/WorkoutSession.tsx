@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useProfile } from '@/auth/useAuth'
+import { useAuth, useProfile } from '@/auth/useAuth'
 import { MuscleWork } from '@/components/MuscleWork'
 import { Loading, ScreenHeader } from '@/components/Screen'
 import { Stepper } from '@/components/Stepper'
@@ -19,6 +19,7 @@ import {
 } from '@/lib/api'
 import { weeklyVolume } from '@/lib/calc'
 import { hasPlayableVideo } from '@/lib/video'
+import { workoutsPath } from '@/lib/routes'
 import { isTimedWorkout } from '@/lib/workout'
 import { supabase } from '@/lib/supabase'
 import { unwrap, useQuery } from '@/lib/useQuery'
@@ -56,8 +57,12 @@ function volumeDone(
  */
 export function WorkoutSession() {
   const profile = useProfile()
+  const { isCoach } = useAuth()
   const navigate = useNavigate()
   const { sessionId } = useParams<{ sessionId: string }>()
+  // De onde se veio e para onde se volta: o aluno ao separador Treino, o
+  // treinador à lista de treinos da sua área.
+  const workouts = workoutsPath(isCoach)
 
   const { data, loading, error } = useQuery(['treino-sessao', sessionId, profile.id], async () => {
     const sessions = unwrap(
@@ -108,7 +113,7 @@ export function WorkoutSession() {
     return (
       <div className="screen screen--plain">
         <p className="error-banner">{error ?? 'Treino não encontrado.'}</p>
-        <button type="button" className="btn btn--ghost" onClick={() => navigate('/treino')}>
+        <button type="button" className="btn btn--ghost" onClick={() => navigate(workouts)}>
           Voltar
         </button>
       </div>
@@ -123,7 +128,7 @@ export function WorkoutSession() {
       <div className="app">
         <div className="screen screen--plain">
           <ScreenHeader
-            back={() => navigate('/treino')}
+            back={() => navigate(workouts)}
             eyebrow="Treino concluído ✓"
             title={day ? `Treino ${day.label}${day.title ? ` · ${day.title}` : ''}` : 'Treino'}
             subtitle={`${clock(finished.seconds)} · ${plural(finished.sets, 'série registada', 'séries registadas')}`}
@@ -148,7 +153,7 @@ export function WorkoutSession() {
           <button
             type="button"
             className="btn btn--accent btn--block"
-            onClick={() => navigate('/treino')}
+            onClick={() => navigate(workouts)}
           >
             Voltar aos treinos
           </button>
@@ -166,7 +171,7 @@ export function WorkoutSession() {
         day={day}
         planExercises={exercises}
         library={plan?.library ?? new Map()}
-        onExit={() => navigate('/treino')}
+        onExit={() => navigate(workouts)}
         onFinish={async (done) => {
           await saveTimedSets(
             session.id,
@@ -214,7 +219,7 @@ export function WorkoutSession() {
           <button
             type="button"
             className="screen-head__back"
-            onClick={() => navigate('/treino')}
+            onClick={() => navigate(workouts)}
             aria-label="Sair do treino"
           >
             ←

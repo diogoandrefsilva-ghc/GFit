@@ -6,6 +6,7 @@ import {
 } from '@/lib/api'
 import { isoDate, shortDate } from '@/lib/format'
 import type { AthleteLimitation } from '@/lib/database.types'
+import './ficha.css'
 
 /**
  * Limitações com princípio e fim. Uma lesão que já sarou não se apaga: passa a
@@ -133,7 +134,7 @@ export function LimitationsCard({
         <>
           <button
             type="button"
-            className="detail__more"
+            className="more-link"
             onClick={() => setShowPast(!showPast)}
           >
             {showPast

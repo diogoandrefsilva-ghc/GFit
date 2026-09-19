@@ -121,8 +121,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       isCoach: profile?.role === 'coach',
+      // Sem treinador há dois caminhos: esperar pelo convite, ou treinar por
+      // sua conta. O `status` é que os separa — 'pending' é quem ainda está à
+      // espera, e quem escolhe o auto-treino fica 'active' sem treinador.
       awaitingInvite:
-        profile?.role === 'athlete' && !profile.coach_id,
+        profile?.role === 'athlete' &&
+        !profile.coach_id &&
+        profile.status === 'pending',
       refreshProfile,
       signOut,
     }),

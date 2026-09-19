@@ -309,3 +309,12 @@
 .plan__actions .btn {
   flex: 1;
 }
+
+/* A nota do exercício, para quem lê o plano sem lhe poder mexer: no editor ela
+   vive no painel que se abre, e aqui não há painel nenhum para abrir. */
+.plan-ex__note {
+  padding: 0 12px 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted-strong);
+}

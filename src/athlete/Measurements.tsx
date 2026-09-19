@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { useProfile } from '@/auth/useAuth'
+import { useAuth, useProfile, useTrainsAlone } from '@/auth/useAuth'
 import { Loading, ScreenHeader, Stat } from '@/components/Screen'
 import { Sparkline } from '@/components/Sparkline'
+import { SelfFicha } from '@/shared/SelfFicha'
 import { supabase } from '@/lib/supabase'
 import {
   fetchAthleteProfile,
@@ -32,6 +33,11 @@ type PerimeterKey = (typeof PERIMETERS)[number]['key']
 
 export function Measurements() {
   const profile = useProfile()
+  const { isCoach } = useAuth()
+  // O aluno sem treinador não tem quem lhe preencha a ficha nem quem lhe ponha
+  // metas: fica aqui, ao pé das medidas, que é o que a ficha explica. Na área
+  // do treinador isto vive na sua própria zona, e não se repete.
+  const ownFicha = useTrainsAlone() && !isCoach
   const [adding, setAdding] = useState(false)
 
   const { data, loading, error, reload } = useQuery(
@@ -156,6 +162,8 @@ export function Measurements() {
           />
         )}
       </section>
+
+      {ownFicha && <SelfFicha />}
 
       {measurements.length > 1 && (
         <section className="card card--flat">

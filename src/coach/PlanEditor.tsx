@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth, useProfile } from "@/auth/useAuth";
 import { Loading, ScreenHeader } from "@/components/Screen";
 import { ExercisePicker } from "@/coach/ExercisePicker";
 import { PlanSchedule } from "@/coach/PlanSchedule";
@@ -14,10 +15,12 @@ import {
   fetchMuscles,
   fetchPlanDetail,
   fetchPlanSchedule,
+  isSelfPlan,
   publishPlan,
   removePlanExercise,
   updatePlanExercise,
 } from "@/lib/api";
+import { workoutsPath } from "@/lib/routes";
 import { supabase } from "@/lib/supabase";
 import { WEEKLY_FULL_SETS, weeklyVolume } from "@/lib/calc";
 import { plural, repRange, restLabel, titleCase } from "@/lib/format";
@@ -30,8 +33,16 @@ import type {
 } from "@/lib/database.types";
 import "./plan-editor.css";
 
+/**
+ * O editor de planos serve três situações com o mesmo ecrã: o treinador a
+ * escrever o plano de um aluno, qualquer pessoa a escrever o seu auto-treino, e
+ * o treinador a ver o auto-treino de um aluno — esta última só de leitura,
+ * porque quem escreveu o plano foi o aluno e não ele.
+ */
 export function PlanEditor() {
   const navigate = useNavigate();
+  const me = useProfile();
+  const { isCoach } = useAuth();
   const { planId } = useParams<{ planId: string }>();
   const [activeDay, setActiveDay] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
@@ -103,17 +114,32 @@ export function PlanEditor() {
   );
   const volume = scope === "day" ? dayVolume : planVolume;
 
+  const self = isSelfPlan(plan);
+  // Escreve quem escreveu. O treinador vê o auto-treino do aluno como o aluno
+  // vê o plano do treinador: inteiro, e sem lhe poder mexer.
+  const canEdit = plan.coach_id === me.id;
+  const goBack = () =>
+    self && canEdit
+      ? navigate(workoutsPath(isCoach), { replace: true })
+      : navigate(`/alunos/${plan.athlete_id}`, { replace: true });
+
   return (
     <div className="app">
       <div className="screen screen--plain">
         <ScreenHeader
-          back={() => navigate(`/alunos/${plan.athlete_id}`, { replace: true })}
-          eyebrow={athlete?.full_name ?? undefined}
+          back={goBack}
+          eyebrow={
+            self && canEdit
+              ? "O meu treino"
+              : (athlete?.full_name ?? undefined)
+          }
           title={plan.name}
           subtitle={
-            plan.status === "published"
-              ? `Publicado · ${plan.num_weeks} semanas`
-              : "Rascunho · o aluno ainda não vê"
+            self
+              ? `Auto-treino · ${plan.num_weeks} semanas${canEdit ? "" : " · escrito pelo próprio"}`
+              : plan.status === "published"
+                ? `Publicado · ${plan.num_weeks} semanas`
+                : "Rascunho · o aluno ainda não vê"
           }
         />
 
@@ -141,30 +167,37 @@ export function PlanEditor() {
               {item.title ? ` · ${item.title}` : ""}
             </button>
           ))}
-          <button
-            type="button"
-            className="chip"
-            onClick={async () => {
-              const next = String.fromCharCode(65 + days.length);
-              const rows = unwrap(
-                await supabase
-                  .from("plan_days")
-                  .insert({
-                    plan_id: plan.id,
-                    label: next,
-                    sort_order: days.length,
-                  })
-                  .select(),
-              );
-              setActiveDay(rows[0].id);
-              reload();
-            }}
-          >
-            +
-          </button>
+          {canEdit && (
+            <button
+              type="button"
+              className="chip"
+              onClick={async () => {
+                const next = String.fromCharCode(65 + days.length);
+                const rows = unwrap(
+                  await supabase
+                    .from("plan_days")
+                    .insert({
+                      plan_id: plan.id,
+                      label: next,
+                      sort_order: days.length,
+                    })
+                    .select(),
+                );
+                setActiveDay(rows[0].id);
+                reload();
+              }}
+            >
+              +
+            </button>
+          )}
         </div>
 
-        {day && <DaySettings day={day} onChanged={reload} />}
+        {day &&
+          (canEdit ? (
+            <DaySettings day={day} onChanged={reload} />
+          ) : (
+            <DayCard day={day} />
+          ))}
 
         {/* ── exercícios ─────────────────────────────── */}
         <ul className="plan__exercises">
@@ -173,6 +206,7 @@ export function PlanEditor() {
               key={item.id}
               item={item}
               dayMode={day?.mode ?? "reps"}
+              readOnly={!canEdit}
               exercise={
                 item.exercise_id
                   ? (library.get(item.exercise_id) ?? null)
@@ -220,14 +254,16 @@ export function PlanEditor() {
           ))}
         </ul>
 
-        <button
-          type="button"
-          className="btn btn--ghost btn--block"
-          disabled={!day}
-          onClick={() => setPicking(true)}
-        >
-          + Adicionar da base de exercícios
-        </button>
+        {canEdit && (
+          <button
+            type="button"
+            className="btn btn--ghost btn--block"
+            disabled={!day}
+            onClick={() => setPicking(true)}
+          >
+            + Adicionar da base de exercícios
+          </button>
+        )}
 
         {/* ── volume ─────────────────────────────────── */}
         {(dayVolume.size > 0 || planVolume.size > 0) && (
@@ -273,35 +309,44 @@ export function PlanEditor() {
           </section>
         )}
 
-        <PlanSchedule
-          plan={plan}
-          days={days}
-          activeDay={day}
-          schedules={schedules}
-          onChanged={reload}
-        />
+        {canEdit ? (
+          <PlanSchedule
+            plan={plan}
+            days={days}
+            activeDay={day}
+            schedules={schedules}
+            onChanged={reload}
+          />
+        ) : (
+          <section className="card card--flat">
+            <span className="eyebrow">Calendário</span>
+            <p className="subtitle">
+              {schedules.length === 0
+                ? "O aluno ainda não marcou este treino em dia nenhum."
+                : `${plural(schedules.length, "treino marcado", "treinos marcados")} pelo aluno. Aparecem no teu calendário.`}
+            </p>
+          </section>
+        )}
 
         <div className="row plan__actions">
-          <button
-            type="button"
-            className="btn btn--quiet"
-            onClick={() =>
-              navigate(`/alunos/${plan.athlete_id}`, { replace: true })
-            }
-          >
+          <button type="button" className="btn btn--quiet" onClick={goBack}>
             Fechar
           </button>
-          <button
-            type="button"
-            className="btn btn--accent"
-            disabled={plan.status === "published"}
-            onClick={async () => {
-              await publishPlan(plan.id);
-              reload();
-            }}
-          >
-            {plan.status === "published" ? "Publicado ✓" : "Publicar ao aluno"}
-          </button>
+          {/* Um auto-treino não se publica a ninguém: quem o escreve é quem o
+              vai fazer, e já o vê desde a primeira linha. */}
+          {canEdit && !self && (
+            <button
+              type="button"
+              className="btn btn--accent"
+              disabled={plan.status === "published"}
+              onClick={async () => {
+                await publishPlan(plan.id);
+                reload();
+              }}
+            >
+              {plan.status === "published" ? "Publicado ✓" : "Publicar ao aluno"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -348,12 +393,23 @@ type Editing = "sets" | "reps" | "time" | "rest";
 function NumberCell({
   label,
   value,
+  readOnly,
   onOpen,
 }: {
   label: string;
   value: string;
+  readOnly?: boolean;
   onOpen: () => void;
 }) {
+  if (readOnly) {
+    return (
+      <span className="plan-ex__num">
+        <span className="plan-ex__num-value">{value}</span>
+        <span className="plan-ex__num-label">{label}</span>
+      </span>
+    );
+  }
+
   return (
     <button
       type="button"
@@ -373,6 +429,7 @@ function PlanExerciseRow({
   exercise,
   muscleNames,
   sex,
+  readOnly = false,
   canMoveUp,
   canMoveDown,
   onChange,
@@ -383,6 +440,8 @@ function PlanExerciseRow({
   exercise: Exercise | null;
   muscleNames: Map<string, string>;
   sex: "M" | "F" | null | undefined;
+  /** O plano é de outra pessoa: lê-se, não se mexe. */
+  readOnly?: boolean;
   canMoveUp: boolean;
   canMoveDown: boolean;
   onChange: () => void;
@@ -421,14 +480,16 @@ function PlanExerciseRow({
                 {exercise?.video_url ? " · vídeo" : ""}
               </em>
             </span>
-            <button
-              type="button"
-              className="plan-ex__toggle"
-              onClick={() => setOpen(!open)}
-              aria-expanded={open}
-            >
-              ⋯
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                className="plan-ex__toggle"
+                onClick={() => setOpen(!open)}
+                aria-expanded={open}
+              >
+                ⋯
+              </button>
+            )}
           </div>
 
           {/*
@@ -441,27 +502,35 @@ function PlanExerciseRow({
             <NumberCell
               label="séries"
               value={String(item.sets)}
+              readOnly={readOnly}
               onOpen={() => setEditing("sets")}
             />
             {mode === "time" ? (
               <NumberCell
                 label="tempo"
                 value={restLabel(work)}
+                readOnly={readOnly}
                 onOpen={() => setEditing("time")}
               />
             ) : (
               <NumberCell
                 label="reps"
                 value={repRange(item.rep_min, item.rep_max)}
+                readOnly={readOnly}
                 onOpen={() => setEditing("reps")}
               />
             )}
             <NumberCell
               label="descanso"
               value={restLabel(item.rest_seconds)}
+              readOnly={readOnly}
               onOpen={() => setEditing("rest")}
             />
           </div>
+
+          {readOnly && item.notes && (
+            <p className="plan-ex__note">{item.notes}</p>
+          )}
         </div>
       </div>
 
@@ -592,6 +661,26 @@ function PlanExerciseRow({
         </div>
       )}
     </li>
+  );
+}
+
+/** O que o painel de definições diz, para quem só está a ler o plano. */
+function DayCard({ day }: { day: PlanDay }) {
+  return (
+    <section className="card card--flat">
+      <span className="eyebrow">
+        Treino {day.label}
+        {day.title ? ` · ${day.title}` : ""}
+      </span>
+      <p className="subtitle">
+        {day.mode === "time"
+          ? day.flow === "circuit"
+            ? `Por tempo, em circuito de ${day.rounds ?? 3} voltas.`
+            : "Por tempo, série a série."
+          : "Por repetições, com carga e reps em reserva."}
+      </p>
+      {day.notes && <p className="subtitle">{day.notes}</p>}
+    </section>
   );
 }
 

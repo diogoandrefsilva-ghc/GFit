@@ -14,3 +14,12 @@ export function useProfile(): Profile {
   if (!profile) throw new Error('Sem perfil carregado')
   return profile
 }
+
+/**
+ * Quem não tem treinador associado responde por si: o plano, as metas e as
+ * notas são suas. Vale para o aluno que treina por sua conta e para o
+ * treinador, que nunca tem ninguém por cima.
+ */
+export function useTrainsAlone(): boolean {
+  return !useProfile().coach_id
+}

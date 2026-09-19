@@ -8,7 +8,7 @@ export interface AuthValue {
   loading: boolean
   error: string | null
   isCoach: boolean
-  /** Perfil criado mas ainda sem treinador associado. */
+  /** Perfil criado, sem treinador, e ainda à espera do convite. */
   awaitingInvite: boolean
   refreshProfile: () => Promise<void>
   signOut: () => Promise<void>
