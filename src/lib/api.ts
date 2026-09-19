@@ -962,8 +962,18 @@ async function countPlanDays(planIds: string[]): Promise<Map<string, number>> {
   const days = unwrap(
     await supabase.from('plan_days').select('id, plan_id').in('plan_id', planIds),
   )
+  const dayIds = days.map((day) => day.id)
+  const exercises = dayIds.length
+    ? unwrap(
+        await supabase.from('plan_exercises').select('plan_day_id').in('plan_day_id', dayIds),
+      )
+    : []
+  // Um dia sem exercícios é só um espaço reservado (ex.: B/C nunca preenchidos) — não conta como treino.
+  const daysWithExercises = new Set(exercises.map((exercise) => exercise.plan_day_id))
+
   const counts = new Map<string, number>()
   for (const day of days) {
+    if (!daysWithExercises.has(day.id)) continue
     counts.set(day.plan_id, (counts.get(day.plan_id) ?? 0) + 1)
   }
   return counts
