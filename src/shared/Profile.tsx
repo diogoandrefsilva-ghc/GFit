@@ -14,6 +14,7 @@ import { copyInvite, shareInvite } from '@/lib/invite'
 import type { Invite, Role } from '@/lib/database.types'
 import { int, plural, relativeDate, shortDate } from '@/lib/format'
 import { unwrap, useQuery } from '@/lib/useQuery'
+import { Welcome } from './Welcome'
 import './profile.css'
 
 /**
@@ -73,6 +74,8 @@ export function Profile() {
           </p>
         </section>
       )}
+
+      <TourCard />
 
       <InstallHint />
 
@@ -453,6 +456,33 @@ function AthleteSection({
         </section>
       )}
     </>
+  )
+}
+
+/**
+ * A apresentação da app, a pedido. Fica ao lado das outras coisas que se
+ * explicam uma vez: quem a saltou no primeiro dia encontra-a aqui, e quem só
+ * quer confirmar onde é que aquilo estava não tem de andar à procura.
+ */
+function TourCard() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <section className="card card--flat">
+      <span className="eyebrow">Como funciona a app</span>
+      <p className="subtitle">
+        O que aparece na primeira vez: o que faz cada separador, em meia dúzia
+        de cartões.
+      </p>
+      <button
+        type="button"
+        className="btn btn--ghost btn--block"
+        onClick={() => setOpen(true)}
+      >
+        Rever a apresentação
+      </button>
+      {open && <Welcome mode="review" onClose={() => setOpen(false)} />}
+    </section>
   )
 }
 

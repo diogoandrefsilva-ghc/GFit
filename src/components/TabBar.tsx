@@ -27,7 +27,7 @@ export function TabBar({ tabs }: { tabs: Tab[] }) {
           className={({ isActive }) => `tabbar__item ${isActive ? 'is-on' : ''}`}
         >
           <span className="tabbar__icon">
-            <Icon name={tab.icon} />
+            <TabIcon name={tab.icon} />
             {tab.badge ? <em className="tabbar__badge">{tab.badge}</em> : null}
           </span>
           <span className="tabbar__label">{tab.label}</span>
@@ -37,7 +37,12 @@ export function TabBar({ tabs }: { tabs: Tab[] }) {
   )
 }
 
-function Icon({ name }: { name: Tab['icon'] }) {
+/**
+ * Os desenhos dos separadores. Exportado porque a apresentação da app os
+ * reutiliza: o cartão que fala do "Treino" mostra o mesmo símbolo que a
+ * pessoa vai procurar em baixo.
+ */
+export function TabIcon({ name }: { name: Tab['icon'] }) {
   const common = {
     width: 22,
     height: 22,

@@ -10,6 +10,7 @@ import { WorkoutHome } from '@/athlete/WorkoutHome'
 import { Measurements } from '@/athlete/Measurements'
 import { Diet } from '@/athlete/Diet'
 import { WeeklyFeedbackScreen } from '@/athlete/WeeklyFeedback'
+import { WelcomeGate } from '@/shared/Welcome'
 
 // O treino a decorrer e os ecrãs do treinador só se carregam quando fazem
 // falta: um aluno nunca chega a descarregar os editores de plano e de dieta.
@@ -88,6 +89,11 @@ export function App() {
         </div>
       }
     >
+      {/* A apresentação da app, por cima do que já está a carregar por baixo.
+          A chave é o utilizador: num telemóvel partilhado, quem entra a
+          seguir tem a sua primeira vez. */}
+      <WelcomeGate key={profile.id} />
+
       {isCoach ? (
         <Routes>
           <Route element={<CoachShell />}>

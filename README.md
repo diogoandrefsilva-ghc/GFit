@@ -16,6 +16,10 @@ ginásio onde a rede é fraca) e está publicada no GitHub Pages.
   E treina: o separador *Eu* é o seu lado de aluno.
 - **Auto-treino** — quem quer escrever o seu próprio treino escreve-o, tenha
   treinador ou não. Quem tem treinador continua a mostrar-lho.
+- **Primeira vez** — quem entra pela primeira vez leva uma apresentação de seis
+  cartões a dizer o que faz cada separador, diferente para o aluno e para o
+  treinador. Vê-se uma vez, salta-se a qualquer altura, e fica no *Perfil* para
+  quem a quiser rever.
 
 ## De onde vêm os dados
 
@@ -185,8 +189,8 @@ src/
   coach/       Alunos, Detalhe do aluno, Calendário, Editor de plano (com a
                marcação no calendário), Editor de dieta, Biblioteca de
                exercícios, Eu (a área pessoal do treinador)
-  shared/      o que serve os dois lados: Perfil, e os cartões da ficha —
-               quem é, metas, limitações, notas
+  shared/      o que serve os dois lados: Perfil, a apresentação da app, e os
+               cartões da ficha — quem é, metas, limitações, notas
   components/  peças partilhadas (steppers, escalas, gráfico, corpo, tab bar)
   lib/         cliente Supabase, tipos, consultas, formatação, cálculos
   assets/      o SVG do corpo
