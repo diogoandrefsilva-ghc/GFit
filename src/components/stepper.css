@@ -33,6 +33,7 @@
   font-weight: 700;
   font-size: 18px;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
   display: inline-flex;
   align-items: baseline;
   justify-content: center;
@@ -52,7 +53,13 @@
   font-size: 24px;
 }
 
+/*
+ * O peso é o número que se lê de relance, muitas vezes com o telemóvel em
+ * cima do banco: no estreito cabe maior sem alargar o cartão.
+ */
 .stepper--lg .stepper__value {
-  min-width: 100px;
-  font-size: 26px;
+  min-width: 104px;
+  font-family: var(--font-narrow);
+  font-size: 34px;
+  line-height: 1;
 }

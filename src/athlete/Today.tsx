@@ -295,6 +295,13 @@ export function Today() {
             />
             <span className="today__steps-goal">meta {int(stepsGoal)}</span>
           </div>
+          <div className="today__steps-bar" aria-hidden="true">
+            <i
+              style={{
+                width: `${Math.min(100, ((log.steps ?? 0) / Math.max(stepsGoal, 1)) * 100)}%`,
+              }}
+            />
+          </div>
         </div>
 
         <div className="field">

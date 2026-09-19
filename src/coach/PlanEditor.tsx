@@ -116,7 +116,7 @@ export function PlanEditor() {
         />
 
         {limitations.length > 0 && (
-          <section className="card card--accent">
+          <section className="card card--warn">
             <span className="eyebrow">Limitações a respeitar</span>
             {limitations.map((limitation) => (
               <p key={limitation.id} className="plan__limitations">

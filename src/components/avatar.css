@@ -15,8 +15,8 @@
 }
 
 .avatar--accent {
-  background: var(--accent);
-  color: #fff;
+  background: var(--gold);
+  color: var(--gold-ink);
 }
 
 .avatar--paper {

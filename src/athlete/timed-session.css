@@ -26,7 +26,7 @@
   top: 0;
   left: 0;
   height: 3px;
-  background: var(--accent);
+  background: var(--gold-dark);
   transition: width 0.9s linear;
 }
 
@@ -96,7 +96,7 @@
 
 /* Nos últimos segundos o número pulsa, para dar conta sem se olhar fixamente. */
 .timed__clock.is-close {
-  color: var(--accent);
+  color: var(--warn);
   animation: timed-pulse 1s ease-in-out infinite;
 }
 
@@ -117,8 +117,8 @@
   font-weight: 700;
   padding: 10px 16px;
   border-radius: var(--radius);
-  background: var(--accent);
-  color: #fff;
+  background: var(--gold);
+  color: var(--gold-ink);
 }
 
 .timed__notes {

@@ -41,6 +41,6 @@
 
 .week-nav__today {
   font-size: 11px;
-  color: var(--accent-dark);
+  color: var(--gold-dark);
   text-decoration: underline;
 }

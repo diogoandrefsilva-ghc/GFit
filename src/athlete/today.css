@@ -51,6 +51,8 @@
 
 .today__steps-input {
   flex: 1;
+  font-family: var(--font-narrow);
+  font-size: 22px;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
 }
@@ -59,6 +61,25 @@
   font-size: 13px;
   color: var(--muted);
   white-space: nowrap;
+}
+
+/*
+ * A meta em número diz pouco a quem vai a meio do dia; a barra diz quanto
+ * falta sem ter de fazer a conta.
+ */
+.today__steps-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--gold-soft);
+  overflow: hidden;
+}
+
+.today__steps-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--gold);
+  transition: width 0.25s ease;
 }
 
 .today__sleep-label {

@@ -29,13 +29,12 @@
 
 .session__clock {
   flex-shrink: 0;
+  font-family: var(--font-narrow);
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  font-size: 17px;
-  padding: 5px 10px;
-  border-radius: var(--radius-sm);
-  background: var(--ink);
-  color: var(--paper);
+  font-size: 24px;
+  line-height: 1;
+  color: var(--gold-dark);
 }
 
 /* ── exercício ─────────────────────────────────────────── */
@@ -57,10 +56,12 @@
 }
 
 .exercise__name {
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 800;
-  letter-spacing: -0.015em;
+  letter-spacing: 0.01em;
   line-height: 1.15;
+  /* Como na biblioteca: o nome do exercício em maiúsculas lê-se de relance. */
+  text-transform: uppercase;
 }
 
 .exercise__meta {
@@ -75,8 +76,8 @@
   font-weight: 700;
   padding: 7px 12px;
   border-radius: var(--radius-sm);
-  background: var(--accent-soft);
-  color: var(--accent-dark);
+  background: var(--gold-soft);
+  color: var(--gold-dark);
 }
 
 /* ── tabela de séries ──────────────────────────────────── */
@@ -126,7 +127,11 @@
 
 .sets tbody tr.is-active th,
 .sets tbody tr.is-active td {
-  background: var(--accent-soft);
+  background: var(--gold-soft);
+}
+
+.sets tbody tr.is-active th {
+  color: var(--gold-dark);
 }
 
 .exercise__target {
@@ -157,7 +162,7 @@
 }
 
 .exercise__previous em.is-down {
-  color: var(--accent-dark);
+  color: var(--warn);
 }
 
 .exercise__notes {

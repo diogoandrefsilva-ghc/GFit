@@ -65,9 +65,11 @@ export function Login() {
   return (
     <div className="login">
       <div className="login__card">
-        <Logo size={44} />
         <div className="login__intro">
-          <h1 className="title">GFit</h1>
+          {/* O logótipo completo faz de título: o `alt` da imagem é o nome. */}
+          <h1 className="title login__logo">
+            <Logo variant="full" size={132} />
+          </h1>
           <p className="subtitle">
             Treinos, medidas, dieta e feedback, entre treinador e aluno.
           </p>

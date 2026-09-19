@@ -82,7 +82,7 @@ export function Dashboard() {
             <Stat
               label="A precisar"
               value={view.flagged.length}
-              tone={view.flagged.length > 0 ? 'accent' : 'good'}
+              tone={view.flagged.length > 0 ? 'warn' : 'good'}
               hint={view.flagged.length === 0 ? 'tudo em dia' : 'de ti'}
             />
           </div>
@@ -180,7 +180,7 @@ export function Dashboard() {
                           {summary.plan?.num_weeks}
                         </em>
                       </span>
-                      <span className="chip chip--accent">renovar</span>
+                      <span className="chip chip--warn">renovar</span>
                     </Link>
                   </li>
                 ))}

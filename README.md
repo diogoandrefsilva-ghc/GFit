@@ -198,6 +198,23 @@ O ícone usa só as silhuetas — a palavra *GFit* do logótipo fica ilegível a
 192 px. O `favicon.svg` é à parte: aos 16 px do separador nem as silhuetas se
 lêem, por isso é um haltere nas cores da marca.
 
+### As cores
+
+Tudo o que é cor vive em `src/styles/tokens.css`, em três famílias, e os ecrãs
+só lhes tocam por nome:
+
+| Família | Para quê |
+|---|---|
+| `--gold`, `--gold-ink`, `--gold-dark`, `--gold-soft`, `--gold-line` | a marca: o botão que inicia, o separador onde se está, o rótulo da semana |
+| `--warn`, `--warn-soft`, `--warn-line` | o que corre mal: erros, alunos a precisar do treinador, limitações activas |
+| `--good`, `--good-soft`, `--good-line` | o que está feito |
+
+Há duas regras que não se dobram. **O dourado de encher não escreve**: sobre
+papel fica em 1,8:1 de contraste, por isso quem preenche é `--gold` (com
+`--gold-ink` por cima) e quem escreve é `--gold-dark`. E **a marca não faz de
+aviso**: se o dourado também servir para dizer que algo está mal, deixa de
+querer dizer o que quer que seja — daí a família `--warn` à parte.
+
 Os protótipos do Claude Design (`FG Coach App.dc.html`,
 `FG Coach Protótipo.dc.html`) ficam no repositório como referência do desenho.
 
@@ -307,7 +324,8 @@ tenha levado uma série contra as vinte de outro.
 
 O SVG tem de ficar inline no DOM, senão o CSS da app não lhe chega: `BodyMap`
 importa o ficheiro como texto, parte-o nas duas vistas uma única vez e injecta
-a que precisa. A cor vem de `--accent` e a intensidade de cada grupo entra numa
+a que precisa. A cor vem de `--accent` — a variável do contrato do SVG, que a app
+preenche com `--gold-dark` — e a intensidade de cada grupo entra noutra
 variável CSS no contentor (`--bm-<slug>`), o que deixa o React fora do DOM do
 desenho e mantém a transição de cor a funcionar.
 

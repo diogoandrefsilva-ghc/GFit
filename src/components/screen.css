@@ -27,6 +27,12 @@
   gap: 3px;
 }
 
+/* O rótulo que diz em que semana do plano se está: é o dourado da marca a
+   aparecer uma vez por ecrã, e não espalhado por tudo. */
+.screen-head__text .eyebrow {
+  color: var(--gold-dark);
+}
+
 .screen-head__action {
   flex-shrink: 0;
   display: flex;
@@ -70,9 +76,9 @@
   border-color: var(--good-line);
 }
 
-.stat--accent {
-  background: var(--accent-soft);
-  border-color: #f7cdbe;
+.stat--warn {
+  background: var(--warn-soft);
+  border-color: var(--warn-line);
 }
 
 .stat__label {

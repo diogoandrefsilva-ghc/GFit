@@ -17,8 +17,8 @@
   font-weight: 700;
   padding: 6px 10px;
   border-radius: var(--radius-sm);
-  background: var(--accent-soft);
-  color: var(--accent-dark);
+  background: var(--gold-soft);
+  color: var(--gold-dark);
 }
 
 .library__novideo {

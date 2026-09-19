@@ -45,18 +45,31 @@
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * O estado do aluno em pastilha e não em texto colorido: numa lista de oito,
+ * a cor sozinha obrigava a comparar linha a linha para ver quem se destaca.
+ */
+.athlete__state {
+  display: flex;
+  margin-top: 3px;
+}
+
 .athlete__state em {
   font-style: normal;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
 }
 
 .athlete__flag {
-  color: var(--accent-dark);
+  color: var(--warn);
+  background: var(--warn-soft);
 }
 
 .athlete__ok {
   color: var(--good);
+  background: var(--good-soft);
 }
 
 .athlete__when {

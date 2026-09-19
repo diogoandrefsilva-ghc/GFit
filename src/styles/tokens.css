@@ -1,4 +1,8 @@
-/* Paleta e tipografia vindas do protótipo do Claude Design. */
+/*
+ * Paleta e tipografia. A base continua a ser papel; o que mudou foi o acento:
+ * o laranja deu lugar ao dourado do logótipo, e o que precisa de atenção
+ * passou a ter família própria em vez de pedir a cor emprestada à marca.
+ */
 :root {
   --ink: #16150f;
   --ink-2: #26241d;
@@ -13,13 +17,30 @@
   --line-2: #c9c4b8;
   --line-3: #b9b4a8;
 
-  --muted: #8a867c;
-  --muted-strong: #5d594f;
-  --muted-soft: #a9a499;
+  /* O cinzento do texto secundário escureceu (#8a867c → #6e6a60): a 13px
+     sobre papel o anterior ficava-se por 3,2:1 de contraste, aquém dos 4,5:1
+     que um texto pequeno precisa. O tom antigo ficou em `--muted-soft`, para
+     onde é apoio e não informação. */
+  --muted: #6e6a60;
+  --muted-strong: #55524a;
+  --muted-soft: #8a867c;
 
-  --accent: #ff4a1c;
-  --accent-dark: #c63a12;
-  --accent-soft: #fde8e1;
+  /* ── marca ───────────────────────────────────────────────
+     O dourado do logótipo é para preencher, não para escrever: como texto
+     sobre papel dá 1,8:1 e não se lê. Daí serem dois — `--gold` enche (com
+     `--gold-ink` por cima) e `--gold-dark` escreve. */
+  --gold: #e3b04b;
+  --gold-ink: #16150f;
+  --gold-dark: #8a5c12;
+  --gold-soft: #f7efdc;
+  --gold-line: #e4d2a6;
+
+  /* ── atenção ─────────────────────────────────────────────
+     Um erro, um aluno a precisar do treinador ou uma limitação activa não são
+     da cor da marca: se tudo é dourado, o dourado deixa de querer dizer nada. */
+  --warn: #b2350f;
+  --warn-soft: #fbe9e2;
+  --warn-line: #f1cfc2;
 
   --good: #1f5d45;
   --good-soft: #eaf3ee;
@@ -27,7 +48,7 @@
 
   --radius-sm: 10px;
   --radius: 14px;
-  --radius-lg: 20px;
+  --radius-lg: 18px;
 
   --font: 'Archivo', system-ui, -apple-system, sans-serif;
   --font-narrow: 'Archivo Narrow', 'Archivo', system-ui, sans-serif;

@@ -49,7 +49,7 @@
 }
 
 .dash__reason {
-  color: var(--accent-dark) !important;
+  color: var(--warn) !important;
   font-weight: 700;
 }
 

@@ -2,7 +2,7 @@
   <title>Corpo humano — vista de frente e vista de costas</title>
   <desc>Silhueta anatómica de género neutro em duas vistas. Cada região muscular é um grupo identificado pelo atributo data-muscle e é pintada por CSS; contorno, cabeça, mãos e pés mantêm-se neutros.</desc>
   <style>
-    .gfit-body{color:var(--accent,#ff4a1c)}
+    .gfit-body{color:var(--accent,#8a5c12)}
     .gfit-shape{fill:var(--gfit-skin,#fcfbf8)}
     .gfit-muscle{fill-opacity:var(--i,0);stroke:var(--line-2,#c9c4b8);stroke-width:.9;
       stroke-linejoin:round;transition:fill-opacity .25s ease}

@@ -40,6 +40,20 @@
   color: var(--ink);
 }
 
+/* A marca dourada por cima do ícone: diz onde se está sem contar só com a
+   diferença de cinzento para preto, que num ecrã a meio brilho quase não se vê. */
+.tabbar__item.is-on .tabbar__icon::before {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--gold);
+}
+
 .tabbar__icon {
   position: relative;
   display: flex;
@@ -53,8 +67,8 @@
   height: 16px;
   padding: 0 4px;
   border-radius: 8px;
-  background: var(--accent);
-  color: #fff;
+  background: var(--gold);
+  color: var(--gold-ink);
   font-size: 10px;
   font-style: normal;
   font-weight: 700;

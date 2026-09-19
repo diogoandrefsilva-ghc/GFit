@@ -32,7 +32,7 @@
   font-family: var(--font-narrow);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--gold-dark);
 }
 
 .profile__name-edit {

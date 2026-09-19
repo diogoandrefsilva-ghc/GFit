@@ -27,6 +27,15 @@
   gap: 4px;
 }
 
+.login__logo {
+  align-self: center;
+  margin-bottom: 6px;
+}
+
+.login__logo .logo {
+  border-radius: 18px;
+}
+
 .login__google {
   background: #fff;
 }

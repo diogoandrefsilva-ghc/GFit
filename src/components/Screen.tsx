@@ -77,7 +77,7 @@ export function Stat({
   label: string
   value: ReactNode
   hint?: ReactNode
-  tone?: 'default' | 'good' | 'accent'
+  tone?: 'default' | 'good' | 'warn'
 }) {
   return (
     <div className={`stat stat--${tone}`}>

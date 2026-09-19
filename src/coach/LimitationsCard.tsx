@@ -33,7 +33,7 @@ export function LimitationsCard({
   const past = limitations.filter((item) => item.resolved_on)
 
   return (
-    <section className={`card ${active.length > 0 ? 'card--accent' : ''}`}>
+    <section className={`card ${active.length > 0 ? 'card--warn' : ''}`}>
       <div className="card__head">
         <span className="eyebrow">
           Limitações{active.length > 0 ? ` · ${active.length} activa${active.length > 1 ? 's' : ''}` : ''}

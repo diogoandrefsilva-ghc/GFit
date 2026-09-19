@@ -15,7 +15,7 @@
 
 .sparkline__overlay {
   fill: none;
-  stroke: var(--accent);
+  stroke: var(--gold-dark);
   stroke-width: 2.5;
   stroke-linejoin: round;
   stroke-linecap: round;

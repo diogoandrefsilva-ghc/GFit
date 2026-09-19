@@ -235,7 +235,8 @@
 }
 
 .plan-cal__marks em.is-active {
-  background: var(--accent);
+  background: var(--gold);
+  color: var(--gold-ink);
 }
 
 .plan-cal__repeat {
@@ -268,7 +269,7 @@
 }
 
 .plan-ex__remove {
-  color: var(--accent-dark);
+  color: var(--warn);
 }
 
 .plan__scope {

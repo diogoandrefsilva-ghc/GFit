@@ -38,7 +38,7 @@ button {
 }
 
 a {
-  color: var(--accent);
+  color: var(--gold-dark);
   text-decoration: none;
 }
 
@@ -57,7 +57,7 @@ ul {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--gold-dark);
   outline-offset: 2px;
 }
 
@@ -157,8 +157,14 @@ ul {
 }
 
 .card--accent {
-  background: var(--accent-soft);
-  border-color: #f7cdbe;
+  background: var(--gold-soft);
+  border-color: var(--gold-line);
+}
+
+/* O cartão de quem precisa de atenção: limitações activas, planos por rever. */
+.card--warn {
+  background: var(--warn-soft);
+  border-color: var(--warn-line);
 }
 
 .card--good {
@@ -203,9 +209,13 @@ ul {
   color: var(--paper);
 }
 
+/*
+ * O botão da acção principal. O dourado não aceita texto branco por cima —
+ * daí o texto ser a tinta escura, que sobre ele dá 9:1.
+ */
 .btn--accent {
-  background: var(--accent);
-  color: #fff;
+  background: var(--gold);
+  color: var(--gold-ink);
 }
 
 .btn--ghost {
@@ -363,9 +373,15 @@ ul {
 }
 
 .chip--accent {
-  background: var(--accent-soft);
-  border-color: #f7cdbe;
-  color: var(--accent-dark);
+  background: var(--gold-soft);
+  border-color: var(--gold-line);
+  color: var(--gold-dark);
+}
+
+.chip--warn {
+  background: var(--warn-soft);
+  border-color: var(--warn-line);
+  color: var(--warn);
 }
 
 .chip--good {
@@ -387,9 +403,9 @@ ul {
 }
 
 .error-banner {
-  background: var(--accent-soft);
-  border: 1px solid #f7cdbe;
-  color: var(--accent-dark);
+  background: var(--warn-soft);
+  border: 1px solid var(--warn-line);
+  color: var(--warn);
   border-radius: var(--radius);
   padding: 12px 14px;
   font-size: 14px;

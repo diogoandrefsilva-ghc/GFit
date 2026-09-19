@@ -34,7 +34,7 @@ uma vista isolada basta trocar o `viewBox`; não é preciso partir o ficheiro.
 O SVG tem de ser **inline** no DOM (não `<img src>`), senão o CSS de fora não lhe chega.
 
 ```html
-<div class="gfit-body" style="--accent:#ff4a1c">
+<div class="gfit-body" style="--accent:#8a5c12">
   <!-- conteúdo de corpo-gfit.svg -->
 </div>
 ```
@@ -87,7 +87,7 @@ dentro das duas, não há geometria duplicada nem lógica diferente por género.
 
 | Variável | Uso | Omissão |
 |---|---|---|
-| `--accent` | Cor da intensidade | `#ff4a1c` |
+| `--accent` | Cor da intensidade | `#8a5c12` |
 | `--line-2` | Traço do contorno e das divisões | `#c9c4b8` |
 | `--gfit-skin` | Preenchimento neutro do corpo | `#fcfbf8` |
 | `--gfit-hair` | Cabelo | `#e7e3d9` |
