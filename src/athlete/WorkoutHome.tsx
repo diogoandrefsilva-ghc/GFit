@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useProfile } from '@/auth/useAuth'
+import { Link, useNavigate } from 'react-router-dom'
+import { useProfile, useTrainsAlone } from '@/auth/useAuth'
 import { MuscleWork } from '@/components/MuscleWork'
 import { Empty, Loading, ScreenHeader } from '@/components/Screen'
 import { WeekNav } from '@/components/WeekNav'
 import {
+  createSelfPlan,
   fetchActivePlan,
   fetchAthleteCalendar,
   fetchAthleteProfile,
   fetchMuscles,
+  fetchSelfPlans,
   fetchWeekSessions,
   startSession,
   type CalendarEntry,
@@ -19,6 +21,7 @@ import {
   isoDate,
   plural,
   relativeDate,
+  shortDate,
   weekDates,
   weekStart,
   weekdayShort,
@@ -32,24 +35,49 @@ import './workout-home.css'
  */
 export function WorkoutHome() {
   const profile = useProfile()
+  const alone = useTrainsAlone()
   const navigate = useNavigate()
   const today = isoDate()
   const [monday, setMonday] = useState(() => weekStart(today))
+  const [creating, setCreating] = useState(false)
 
-  const { data, loading, error } = useQuery(['treino', profile.id, monday, today], async () => {
-    const dates = weekDates(monday)
-    const [plan, calendar, muscles, ficha] = await Promise.all([
-      fetchActivePlan(profile.id),
-      fetchAthleteCalendar(profile.id, dates[0], dates[6]),
-      fetchMuscles(),
-      fetchAthleteProfile(profile.id),
-    ])
-    if (!plan) return { plan: null, calendar, sessions: [], week: 1, muscles, ficha }
+  const { data, loading, error } = useQuery(
+    ['treino', profile.id, monday, today],
+    async () => {
+      const dates = weekDates(monday)
+      const [plan, calendar, muscles, ficha, selfPlans] = await Promise.all([
+        fetchActivePlan(profile.id),
+        fetchAthleteCalendar(profile.id, dates[0], dates[6]),
+        fetchMuscles(),
+        fetchAthleteProfile(profile.id),
+        fetchSelfPlans(profile.id),
+      ])
+      if (!plan) {
+        return { plan: null, calendar, sessions: [], week: 1, muscles, ficha, selfPlans }
+      }
 
-    const week = weekOfPlan(plan.plan.start_date, today)
-    const sessions = await fetchWeekSessions(profile.id, plan.plan.id, week)
-    return { plan, calendar, sessions, week, muscles, ficha }
-  })
+      const week = weekOfPlan(plan.plan.start_date, today)
+      const sessions = await fetchWeekSessions(profile.id, plan.plan.id, week)
+      return { plan, calendar, sessions, week, muscles, ficha, selfPlans }
+    },
+  )
+
+  /** Escrever um treino meu: nasce com os três dias do costume, como os outros. */
+  async function newSelfPlan(count: number) {
+    if (creating) return
+    setCreating(true)
+    try {
+      const created = await createSelfPlan(profile.id, {
+        name: count === 0 ? 'O meu treino' : `O meu treino ${count + 1}`,
+        block_name: null,
+        num_weeks: 4,
+        start_date: isoDate(),
+      })
+      navigate(`/planos/${created.id}`)
+    } finally {
+      setCreating(false)
+    }
+  }
 
   /**
    * O que a semana trabalha. Se houver treinos marcados, são eles que contam —
@@ -94,7 +122,7 @@ export function WorkoutHome() {
     )
   }
 
-  const { plan, calendar, sessions, week, muscles, ficha } = data!
+  const { plan, calendar, sessions, week, muscles, ficha, selfPlans } = data!
   const muscleNames = new Map(muscles.map((muscle) => [muscle.slug, muscle.name]))
   const dates = weekDates(monday)
   const doneMarks = calendar.filter((entry) => entry.session?.status === 'done').length
@@ -172,7 +200,21 @@ export function WorkoutHome() {
       {!plan ? (
         <Empty
           title="Ainda sem plano"
-          hint="O treinador ainda não publicou nenhum plano para ti."
+          hint={
+            alone
+              ? 'Ninguém te prescreve treinos — escreve o teu, com os exercícios da base.'
+              : 'O treinador ainda não publicou nenhum plano para ti. Entretanto podes escrever o teu.'
+          }
+          action={
+            <button
+              type="button"
+              className="btn btn--accent"
+              disabled={creating}
+              onClick={() => newSelfPlan(selfPlans.length)}
+            >
+              {creating ? 'A criar…' : 'Escrever o meu treino'}
+            </button>
+          }
         />
       ) : (
         <section className="card card--flat">
@@ -236,6 +278,60 @@ export function WorkoutHome() {
         <section className="card card--flat">
           <span className="eyebrow">Notas do plano</span>
           <p className="workout-days__notes">{plan.plan.notes}</p>
+        </section>
+      )}
+
+      {/* Auto-treino: o que a própria pessoa escreveu para si. Fica à parte do
+          plano do treinador de propósito — são coisas diferentes, e quem tem as
+          duas tem de as distinguir de relance. */}
+      {(selfPlans.length > 0 || plan) && (
+        <section className="card card--flat">
+          <div className="card__head">
+            <span className="eyebrow">Escritos por mim</span>
+            <button
+              type="button"
+              className="btn btn--sm btn--primary"
+              disabled={creating}
+              onClick={() => newSelfPlan(selfPlans.length)}
+            >
+              {creating ? 'A criar…' : '+ Novo'}
+            </button>
+          </div>
+
+          {selfPlans.length === 0 ? (
+            <p className="subtitle">
+              {alone
+                ? 'Ainda não escreveste nenhum treino teu.'
+                : 'Além do plano do treinador, podes escrever treinos teus. O treinador vê-os.'}
+            </p>
+          ) : (
+            <>
+              <p className="subtitle">
+                Marca-os no calendário do plano e aparecem na semana, como os
+                outros.
+              </p>
+              <ul className="plan-list">
+                {selfPlans.map((item) => (
+                  <li key={item.id}>
+                    <Link to={`/planos/${item.id}`} className="plan-list__row">
+                      <span className="plan-list__name">
+                        <strong>{item.name}</strong>
+                        <em>
+                          {item.num_weeks} semanas · início{' '}
+                          {shortDate(item.start_date)}
+                        </em>
+                      </span>
+                      {plan?.plan.id === item.id ? (
+                        <span className="chip chip--good">a correr</span>
+                      ) : (
+                        <span className="chip">editar</span>
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </section>
       )}
     </div>

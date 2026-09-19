@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useProfile } from '@/auth/useAuth'
+import { useAuth, useProfile, useTrainsAlone } from '@/auth/useAuth'
 import { Avatar } from '@/components/Avatar'
 import { Scale } from '@/components/Scale'
 import { Stepper } from '@/components/Stepper'
@@ -31,14 +31,20 @@ import {
   weekStart,
   weekdayShort,
 } from '@/lib/format'
+import { workoutsPath } from '@/lib/routes'
 import { useQuery } from '@/lib/useQuery'
 import type { DailyLog } from '@/lib/database.types'
 import './today.css'
 
 export function Today() {
   const profile = useProfile()
+  const alone = useTrainsAlone()
+  const { isCoach } = useAuth()
   const navigate = useNavigate()
   const today = isoDate()
+  // O treinador que treina a si próprio vê os mesmos ecrãs, mas a lista de
+  // treinos dele vive na área "Eu".
+  const workouts = workoutsPath(isCoach)
 
   const { data, loading, error, reload } = useQuery(['hoje', profile.id, today], async () => {
     const monday = weekStart(today)
@@ -150,8 +156,10 @@ export function Today() {
             {marked.day?.title ? ` · ${marked.day.title}` : ''}
           </h2>
           <p className="today__workout-meta">
-            marcado pelo treinador ·{' '}
-            {plural(marked.exerciseCount, 'exercício', 'exercícios')}
+            {marked.schedule.coach_id === profile.id
+              ? 'marcado por ti'
+              : 'marcado pelo treinador'}{' '}
+            · {plural(marked.exerciseCount, 'exercício', 'exercícios')}
           </p>
           <button
             type="button"
@@ -200,7 +208,7 @@ export function Today() {
           <button
             type="button"
             className="btn btn--ghost btn--block"
-            onClick={() => navigate('/treino')}
+            onClick={() => navigate(workouts)}
           >
             Ver a semana
           </button>
@@ -238,9 +246,17 @@ export function Today() {
       ) : (
         <section className="card card--flat">
           <p className="subtitle">
-            Ainda não tens plano publicado. Assim que o treinador o publicar,
-            aparece aqui.
+            {alone
+              ? 'Ainda não tens treinos. Escreve o teu no separador Treino — sais com um plano, com os exercícios da base.'
+              : 'Ainda não tens plano publicado. Assim que o treinador o publicar, aparece aqui. Se quiseres, escreves o teu no separador Treino.'}
           </p>
+          <button
+            type="button"
+            className="btn btn--ghost btn--block"
+            onClick={() => navigate(workouts)}
+          >
+            Ir aos treinos
+          </button>
         </section>
       )}
 
@@ -344,13 +360,15 @@ export function Today() {
         <section className="card card--accent today__note">
           <div className="today__note-head">
             <Avatar
-              name={coach?.full_name ?? 'Treinador'}
-              url={coach?.avatar_url}
+              name={coach?.full_name ?? profile.full_name ?? 'Treinador'}
+              url={coach?.avatar_url ?? profile.avatar_url}
               size={34}
               tone="accent"
             />
             <div>
-              <span className="eyebrow">Nota do treinador</span>
+              <span className="eyebrow">
+                {note.coach_id === profile.id ? 'A minha nota' : 'Nota do treinador'}
+              </span>
               <p className="today__note-body">{note.body}</p>
             </div>
           </div>

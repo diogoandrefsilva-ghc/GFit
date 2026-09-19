@@ -5,23 +5,30 @@ import { describeError } from '@/lib/supabase'
 import { int, isoDate, num, shortDate } from '@/lib/format'
 import { WEIGHT_DIRECTION_LABEL } from '@/lib/calc'
 import type { AthleteTargets, WeightDirection } from '@/lib/database.types'
+import './ficha.css'
 
 /**
  * As metas são revisões datadas, não um formulário que se sobrescreve. Cada vez
- * que o treinador muda o rumo fica o registo de quando foi e do que era antes —
- * que é como se percebe, três meses depois, o que é que resultou.
+ * que se muda o rumo fica o registo de quando foi e do que era antes — que é
+ * como se percebe, três meses depois, o que é que resultou.
+ *
+ * Serve os dois lados: o treinador a definir as metas de um aluno, e quem
+ * treina por sua conta a definir as suas. Só muda o texto.
  */
 export function TargetsTab({
   athleteId,
   coachId,
   current,
   history,
+  self = false,
   onChanged,
 }: {
   athleteId: string
   coachId: string
   current: AthleteTargets | null
   history: AthleteTargets[]
+  /** As metas são de quem está a olhar para elas. */
+  self?: boolean
   onChanged: () => void
 }) {
   const [editing, setEditing] = useState<AthleteTargets | 'new' | null>(
@@ -93,8 +100,8 @@ export function TargetsTab({
         <section className="card">
           <span className="eyebrow">Metas</span>
           <p className="subtitle">
-            Ainda não definiste metas para este aluno. A primeira revisão fica a
-            valer a partir da data que escolheres.
+            Ainda não há metas definidas {self ? 'para ti' : 'para este aluno'}. A
+            primeira revisão fica a valer a partir da data que escolheres.
           </p>
         </section>
       )}

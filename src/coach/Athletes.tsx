@@ -120,7 +120,9 @@ export function Athletes() {
                     <span className="athlete__meta">
                       {summary.plan
                         ? `Semana ${summary.week}/${summary.plan.num_weeks}`
-                        : 'Sem plano'}
+                        : summary.selfPlans > 0
+                          ? 'Sem plano · treina por sua conta'
+                          : 'Sem plano'}
                       {summary.lastLog?.weight_kg
                         ? ` · ${num(summary.lastLog.weight_kg, 1)} kg`
                         : ''}

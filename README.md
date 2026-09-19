@@ -13,6 +13,9 @@ ginásio onde a rede é fraca) e está publicada no GitHub Pages.
 - **Treinador** — vê quem precisa de atenção, escreve o plano de treino a partir
   da base de exercícios, publica-o e marca-o no calendário, monta o plano
   alimentar a partir da base de alimentos, deixa notas e responde ao feedback.
+  E treina: o separador *Eu* é o seu lado de aluno.
+- **Auto-treino** — quem quer escrever o seu próprio treino escreve-o, tenha
+  treinador ou não. Quem tem treinador continua a mostrar-lho.
 
 ## De onde vêm os dados
 
@@ -143,9 +146,10 @@ Quase nada se sobrescreve. As metas são revisões datadas — a vista
 do treinador ficam todas. Assim consegue ver-se, meses depois, que metas estavam
 postas quando o peso começou a descer.
 
-O RLS segue uma regra só: o aluno vê e escreve o que é dele, o treinador vê os
-alunos que tem associados e é o único que escreve planos. Rascunhos de plano e
-de dieta ficam invisíveis ao aluno até serem publicados.
+O RLS segue uma regra só: o aluno vê e escreve o que é dele, e o treinador vê os
+alunos que tem associados. Escrever um plano é de quem o escreveu — o treinador
+para os seus alunos, cada um para si (ver *Auto-treino*). Rascunhos de plano e
+de dieta ficam invisíveis a quem não é o autor.
 
 ## Publicação
 
@@ -174,12 +178,15 @@ login com Google voltar ao sítio certo.
 
 ```
 src/
-  auth/        login, contexto de sessão, ecrã de espera por convite
+  auth/        login, contexto de sessão, ecrã de escolha de quem entra sem
+               convite (esperar pelo treinador ou treinar por sua conta)
   athlete/     Hoje, Treino (semana marcada), Sessão de treino, Medidas,
                Dieta, Semana
   coach/       Alunos, Detalhe do aluno, Calendário, Editor de plano (com a
                marcação no calendário), Editor de dieta, Biblioteca de
-               exercícios
+               exercícios, Eu (a área pessoal do treinador)
+  shared/      o que serve os dois lados: Perfil, e os cartões da ficha —
+               quem é, metas, limitações, notas
   components/  peças partilhadas (steppers, escalas, gráfico, corpo, tab bar)
   lib/         cliente Supabase, tipos, consultas, formatação, cálculos
   assets/      o SVG do corpo
@@ -267,6 +274,58 @@ Daí saem as duas vistas de semana:
 
 Sem marcações nenhumas nada disto estorva: o aluno continua a escolher o treino
 da lista do plano, como antes.
+
+## Auto-treino
+
+Nem todo o treino vem de um treinador. Um aluno pode querer escrever o seu, e um
+treinador treina como toda a gente. As duas coisas são a mesma, e resolvem-se
+sem tabela nenhuma nova: **um auto-treino é um plano em que o autor e o dono são
+a mesma pessoa** — `plans.coach_id = plans.athlete_id`. Daí para baixo não muda
+nada: dias, exercícios, marcações no calendário, sessões e séries são os do
+costume, e os ecrãs também.
+
+Para a base de dados, o treinador que se acompanha a si próprio é um aluno que é
+o seu próprio treinador. É por isso que o separador *Eu* não tem ecrãs seus: são
+o **Hoje**, o **Treino** e as **Medidas** do aluno, com o `athlete_id` dele.
+
+Quem entra sem convite escolhe no arranque: esperar pelo treinador, ou começar
+já. A escolha fica no `profiles.status` — `pending` é quem espera, `active` sem
+`coach_id` é quem treina por sua conta —, e não fecha porta nenhuma: o convite
+que chegar depois liga a conta ao treinador com tudo o que já lá estiver.
+
+### Quem escreve o quê
+
+São duas perguntas diferentes, e têm respostas diferentes:
+
+| | Quem pode |
+|---|---|
+| Escrever um plano para si | qualquer pessoa, mesmo tendo treinador |
+| Definir metas, ficha e limitações de alguém | o treinador dessa pessoa — e a própria, quando não tem treinador |
+
+A segunda linha é o que impede um aluno de reescrever as metas que o treinador
+lhe pôs, e é ao mesmo tempo o que dá ao treinador (que nunca tem ninguém por
+cima) o seu objectivo, as suas metas, as suas limitações e as suas notas.
+
+O que o aluno já escrevia sobre si — peso, passos, sono, energia, fome, stress,
+perímetros, feedback — continua exactamente igual: sempre foi dele.
+
+### O que o treinador vê
+
+Tudo o que o aluno escreveu para si:
+
+- o plano aparece no separador *Planos* do aluno, com a marca **auto-treino**,
+  e abre-se inteiro — só de leitura, porque quem o escreveu foi o aluno;
+- os treinos que o aluno marcou aparecem no *Calendário*, com a marca **auto**
+  para não se confundirem com os que foi ele a prescrever;
+- um aluno sem plano prescrito mas a treinar por sua conta deixa de aparecer na
+  lista como "Sem plano publicado" — não é um esquecimento do treinador, é uma
+  escolha do aluno. O silêncio e os treinos em falta continuam a contar.
+
+Um plano do treinador e um auto-treino podem coexistir. Nesse caso o plano que
+manda nos ecrãs do dia a dia é o do treinador, e os treinos do próprio ficam na
+lista *Escritos por mim*, no fundo do separador *Treino*. Para um auto-treino
+que não seja o plano a correr chegar à semana, marca-se no calendário do plano
+— a mesma regra de sempre: o plano diz o que se faz, o calendário diz quando.
 
 ## Treinos por repetições e por tempo
 

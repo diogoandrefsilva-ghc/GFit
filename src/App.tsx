@@ -40,6 +40,9 @@ const DietEditor = lazy(() =>
 const ExerciseLibrary = lazy(() =>
   import('@/coach/ExerciseLibrary').then((m) => ({ default: m.ExerciseLibrary })),
 )
+const SelfArea = lazy(() =>
+  import('@/coach/SelfArea').then((m) => ({ default: m.SelfArea })),
+)
 const Profile = lazy(() =>
   import('@/shared/Profile').then((m) => ({ default: m.Profile })),
 )
@@ -93,10 +96,14 @@ export function App() {
             <Route path="/alunos/:athleteId" element={<AthleteDetail />} />
             <Route path="/calendario" element={<CoachCalendar />} />
             <Route path="/exercicios" element={<ExerciseLibrary />} />
+            {/* O treinador como aluno de si próprio: o seu dia, o seu treino,
+                as suas medidas e as suas metas. */}
+            <Route path="/eu" element={<SelfArea />} />
             <Route path="/perfil" element={<Profile />} />
           </Route>
           <Route path="/planos/:planId" element={<PlanEditor />} />
           <Route path="/dietas/:dietPlanId" element={<DietEditor />} />
+          <Route path="/treino/:sessionId" element={<WorkoutSession />} />
           <Route path="*" element={<Navigate to="/inicio" replace />} />
         </Routes>
       ) : (
@@ -110,6 +117,8 @@ export function App() {
             <Route path="/perfil" element={<Profile />} />
           </Route>
           <Route path="/treino/:sessionId" element={<WorkoutSession />} />
+          {/* Auto-treino: o aluno escreve o seu plano no mesmo editor. */}
+          <Route path="/planos/:planId" element={<PlanEditor />} />
           <Route path="*" element={<Navigate to="/hoje" replace />} />
         </Routes>
       )}

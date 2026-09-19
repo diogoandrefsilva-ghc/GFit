@@ -63,6 +63,17 @@ export function Profile() {
         <AthleteSection coach={data?.coach ?? null} targets={data?.targets ?? null} />
       )}
 
+      {isCoach && (
+        <section className="card card--flat">
+          <span className="eyebrow">O meu treino</span>
+          <p className="subtitle">
+            Também treinas: o separador <strong>Eu</strong> é o teu lado de
+            aluno — o registo do dia, os teus treinos, as medidas e as metas que
+            pões a ti próprio.
+          </p>
+        </section>
+      )}
+
       <InstallHint />
 
       <section className="card">
@@ -361,6 +372,9 @@ function AthleteSection({
   coach: { full_name: string | null; email: string | null } | null
   targets: Awaited<ReturnType<typeof fetchCurrentTargets>>
 }) {
+  const { refreshProfile } = useAuth()
+  const [checking, setChecking] = useState(false)
+
   return (
     <>
       <section className="card">
@@ -374,14 +388,38 @@ function AthleteSection({
             </div>
           </div>
         ) : (
-          <p className="subtitle">Ainda não estás ligado a nenhum treinador.</p>
+          <>
+            <p className="subtitle">
+              Treinas por tua conta: os planos são os que escreves, e as metas
+              as que pões a ti próprio, no ecrã Medidas. Se um treinador te
+              convidar com este email, ficas ligado a ele sem perder nada do que
+              já registaste.
+            </p>
+            <button
+              type="button"
+              className="btn btn--ghost btn--block"
+              disabled={checking}
+              onClick={async () => {
+                setChecking(true)
+                try {
+                  await refreshProfile()
+                } finally {
+                  setChecking(false)
+                }
+              }}
+            >
+              {checking ? 'A verificar…' : 'Já fui convidado'}
+            </button>
+          </>
         )}
       </section>
 
       {targets && (
         <section className="card">
           <span className="eyebrow">As tuas metas</span>
-          <p className="subtitle">Definidas pelo treinador.</p>
+          <p className="subtitle">
+            {coach ? 'Definidas pelo treinador.' : 'Definidas por ti, no ecrã Medidas.'}
+          </p>
           <div className="row">
             <Stat label="Kcal" value={targets.kcal_target ? int(targets.kcal_target) : '—'} />
             <Stat

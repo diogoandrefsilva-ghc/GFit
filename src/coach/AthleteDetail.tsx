@@ -4,11 +4,13 @@ import { useProfile } from '@/auth/useAuth'
 import { Avatar } from '@/components/Avatar'
 import { Loading, ScreenHeader, Stat } from '@/components/Screen'
 import { Sparkline } from '@/components/Sparkline'
-import { IdentityCard } from '@/coach/IdentityCard'
-import { LimitationsCard } from '@/coach/LimitationsCard'
-import { TargetsTab } from '@/coach/TargetsTab'
+import { IdentityCard } from '@/shared/IdentityCard'
+import { LimitationsCard } from '@/shared/LimitationsCard'
+import { NotesCard } from '@/shared/NotesCard'
+import { TargetsTab } from '@/shared/TargetsTab'
 import {
   createPlan,
+  isSelfPlan,
   fetchAthleteProfile,
   fetchCoachNotes,
   fetchCurrentTargets,
@@ -20,7 +22,6 @@ import {
   fetchRecentLogs,
   fetchTargetsHistory,
   replyToFeedback,
-  saveCoachNote,
 } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import {
@@ -248,8 +249,9 @@ export function AthleteDetail() {
                 type="button"
                 className="btn btn--sm btn--primary"
                 onClick={async () => {
+                  const mine = plans.filter((item) => !isSelfPlan(item))
                   const plan = await createPlan(coach.id, athlete.id, {
-                    name: `Plano ${plans.length + 1}`,
+                    name: `Plano ${mine.length + 1}`,
                     block_name: null,
                     num_weeks: 4,
                     start_date: isoDate(),
@@ -263,23 +265,29 @@ export function AthleteDetail() {
             {plans.length === 0 ? (
               <p className="subtitle">Ainda sem planos.</p>
             ) : (
-              <ul className="detail__plans">
+              <ul className="plan-list">
                 {plans.map((plan) => (
                   <li key={plan.id}>
-                    <Link to={`/planos/${plan.id}`} className="detail__plan">
-                      <span className="detail__plan-name">
+                    <Link to={`/planos/${plan.id}`} className="plan-list__row">
+                      <span className="plan-list__name">
                         <strong>{plan.name}</strong>
                         <em>
                           {plan.num_weeks} semanas · início {shortDate(plan.start_date)}
                         </em>
                       </span>
-                      <span
-                        className={`chip ${
-                          plan.status === 'published' ? 'chip--good' : 'chip--accent'
-                        }`}
-                      >
-                        {plan.status === 'published' ? 'publicado' : 'rascunho'}
-                      </span>
+                      {/* O que o aluno escreveu para si vê-se, mas não se
+                          edita: o plano é dele. */}
+                      {isSelfPlan(plan) ? (
+                        <span className="chip">auto-treino</span>
+                      ) : (
+                        <span
+                          className={`chip ${
+                            plan.status === 'published' ? 'chip--good' : 'chip--accent'
+                          }`}
+                        >
+                          {plan.status === 'published' ? 'publicado' : 'rascunho'}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 ))}
@@ -317,11 +325,11 @@ export function AthleteDetail() {
             {dietPlans.length === 0 ? (
               <p className="subtitle">Ainda sem planos alimentares.</p>
             ) : (
-              <ul className="detail__plans">
+              <ul className="plan-list">
                 {dietPlans.map((plan) => (
                   <li key={plan.id}>
-                    <Link to={`/dietas/${plan.id}`} className="detail__plan">
-                      <span className="detail__plan-name">
+                    <Link to={`/dietas/${plan.id}`} className="plan-list__row">
+                      <span className="plan-list__name">
                         <strong>{plan.name}</strong>
                         <em>{plan.kcal_target ? `${plan.kcal_target} kcal` : 'sem meta'}</em>
                       </span>
@@ -436,81 +444,6 @@ function WeightCard({
             tone={Math.abs(toTarget) <= 0.5 ? 'good' : 'default'}
           />
         </div>
-      )}
-    </section>
-  )
-}
-
-/** Notas do dia, com o rasto do que já foi dito. */
-function NotesCard({
-  coachId,
-  athleteId,
-  notes,
-  onSaved,
-}: {
-  coachId: string
-  athleteId: string
-  notes: { id: string; note_date: string; body: string; read_at: string | null }[]
-  onSaved: () => void
-}) {
-  const [body, setBody] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [showAll, setShowAll] = useState(false)
-
-  const visible = showAll ? notes : notes.slice(0, 3)
-
-  return (
-    <section className="card card--accent">
-      <span className="eyebrow">Notas e conselhos</span>
-      <p className="subtitle">A mais recente aparece no ecrã "Hoje" do aluno.</p>
-
-      <textarea
-        className="textarea"
-        value={body}
-        placeholder="Hoje sobe 2,5 kg no supino. Se a perna incomodar, avisa-me."
-        onChange={(event) => setBody(event.target.value)}
-      />
-      <button
-        type="button"
-        className="btn btn--primary btn--block"
-        disabled={busy || body.trim().length === 0}
-        onClick={async () => {
-          setBusy(true)
-          try {
-            await saveCoachNote(coachId, athleteId, body.trim())
-            setBody('')
-            onSaved()
-          } finally {
-            setBusy(false)
-          }
-        }}
-      >
-        {busy ? 'A enviar…' : 'Enviar nota'}
-      </button>
-
-      {notes.length > 0 && (
-        <ul className="detail__notes">
-          {visible.map((note) => (
-            <li key={note.id}>
-              <span className="detail__note-date">
-                {shortDate(note.note_date)}
-                {note.read_at ? ' · lida' : ''}
-              </span>
-              <p>{note.body}</p>
-            </li>
-          ))}
-          {notes.length > 3 && (
-            <li>
-              <button
-                type="button"
-                className="detail__more"
-                onClick={() => setShowAll(!showAll)}
-              >
-                {showAll ? 'mostrar menos' : `ver as ${notes.length} notas`}
-              </button>
-            </li>
-          )}
-        </ul>
       )}
     </section>
   )
