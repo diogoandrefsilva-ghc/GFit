@@ -2,9 +2,8 @@ import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth, useProfile, useTrainsAlone } from '@/auth/useAuth'
 import { Avatar } from '@/components/Avatar'
-import { Scale } from '@/components/Scale'
-import { Stepper } from '@/components/Stepper'
 import { Loading, ScreenHeader } from '@/components/Screen'
+import { RegisterCards } from '@/athlete/RegisterCards'
 import {
   fetchActivePlan,
   fetchAthleteCalendar,
@@ -12,6 +11,7 @@ import {
   fetchCoach,
   fetchDailyLog,
   fetchLatestCoachNote,
+  fetchLatestMeasurementDate,
   fetchRecentLogs,
   fetchWeekSessions,
   saveDailyLog,
@@ -20,18 +20,15 @@ import {
 import { average, weekOfPlan } from '@/lib/calc'
 import {
   addDays,
-  hoursLabel,
-  int,
   isoDate,
   longDate,
-  num,
   plural,
   shortDate,
   signed,
   weekStart,
   weekdayShort,
 } from '@/lib/format'
-import { workoutsPath } from '@/lib/routes'
+import { measurementsPath, workoutsPath } from '@/lib/routes'
 import { useQuery } from '@/lib/useQuery'
 import type { DailyLog } from '@/lib/database.types'
 import './today.css'
@@ -48,24 +45,38 @@ export function Today() {
 
   const { data, loading, error, reload } = useQuery(['hoje', profile.id, today], async () => {
     const monday = weekStart(today)
-    const [plan, log, recent, note, targets, coach, calendar] = await Promise.all([
-      fetchActivePlan(profile.id),
-      fetchDailyLog(profile.id, today),
-      fetchRecentLogs(profile.id, 14),
-      fetchLatestCoachNote(profile.id),
-      fetchCurrentTargets(profile.id),
-      profile.coach_id ? fetchCoach(profile.coach_id) : Promise.resolve(null),
-      // A semana toda, e não só hoje: é o que permite dizer quando é o próximo
-      // treino num dia de descanso.
-      fetchAthleteCalendar(profile.id, monday, addDays(monday, 6)),
-    ])
+    const [plan, log, recent, note, targets, coach, calendar, measuredOn] =
+      await Promise.all([
+        fetchActivePlan(profile.id),
+        fetchDailyLog(profile.id, today),
+        fetchRecentLogs(profile.id, 14),
+        fetchLatestCoachNote(profile.id),
+        fetchCurrentTargets(profile.id),
+        profile.coach_id ? fetchCoach(profile.coach_id) : Promise.resolve(null),
+        // A semana toda, e não só hoje: é o que permite dizer quando é o
+        // próximo treino num dia de descanso.
+        fetchAthleteCalendar(profile.id, monday, addDays(monday, 6)),
+        // Só a data, para o cartão das medidas dizer quando foi a última vez.
+        fetchLatestMeasurementDate(profile.id),
+      ])
 
     const week = plan ? weekOfPlan(plan.plan.start_date, today) : 1
     const sessions = plan
       ? await fetchWeekSessions(profile.id, plan.plan.id, week)
       : []
 
-    return { plan, log, recent, note, targets, coach, week, sessions, calendar }
+    return {
+      plan,
+      log,
+      recent,
+      note,
+      targets,
+      coach,
+      week,
+      sessions,
+      calendar,
+      measuredOn,
+    }
   })
 
   const [draft, setDraft] = useState<Partial<DailyLog> | null>(null)
@@ -102,7 +113,8 @@ export function Today() {
     )
   }
 
-  const { plan, recent, note, targets, coach, week, sessions, calendar } = data!
+  const { plan, recent, note, targets, coach, week, sessions, calendar, measuredOn } =
+    data!
 
   // O que o treinador marcou para hoje manda sobre o palpite do plano.
   const todayMarks = calendar.filter((entry) => entry.schedule.scheduled_on === today)
@@ -261,99 +273,16 @@ export function Today() {
       )}
 
       {/* ── registo diário ─────────────────────────────── */}
-      <section className="card">
-        <div className="card__head">
-          <h2 className="today__section">Registo de hoje</h2>
-          <span className="today__saving">{saving ? 'a guardar…' : ''}</span>
-        </div>
-
-        <div className="today__weight">
-          <div className="field">
-            <span className="field__label">Peso</span>
-            <Stepper
-              value={log.weight_kg ?? null}
-              fallback={lastWeight ?? 75}
-              onChange={(value) => patch({ weight_kg: value })}
-              step={0.1}
-              min={30}
-              max={250}
-              decimals={1}
-              unit="kg"
-              size="lg"
-              label="peso"
-            />
-          </div>
-          <div className="today__weight-hint">
-            {weightAverage !== null && (
-              <span className="muted">média 7d {num(weightAverage, 1)} kg</span>
-            )}
-          </div>
-        </div>
-
-        <div className="field">
-          <span className="field__label">Passos</span>
-          <div className="today__steps">
-            <input
-              className="input today__steps-input"
-              type="number"
-              inputMode="numeric"
-              min={0}
-              max={80000}
-              placeholder="0"
-              value={log.steps ?? ''}
-              onChange={(event) =>
-                setDraft((previous) => ({
-                  ...previous,
-                  steps: event.target.value === '' ? null : Number(event.target.value),
-                }))
-              }
-              onBlur={() => patch({ steps: log.steps ?? null })}
-            />
-            <span className="today__steps-goal">meta {int(stepsGoal)}</span>
-          </div>
-          <div className="today__steps-bar" aria-hidden="true">
-            <i
-              style={{
-                width: `${Math.min(100, ((log.steps ?? 0) / Math.max(stepsGoal, 1)) * 100)}%`,
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="field">
-          <span className="field__label">Sono</span>
-          <Stepper
-            value={log.sleep_hours ?? null}
-            fallback={7.5}
-            onChange={(value) => patch({ sleep_hours: value })}
-            step={0.25}
-            min={0}
-            max={16}
-            decimals={2}
-            label="horas de sono"
-            format={hoursLabel}
-          />
-        </div>
-
-        <Scale
-          label="Energia"
-          hint="1 sem pilha · 5 a abarrotar"
-          value={log.energy ?? null}
-          onChange={(value) => patch({ energy: value })}
-        />
-        <Scale
-          label="Fome"
-          hint="1 nenhuma · 5 muita"
-          value={log.hunger ?? null}
-          onChange={(value) => patch({ hunger: value })}
-        />
-        <Scale
-          label="Stress"
-          hint="1 calmo · 5 em brasa"
-          value={log.stress ?? null}
-          onChange={(value) => patch({ stress: value })}
-        />
-      </section>
+      <RegisterCards
+        log={log}
+        saving={saving}
+        stepsGoal={stepsGoal}
+        lastWeight={lastWeight}
+        weightAverage={weightAverage}
+        measuredOn={measuredOn}
+        onPatch={patch}
+        measurementsPath={measurementsPath(isCoach, true)}
+      />
 
       {/* ── nota do treinador ──────────────────────────── */}
       {note && (

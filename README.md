@@ -9,7 +9,8 @@ ginásio onde a rede é fraca) e está publicada no GitHub Pages.
 - **Aluno** — vê a semana de treinos que o treinador marcou e regista cada série
   (carga, repetições, reps em reserva) com o que fez da última vez ao lado; nos
   treinos por tempo a app conduz com temporizador; regista peso, passos, sono,
-  energia, fome e stress; consulta a dieta; envia o feedback da semana.
+  energia, fome, stress e perímetros em cartões, um por coisa; consulta a
+  dieta; envia o feedback da semana.
 - **Treinador** — vê quem precisa de atenção, escreve o plano de treino a partir
   da base de exercícios, publica-o e marca-o no calendário, monta o plano
   alimentar a partir da base de alimentos, deixa notas e responde ao feedback.
@@ -186,14 +187,15 @@ login com Google voltar ao sítio certo.
 src/
   auth/        login, contexto de sessão, ecrã de escolha de quem entra sem
                convite (esperar pelo treinador ou treinar por sua conta)
-  athlete/     Hoje, Treino (semana marcada), Sessão de treino, Medidas,
-               Dieta, Semana
+  athlete/     Hoje (com os cartões de registo), Treino (semana marcada),
+               Sessão de treino, Medidas, Dieta, Semana
   coach/       Alunos, Detalhe do aluno, Calendário, Editor de plano (com a
                marcação no calendário), Editor de dieta, Biblioteca de
                exercícios, Eu (a área pessoal do treinador)
   shared/      o que serve os dois lados: Perfil, a apresentação da app, e os
                cartões da ficha — quem é, metas, limitações, notas
-  components/  peças partilhadas (steppers, escalas, gráfico, corpo, tab bar)
+  components/  peças partilhadas (steppers, escalas, painel do fundo, gráfico,
+               corpo, tab bar)
   lib/         cliente Supabase, tipos, consultas, formatação, cálculos
   assets/      o SVG do corpo
   styles/      tokens e folha de estilo base
@@ -256,6 +258,38 @@ valem disco.
 
 Os ecrãs que vivem em chunks próprios são trazidos enquanto a app está parada,
 para o primeiro toque em cada separador não esperar por um download.
+
+## O registo do dia
+
+O *Hoje* é o ecrã que se abre todos os dias, e o que se lhe pede é sempre a
+mesma coisa: registar. Por isso não é um formulário — é uma grelha de cartões
+grandes, um por cada coisa que há a registar: **peso**, **passos**, **sono**,
+**como te sentes** (energia, fome e stress juntos, que são a mesma pergunta
+feita de três maneiras) e **medidas**.
+
+Cada cartão diz, sem se lhe tocar, o que já lá está — o número de hoje, a média
+de 7 dias, quanto falta para a meta de passos — e veste o verde do que está
+feito assim que fica registado. Quem abre a app vê num relance o que falta, que
+é a pergunta que se faz à porta do ginásio.
+
+O toque abre o painel que sobe do fundo (`src/components/Sheet.tsx`, o mesmo
+dos números do editor de planos), com um valor só e grande. Três coisas que
+isto resolve e o formulário anterior não resolvia:
+
+- **Um alvo do tamanho do polegar por cada coisa**, em vez de seis campos
+  pequenos a competir pelo mesmo ecrã.
+- **Um toque quando nada mudou** — o painel abre no último valor conhecido e
+  traz um botão a confirmá-lo ("Registar 77,2 kg"), que é o caso de quem se
+  pesa todos os dias.
+- **Grava-se à saída**, e não a cada − e +: procurar o número certo não tem de
+  ser uma fila de gravações.
+
+O cartão das medidas não abre painel nenhum — leva ao ecrã *Medidas*, com o
+formulário de perímetros já aberto (`?registar=1`, que sai da barra de endereço
+mal é lido). São nove campos e um histórico: é ecrã, não é painel.
+
+O treinador vê exactamente os mesmos cartões na sua área *Eu*, porque é o mesmo
+ecrã (ver *Auto-treino*).
 
 ## Calendário de treinos
 

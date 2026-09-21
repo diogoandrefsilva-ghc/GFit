@@ -1,0 +1,199 @@
+.reg-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reg-block__title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.reg-block__saving {
+  font-size: 12px;
+  color: var(--muted-soft);
+}
+
+.reg-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/*
+ * O alvo é do tamanho do polegar e o cartão diz tudo sem se tocar nele: o que
+ * é, o que lá está e o que falta. Registar é o toque a seguir, não o primeiro.
+ */
+.reg {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 132px;
+  padding: 14px;
+  text-align: left;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  transition: transform 0.06s ease, background 0.16s ease, border-color 0.16s ease;
+}
+
+.reg:active {
+  transform: scale(0.985);
+}
+
+/* O que já está registado veste o verde do que está feito — nunca o dourado
+   da marca, que aqui só encheria de cor um ecrã inteiro de cartões. */
+.reg--done {
+  background: var(--good-soft);
+  border-color: var(--good-line);
+}
+
+.reg--wide {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-height: 0;
+}
+
+.reg__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.reg--wide .reg__top {
+  flex: 0 0 auto;
+}
+
+.reg__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--paper-2);
+  color: var(--ink-3);
+}
+
+.reg--done .reg__icon {
+  background: #fff;
+  color: var(--good);
+}
+
+.reg__tick {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--good);
+}
+
+.reg__chevron {
+  font-size: 22px;
+  color: var(--muted-soft);
+  line-height: 1;
+}
+
+.reg__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.reg__label {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+/* Duas linhas reservadas ao nome: com uma só, os números de dois cartões lado
+   a lado ficavam a alturas diferentes consoante o nome coubesse na linha. */
+.reg:not(.reg--wide) .reg__label {
+  min-height: 2.5em;
+}
+
+.reg__value {
+  font-family: var(--font-narrow);
+  font-size: 24px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  margin-top: 2px;
+}
+
+.reg__value--empty {
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.reg__unit {
+  font-style: normal;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-left: 3px;
+}
+
+.reg__hint {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * A meta em número diz pouco a quem vai a meio do dia; a barra diz quanto
+ * falta sem ter de fazer a conta.
+ */
+.reg__bar {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--gold-soft);
+  overflow: hidden;
+  margin-top: auto;
+}
+
+.reg--done .reg__bar {
+  background: #fff;
+}
+
+.reg__bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--gold);
+  transition: width 0.25s ease;
+}
+
+/* ── os painéis ────────────────────────────────────────── */
+
+.reg-sheet__dial {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0 2px;
+}
+
+.reg-sheet__input {
+  font-family: var(--font-narrow);
+  font-size: 26px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  height: 58px;
+  text-align: center;
+}
+
+.reg-sheet__hint {
+  font-size: 12px;
+  color: var(--muted-soft);
+  line-height: 1.45;
+}

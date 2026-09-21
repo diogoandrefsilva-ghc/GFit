@@ -197,6 +197,24 @@ export async function fetchMeasurements(athleteId: string): Promise<Measurement[
   )
 }
 
+/**
+ * Só a data do último registo de perímetros. O cartão de registo do Hoje quer
+ * dizer quando foi a última vez, e não tem de trazer a tabela toda para isso.
+ */
+export async function fetchLatestMeasurementDate(
+  athleteId: string,
+): Promise<string | null> {
+  const rows = unwrap(
+    await supabase
+      .from('measurements')
+      .select('measured_on')
+      .eq('athlete_id', athleteId)
+      .order('measured_on', { ascending: false })
+      .limit(1),
+  )
+  return rows[0]?.measured_on ?? null
+}
+
 export async function fetchAthleteProfile(
   athleteId: string,
 ): Promise<AthleteProfile | null> {

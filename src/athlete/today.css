@@ -1,9 +1,3 @@
-.today__me {
-  display: flex;
-  padding: 0;
-  border-radius: 50%;
-}
-
 .today__workout-eyebrow {
   color: var(--muted-soft);
 }
@@ -18,73 +12,6 @@
   font-size: 14px;
   color: var(--muted-soft);
   margin-top: -6px;
-}
-
-.today__section {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.today__saving {
-  font-size: 12px;
-  color: var(--muted-soft);
-}
-
-.today__weight {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.today__weight-hint {
-  font-size: 13px;
-  padding-bottom: 12px;
-}
-
-.today__steps {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.today__steps-input {
-  flex: 1;
-  font-family: var(--font-narrow);
-  font-size: 22px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-}
-
-.today__steps-goal {
-  font-size: 13px;
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-/*
- * A meta em número diz pouco a quem vai a meio do dia; a barra diz quanto
- * falta sem ter de fazer a conta.
- */
-.today__steps-bar {
-  height: 6px;
-  border-radius: 3px;
-  background: var(--gold-soft);
-  overflow: hidden;
-}
-
-.today__steps-bar i {
-  display: block;
-  height: 100%;
-  border-radius: 3px;
-  background: var(--gold);
-  transition: width 0.25s ease;
-}
-
-.today__sleep-label {
-  font-size: 13px;
-  color: var(--muted);
 }
 
 .today__note-head {

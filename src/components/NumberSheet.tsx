@@ -1,72 +1,17 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useState } from 'react'
+import { Sheet } from '@/components/Sheet'
 import { Stepper } from '@/components/Stepper'
 import './number-sheet.css'
 
 /**
  * Os números de um exercício — séries, repetições, descanso, tempo — mudam-se
- * num painel que sobe do fundo, com o exercício ainda à vista por trás.
+ * no painel que sobe do fundo, com o exercício ainda à vista por trás.
  *
  * Em cima está o valor a mudar, com − e + para o afinar; em baixo, os valores
  * do costume à distância de um toque. O toque num deles vale por escolher e
  * fechar, que é o gesto de nove em cada dez vezes; quem precisa de um valor
  * fora da lista chega lá pelos botões sem mudar de sítio.
  */
-function Sheet({
-  title,
-  caption,
-  onClose,
-  children,
-}: {
-  title: string
-  caption?: string
-  onClose: () => void
-  children: ReactNode
-}) {
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKey)
-
-    // Sem isto a lista de exercícios continua a deslizar por trás do painel.
-    const previous = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = previous
-    }
-  }, [onClose])
-
-  return (
-    <div className="nsheet" role="dialog" aria-label={title}>
-      <button
-        type="button"
-        className="nsheet__scrim"
-        onClick={onClose}
-        aria-label="Fechar"
-      />
-      <div className="nsheet__panel">
-        <div className="nsheet__grip" />
-        <div className="nsheet__head">
-          <span className="nsheet__text">
-            <strong className="nsheet__title">{title}</strong>
-            {caption && <em className="nsheet__caption">{caption}</em>}
-          </span>
-          <button
-            type="button"
-            className="btn btn--sm btn--quiet"
-            onClick={onClose}
-          >
-            Pronto
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  )
-}
-
 function Presets<T>({
   values,
   isOn,
