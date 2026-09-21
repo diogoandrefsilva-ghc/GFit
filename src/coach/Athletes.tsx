@@ -1,18 +1,25 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useMemo } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useProfile } from '@/auth/useAuth'
 import { Avatar } from '@/components/Avatar'
 import { Empty, Loading, ScreenHeader } from '@/components/Screen'
 import { attentionReason, fetchAthleteSummaries, fetchInvites } from '@/lib/api'
 import { num, plural, relativeDate, signed } from '@/lib/format'
+import { ATHLETE_VIEWS, type AthleteView } from '@/lib/routes'
 import { useQuery } from '@/lib/useQuery'
 import './athletes.css'
 
-type Filter = 'attention' | 'all' | 'paused'
-
 export function Athletes() {
   const profile = useProfile()
-  const [filter, setFilter] = useState<Filter>('attention')
+
+  // A vista vive na barra de endereço e não em estado local: é assim que os
+  // cartões do Início podem trazer o treinador já à lista certa, e que voltar
+  // de uma ficha devolve a lista onde ela estava.
+  const [params, setParams] = useSearchParams()
+  const asked = params.get('ver')
+  const filter: AthleteView = ATHLETE_VIEWS.includes(asked as AthleteView)
+    ? (asked as AthleteView)
+    : 'atencao'
 
   const { data, loading, error } = useQuery(['alunos', profile.id], async () => {
     const [summaries, invites] = await Promise.all([
@@ -45,8 +52,8 @@ export function Athletes() {
   const pendingInvites = invites.filter((invite) => invite.status === 'pending')
 
   const visible = summaries.filter((summary) => {
-    if (filter === 'attention') return flagged.has(summary.profile.id)
-    if (filter === 'paused') return summary.profile.status !== 'active'
+    if (filter === 'atencao') return flagged.has(summary.profile.id)
+    if (filter === 'pausa') return summary.profile.status !== 'active'
     return true
   })
 
@@ -64,16 +71,16 @@ export function Athletes() {
       <div className="row row--wrap athletes__filters">
         {(
           [
-            ['attention', `A precisar (${flagged.size})`],
-            ['all', `Todos (${summaries.length})`],
-            ['paused', 'Em pausa'],
+            ['atencao', `A precisar (${flagged.size})`],
+            ['todos', `Todos (${summaries.length})`],
+            ['pausa', 'Em pausa'],
           ] as const
         ).map(([key, label]) => (
           <button
             key={key}
             type="button"
             className={`chip ${filter === key ? 'chip--on' : ''}`}
-            onClick={() => setFilter(key)}
+            onClick={() => setParams({ ver: key }, { replace: true })}
           >
             {label}
           </button>
@@ -93,7 +100,7 @@ export function Athletes() {
       {visible.length === 0 ? (
         <Empty
           title={
-            filter === 'attention' ? 'Está tudo em dia' : 'Sem alunos nesta vista'
+            filter === 'atencao' ? 'Está tudo em dia' : 'Sem alunos nesta vista'
           }
           hint={
             summaries.length === 0

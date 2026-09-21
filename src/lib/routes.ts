@@ -19,6 +19,19 @@ export function measurementsPath(isCoach: boolean, register = false): string {
   return `${base}${isCoach ? '&' : '?'}registar=1`
 }
 
+/**
+ * As vistas da lista de alunos, tal como se escrevem na barra de endereço. A
+ * lista abre em "atenção" e é essa que vale quando não se diz nada — os
+ * cartões do Início é que apontam a cada uma.
+ */
+export const ATHLETE_VIEWS = ['atencao', 'todos', 'pausa'] as const
+
+export type AthleteView = (typeof ATHLETE_VIEWS)[number]
+
+export function athletesPath(view: AthleteView): string {
+  return `/alunos?ver=${view}`
+}
+
 /** As zonas da área pessoal do treinador. */
 export const SELF_ZONES = ['hoje', 'treino', 'medidas', 'ficha'] as const
 

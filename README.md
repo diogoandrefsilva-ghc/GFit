@@ -11,10 +11,11 @@ ginásio onde a rede é fraca) e está publicada no GitHub Pages.
   treinos por tempo a app conduz com temporizador; regista peso, passos, sono,
   energia, fome, stress e perímetros em cartões, um por coisa; consulta a
   dieta; envia o feedback da semana.
-- **Treinador** — vê quem precisa de atenção, escreve o plano de treino a partir
-  da base de exercícios, publica-o e marca-o no calendário, monta o plano
-  alimentar a partir da base de alimentos, deixa notas e responde ao feedback.
-  E treina: o separador *Eu* é o seu lado de aluno.
+- **Treinador** — vê quem precisa de atenção em cartões que abrem a lista ou o
+  calendário, escreve o plano de treino a partir da base de exercícios,
+  publica-o e marca-o no calendário, monta o plano alimentar a partir da base
+  de alimentos, deixa notas e responde ao feedback. E treina: o separador *Eu*
+  é o seu lado de aluno, com um lembrete no fim do *Início*.
 - **Auto-treino** — quem quer escrever o seu próprio treino escreve-o, tenha
   treinador ou não. Quem tem treinador continua a mostrar-lho.
 - **Primeira vez** — quem entra pela primeira vez leva uma apresentação de seis
@@ -258,6 +259,30 @@ valem disco.
 
 Os ecrãs que vivem em chunks próprios são trazidos enquanto a app está parada,
 para o primeiro toque em cada separador não esperar por um download.
+
+## O início do treinador
+
+Os quatro números do topo — alunos, quem precisa de ti, treinos da semana, quem
+registou hoje — deixaram de ser só números: cada um é um cartão que leva ao
+ecrã que o explica.
+
+| Cartão | Onde vai dar |
+| --- | --- |
+| Alunos | a lista toda (`/alunos?ver=todos`) |
+| A precisar | a lista já filtrada por quem precisa (`/alunos?ver=atencao`) |
+| Treinos, esta semana | o calendário |
+| Registaram hoje | a lista toda, onde cada linha diz quando foi a última vez |
+
+A vista da lista de alunos passou a viver na barra de endereço (`?ver=atencao`,
+`todos`, `pausa`) em vez de em estado local. É o que permite ao cartão apontar
+à vista certa — e, de caminho, voltar de uma ficha devolve a lista onde ela
+estava.
+
+No fim do ecrã há um banner com o dia do próprio treinador, que abre o separador
+*Eu*. Não é um "vai ali" solto: diz o que lhe falta — `por registar: peso, sono`
+—, e quando tem treino marcado para hoje é isso que anuncia. Com tudo feito
+veste o verde e limita-se a dizê-lo. O treinador passa o dia a olhar para os
+números dos alunos; este é o lembrete de que também tem os seus.
 
 ## O registo do dia
 
