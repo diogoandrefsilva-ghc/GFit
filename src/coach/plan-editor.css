@@ -70,60 +70,80 @@
   line-height: 1;
 }
 
+/*
+ * Os três números do exercício num carril só, separados por um fio. Juntos
+ * lêem-se como uma linha — "6 séries de 8-12 com 15s" — e cada um abre o
+ * painel do fundo ao toque.
+ */
 .plan-ex__numbers {
   display: flex;
-  gap: 8px;
+  margin-top: 10px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
 }
 
-.plan-ex__pick {
+.plan-ex__num {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 6px 4px 7px;
-  background: var(--paper-2);
-  border-radius: var(--radius-sm);
+  justify-content: center;
+  gap: 1px;
+  padding: 9px 4px 8px;
+  background: transparent;
+  transition: background 0.14s ease;
+}
+
+.plan-ex__num + .plan-ex__num {
+  border-left: 1px solid var(--line);
+}
+
+.plan-ex__num:active {
+  background: var(--paper-3);
+}
+
+.plan-ex__num-value {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /*
- * A caixa do número é o próprio selector: fica com o ar das outras caixas do
- * cartão, mas abre a lista de valores ao toque. Sem seta desenhada, porque a
- * lista fechada tem de caber em três colunas num telemóvel.
+ * "DESCANSO" é a palavra mais comprida das três e é ela que manda: num ecrã
+ * de 320 a coluna tem 55px e a letra tem de encolher com ele.
  */
-.plan-ex__select {
-  width: 100%;
-  height: auto;
-  min-height: 0;
-  padding: 2px 4px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  text-align: center;
-  text-align-last: center;
-  -webkit-appearance: none;
-  appearance: none;
-  font-family: inherit;
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.plan-ex__select:focus {
-  outline: 2px solid var(--ink);
-  outline-offset: 1px;
-}
-
-.plan-ex__numbers em {
-  font-style: normal;
+.plan-ex__num-label {
+  max-width: 100%;
   font-family: var(--font-narrow);
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-size: clamp(9px, 2.5vw, 10px);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * Abaixo dos 360 a coluna perde uma dezena de pixels e "DESCANSO" deixa de
+ * caber: a letra aperta o que falta em vez de ficar pelas reticências.
+ */
+@media (max-width: 359px) {
+  .plan-ex__num {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+
+  .plan-ex__num-label {
+    letter-spacing: 0.02em;
+  }
 }
 
 /* ── calendário do plano ───────────────────────────────── */
@@ -263,9 +283,18 @@
 .plan-ex__edit {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   border-top: 1px solid var(--line);
   padding-top: 12px;
+}
+
+/* Subir, descer e remover: em vez de se espremerem, passam à linha de baixo. */
+.plan-ex__edit .row {
+  flex-wrap: wrap;
+}
+
+.plan-ex__edit .row .btn {
+  flex: 0 0 auto;
 }
 
 .plan-ex__remove {
@@ -279,4 +308,13 @@
 
 .plan__actions .btn {
   flex: 1;
+}
+
+/* A nota do exercício, para quem lê o plano sem lhe poder mexer: no editor ela
+   vive no painel que se abre, e aqui não há painel nenhum para abrir. */
+.plan-ex__note {
+  padding: 0 12px 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted-strong);
 }

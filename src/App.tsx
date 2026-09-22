@@ -10,6 +10,7 @@ import { WorkoutHome } from '@/athlete/WorkoutHome'
 import { Measurements } from '@/athlete/Measurements'
 import { Diet } from '@/athlete/Diet'
 import { WeeklyFeedbackScreen } from '@/athlete/WeeklyFeedback'
+import { WelcomeGate } from '@/shared/Welcome'
 
 // O treino a decorrer e os ecrãs do treinador só se carregam quando fazem
 // falta: um aluno nunca chega a descarregar os editores de plano e de dieta.
@@ -39,6 +40,9 @@ const DietEditor = lazy(() =>
 )
 const ExerciseLibrary = lazy(() =>
   import('@/coach/ExerciseLibrary').then((m) => ({ default: m.ExerciseLibrary })),
+)
+const SelfArea = lazy(() =>
+  import('@/coach/SelfArea').then((m) => ({ default: m.SelfArea })),
 )
 const Profile = lazy(() =>
   import('@/shared/Profile').then((m) => ({ default: m.Profile })),
@@ -85,6 +89,11 @@ export function App() {
         </div>
       }
     >
+      {/* A apresentação da app, por cima do que já está a carregar por baixo.
+          A chave é o utilizador: num telemóvel partilhado, quem entra a
+          seguir tem a sua primeira vez. */}
+      <WelcomeGate key={profile.id} />
+
       {isCoach ? (
         <Routes>
           <Route element={<CoachShell />}>
@@ -93,10 +102,14 @@ export function App() {
             <Route path="/alunos/:athleteId" element={<AthleteDetail />} />
             <Route path="/calendario" element={<CoachCalendar />} />
             <Route path="/exercicios" element={<ExerciseLibrary />} />
+            {/* O treinador como aluno de si próprio: o seu dia, o seu treino,
+                as suas medidas e as suas metas. */}
+            <Route path="/eu" element={<SelfArea />} />
             <Route path="/perfil" element={<Profile />} />
           </Route>
           <Route path="/planos/:planId" element={<PlanEditor />} />
           <Route path="/dietas/:dietPlanId" element={<DietEditor />} />
+          <Route path="/treino/:sessionId" element={<WorkoutSession />} />
           <Route path="*" element={<Navigate to="/inicio" replace />} />
         </Routes>
       ) : (
@@ -110,6 +123,8 @@ export function App() {
             <Route path="/perfil" element={<Profile />} />
           </Route>
           <Route path="/treino/:sessionId" element={<WorkoutSession />} />
+          {/* Auto-treino: o aluno escreve o seu plano no mesmo editor. */}
+          <Route path="/planos/:planId" element={<PlanEditor />} />
           <Route path="*" element={<Navigate to="/hoje" replace />} />
         </Routes>
       )}

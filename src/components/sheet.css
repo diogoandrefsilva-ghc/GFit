@@ -1,0 +1,83 @@
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.sheet__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(22, 21, 15, 0.42);
+  border: none;
+  animation: sheet-fade 0.18s ease;
+}
+
+@keyframes sheet-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.sheet__panel {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  /* Num ecrã curto — ou com o teclado aberto — o painel desliza em vez de
+     empurrar o que traz dentro para fora da vista. */
+  max-height: 88vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--paper);
+  border-radius: 24px 24px 0 0;
+  padding: 10px 16px calc(var(--safe-bottom) + 18px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: sheet-up 0.2s ease;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+  }
+}
+
+.sheet__grip {
+  width: 38px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line-2);
+  align-self: center;
+}
+
+.sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sheet__text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet__title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* De que se está a falar, para não haver enganos com o painel aberto. */
+.sheet__caption {
+  font-style: normal;
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

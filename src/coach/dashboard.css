@@ -112,3 +112,147 @@
   font-size: 12px;
   padding-top: 4px;
 }
+
+/* ── os números que levam a algum lado ─────────────────── */
+
+.dash__tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.dash__tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  color: var(--ink);
+  transition: transform 0.06s ease;
+}
+
+.dash__tile:active {
+  transform: scale(0.985);
+}
+
+.dash__tile--good {
+  background: var(--good-soft);
+  border-color: var(--good-line);
+}
+
+.dash__tile--warn {
+  background: var(--warn-soft);
+  border-color: var(--warn-line);
+}
+
+/*
+ * Duas linhas reservadas ao rótulo: "Registaram hoje" não cabe numa, e sem
+ * isto o número desse cartão descaía uma linha em relação ao do lado.
+ */
+.dash__tile-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 2.6em;
+}
+
+.dash__tile-head .stat__label {
+  line-height: 1.3;
+}
+
+.dash__tile-go {
+  font-size: 20px;
+  line-height: 1;
+  color: var(--muted-soft);
+}
+
+.dash__tile-value {
+  font-family: var(--font-narrow);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  margin-top: 2px;
+}
+
+.dash__tile--good .dash__tile-value {
+  color: var(--good);
+}
+
+.dash__tile--warn .dash__tile-value {
+  color: var(--warn);
+}
+
+.dash__tile-hint {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── e o treino do próprio treinador ───────────────────── */
+
+/*
+ * Os dois nomes juntos de propósito: `base.css` entra depois das folhas dos
+ * ecrãs, e com `.dash__self` sozinho a coluna do `.card` ganhava o desempate.
+ */
+.card.dash__self {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+/*
+ * A cor do texto escreve-se aqui, variante a variante: o banner é um link, e
+ * sem isto herdava o dourado que a `base.css` dá a qualquer `<a>`.
+ */
+.card.dash__self.card--ink {
+  color: var(--paper);
+}
+
+.card.dash__self.card--good {
+  color: var(--ink);
+}
+
+.dash__self-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Sobre a tinta escura o cinzento do costume não se lê. */
+.card--ink .dash__self-eyebrow,
+.card--ink .dash__self-meta {
+  color: var(--paper-3);
+}
+
+.card--good .dash__self-meta {
+  color: var(--muted-strong);
+}
+
+.dash__self-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.dash__self-meta {
+  font-style: normal;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.dash__self-go {
+  flex-shrink: 0;
+  font-size: 20px;
+  line-height: 1;
+  opacity: 0.8;
+}

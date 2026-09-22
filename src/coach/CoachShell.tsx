@@ -9,6 +9,8 @@ const TABS: Tab[] = [
   { to: '/alunos', label: 'Alunos', icon: 'people' },
   { to: '/calendario', label: 'Calendário', icon: 'calendar' },
   { to: '/exercicios', label: 'Exercícios', icon: 'library' },
+  // O treinador também treina: aqui é ele o aluno.
+  { to: '/eu', label: 'Eu', icon: 'workout' },
   { to: '/perfil', label: 'Perfil', icon: 'person' },
 ]
 
@@ -23,6 +25,7 @@ export function CoachShell() {
         import('@/coach/Athletes').catch(() => {})
         import('@/coach/Calendar').catch(() => {})
         import('@/coach/ExerciseLibrary').catch(() => {})
+        import('@/coach/SelfArea').catch(() => {})
         import('@/shared/Profile').catch(() => {})
       }),
     [],

@@ -4,7 +4,7 @@ import { useProfile } from '@/auth/useAuth'
 import { Avatar } from '@/components/Avatar'
 import { Empty, Loading, ScreenHeader } from '@/components/Screen'
 import { WeekNav } from '@/components/WeekNav'
-import { fetchAthletes, fetchCoachCalendar } from '@/lib/api'
+import { fetchAthletes, fetchCoachCalendar, isSelfPlan } from '@/lib/api'
 import { dayOfMonth, isoDate, plural, weekDates, weekStart, weekdayShort } from '@/lib/format'
 import { useQuery } from '@/lib/useQuery'
 import './calendar.css'
@@ -12,6 +12,10 @@ import './calendar.css'
 /**
  * A semana dos alunos todos num ecrã: quem treina em que dia, e o que já foi
  * feito. É a vista de quem marcou os treinos e quer saber se estão a acontecer.
+ *
+ * Mostra também o que não foi ele a marcar: os auto-treinos dos alunos, com a
+ * marca "auto" para não se confundirem com o que prescreveu, e os treinos dele
+ * próprio.
  */
 export function CoachCalendar() {
   const coach = useProfile()
@@ -22,7 +26,7 @@ export function CoachCalendar() {
   const { data, loading, error } = useQuery(['calendario-treinador', coach.id, monday], async () => {
     const dates = weekDates(monday)
     const [calendar, athletes] = await Promise.all([
-      fetchCoachCalendar(coach.id, dates[0], dates[6]),
+      fetchCoachCalendar(dates[0], dates[6]),
       fetchAthletes(coach.id),
     ])
     return { calendar, athletes }
@@ -41,6 +45,16 @@ export function CoachCalendar() {
   const visible = athleteId
     ? calendar.filter((entry) => entry.schedule.athlete_id === athleteId)
     : calendar
+  // O treinador só aparece no filtro se tiver treinos marcados para si.
+  const filters = calendar.some((entry) => entry.schedule.athlete_id === coach.id)
+    ? [{ id: coach.id, name: 'Eu' }, ...athletes.map((item) => ({
+        id: item.id,
+        name: item.full_name ?? item.email ?? 'Aluno',
+      }))]
+    : athletes.map((item) => ({
+        id: item.id,
+        name: item.full_name ?? item.email ?? 'Aluno',
+      }))
   const done = visible.filter((entry) => entry.session?.status === 'done').length
   const dates = weekDates(monday)
 
@@ -57,7 +71,7 @@ export function CoachCalendar() {
 
       <WeekNav monday={monday} onChange={setMonday} />
 
-      {athletes.length > 1 && (
+      {filters.length > 1 && (
         <div className="row row--wrap cal__filter">
           <button
             type="button"
@@ -66,14 +80,14 @@ export function CoachCalendar() {
           >
             Todos
           </button>
-          {athletes.map((athlete) => (
+          {filters.map((item) => (
             <button
-              key={athlete.id}
+              key={item.id}
               type="button"
-              className={`chip ${athleteId === athlete.id ? 'chip--on' : ''}`}
-              onClick={() => setAthleteId(athlete.id)}
+              className={`chip ${athleteId === item.id ? 'chip--on' : ''}`}
+              onClick={() => setAthleteId(item.id)}
             >
-              {athlete.full_name ?? athlete.email ?? 'Aluno'}
+              {item.name}
             </button>
           ))}
         </div>
@@ -117,11 +131,13 @@ export function CoachCalendar() {
                           : date < today
                             ? 'em falta'
                             : null
+                    const mine = entry.schedule.athlete_id === coach.id
+                    const self = entry.plan ? isSelfPlan(entry.plan) : false
 
                     return (
                       <Link
                         key={entry.schedule.id}
-                        to={`/alunos/${entry.schedule.athlete_id}`}
+                        to={mine ? '/eu?zona=treino' : `/alunos/${entry.schedule.athlete_id}`}
                         className="cal-day__card"
                       >
                         <Avatar
@@ -130,7 +146,10 @@ export function CoachCalendar() {
                           size={28}
                         />
                         <span className="cal-day__text">
-                          <strong>{entry.athlete?.full_name ?? 'Aluno'}</strong>
+                          <strong>
+                            {mine ? 'Eu' : (entry.athlete?.full_name ?? 'Aluno')}
+                            {self && !mine ? ' · auto' : ''}
+                          </strong>
                           <em>
                             {entry.day?.label ?? '?'}
                             {entry.day?.title ? ` · ${entry.day.title}` : ''} ·{' '}

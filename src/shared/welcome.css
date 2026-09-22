@@ -1,0 +1,205 @@
+/*
+ * A apresentação da app. Mesma linguagem do ecrã de entrada — papel sobre
+ * fundo escurecido — porque é isso que ela é: a continuação do login, antes
+ * de a app propriamente dita aparecer.
+ */
+
+.welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 16px);
+  background: rgba(22, 21, 15, 0.62);
+  animation: welcome-fade 0.18s ease;
+}
+
+@keyframes welcome-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.welcome__card {
+  width: 100%;
+  max-width: 420px;
+  max-height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 14px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: welcome-in 0.2s ease;
+}
+
+@keyframes welcome-in {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+}
+
+/* O cartão recebe o foco ao abrir; o contorno do browser à volta de tudo não
+   acrescenta nada a quem já está lá dentro. */
+.welcome__card:focus {
+  outline: none;
+}
+
+/*
+ * Nada se espreme para caber: num ecrã curto o cartão desliza. Sem isto, o
+ * texto do cartão mais comprido era encolhido para dentro da sua caixa e
+ * escrevia-se por cima dos pontos e dos botões.
+ */
+.welcome__card > * {
+  flex-shrink: 0;
+}
+
+.welcome__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.welcome__count {
+  font-family: var(--font-narrow);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--muted-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.welcome__skip {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted-strong);
+  padding: 6px 4px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* O carril que troca de lado. Fica acima do cartão e não muda com ele: é a
+   moldura, não o conteúdo. */
+.welcome__side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.welcome__peek {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--muted);
+  text-align: center;
+}
+
+.welcome__slide {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* As páginas têm textos de tamanhos diferentes; sem isto o cartão saltava
+     de altura a cada toque em "Seguinte". */
+  min-height: 230px;
+  animation: welcome-slide 0.2s ease;
+}
+
+@keyframes welcome-slide {
+  from {
+    transform: translateX(10px);
+    opacity: 0;
+  }
+}
+
+.welcome__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 8px;
+  border-radius: var(--radius);
+  background: var(--gold-soft);
+  border: 1px solid var(--gold-line);
+  color: var(--gold-dark);
+}
+
+/* O símbolo do separador é desenhado à medida da barra de baixo (22 px);
+   aqui manda o cartão. */
+.welcome__icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+/* A marca preenche a moldura toda, sem o papel à volta. */
+.welcome__icon:has(.logo) {
+  background: none;
+  border-color: transparent;
+  padding: 0;
+}
+
+.welcome__title {
+  font-size: 24px;
+  line-height: 1.12;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.welcome__body {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+
+.welcome__dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.welcome__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--line-2);
+  transition: background 0.16s ease, width 0.16s ease;
+}
+
+.welcome__dot.is-on {
+  width: 20px;
+  border-radius: 4px;
+  background: var(--gold-dark);
+}
+
+.welcome__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.welcome__next {
+  flex: 1;
+}
+
+.welcome__again {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--muted-strong);
+  /* O alvo de toque chega à largura do cartão: a caixa sozinha são 16 px. */
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.welcome__again input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--gold-dark);
+}

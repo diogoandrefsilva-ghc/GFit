@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
 import { AuthProvider } from '@/auth/AuthProvider'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { watchSafeArea } from '@/lib/safe-area'
 import { App } from './App'
 import '@/styles/base.css'
 
@@ -21,6 +22,10 @@ window.addEventListener('vite:preloadError', () => {
   sessionStorage.setItem(RELOAD_AFTER_CHUNK_ERROR, '1')
   window.location.reload()
 })
+
+// Antes de desenhar seja o que for: é isto que diz aos ecrãs quanto espaço
+// deixar à barra de estado e ao indicador do fundo.
+watchSafeArea()
 
 const root = document.getElementById('root')!
 root.innerHTML = '' // tira o ecrã de arranque do index.html

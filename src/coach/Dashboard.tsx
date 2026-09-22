@@ -1,12 +1,21 @@
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useProfile } from '@/auth/useAuth'
 import { Avatar } from '@/components/Avatar'
-import { Loading, ScreenHeader, Stat } from '@/components/Screen'
-import { attentionReason, fetchAthleteSummaries, type AthleteSummary } from '@/lib/api'
+import { Loading, ScreenHeader } from '@/components/Screen'
+import {
+  attentionReason,
+  fetchAthleteCalendar,
+  fetchAthleteSummaries,
+  fetchDailyLog,
+  type AthleteSummary,
+  type CalendarEntry,
+} from '@/lib/api'
 import { weightTone } from '@/lib/calc'
 import { isoDate, longDate, num, plural, relativeDate, shortDate, signed } from '@/lib/format'
+import { athletesPath } from '@/lib/routes'
 import { useQuery } from '@/lib/useQuery'
+import type { DailyLog } from '@/lib/database.types'
 import './dashboard.css'
 
 /**
@@ -15,13 +24,25 @@ import './dashboard.css'
  */
 export function Dashboard() {
   const profile = useProfile()
+  const today = isoDate()
 
-  const { data, loading, error } = useQuery(['inicio-treinador', profile.id], () =>
-    fetchAthleteSummaries(profile.id),
+  // O dia entra na chave: o que o treinador registou de si é de hoje, e a
+  // cache não pode servir amanhã o dia de ontem.
+  const { data, loading, error } = useQuery(
+    ['inicio-treinador', profile.id, today],
+    async () => {
+      const [summaries, myLog, myCalendar] = await Promise.all([
+        fetchAthleteSummaries(profile.id),
+        // O treinador também é aluno de si próprio: isto é o dia dele.
+        fetchDailyLog(profile.id, today),
+        fetchAthleteCalendar(profile.id, today, today),
+      ])
+      return { summaries, myLog, myCalendar }
+    },
   )
 
   const view = useMemo(() => {
-    const summaries = data ?? []
+    const summaries = data?.summaries ?? []
     const flagged: { summary: AthleteSummary; reason: string }[] = []
 
     for (const summary of summaries) {
@@ -69,8 +90,10 @@ export function Dashboard() {
         </section>
       ) : (
         <>
-          <div className="row">
-            <Stat
+          {/* Os quatro números do costume, agora com sítio para onde levar:
+              cada um abre a lista ou o calendário que o explica. */}
+          <div className="dash__tiles">
+            <Tile
               label="Alunos"
               value={view.active.length}
               hint={
@@ -78,26 +101,27 @@ export function Dashboard() {
                   ? `${view.summaries.length - view.active.length} em pausa`
                   : 'activos'
               }
+              to={athletesPath('todos')}
             />
-            <Stat
+            <Tile
               label="A precisar"
               value={view.flagged.length}
               tone={view.flagged.length > 0 ? 'warn' : 'good'}
               hint={view.flagged.length === 0 ? 'tudo em dia' : 'de ti'}
+              to={athletesPath('atencao')}
             />
-          </div>
-
-          <div className="row">
-            <Stat
+            <Tile
               label="Treinos"
               value={`${view.done}/${view.planned || '—'}`}
               hint="esta semana"
               tone={view.planned > 0 && view.done >= view.planned ? 'good' : 'default'}
+              to="/calendario"
             />
-            <Stat
+            <Tile
               label="Registaram hoje"
               value={`${view.loggedToday.length}/${view.active.length}`}
               hint="peso, sono, passos"
+              to={athletesPath('todos')}
             />
           </div>
 
@@ -236,9 +260,101 @@ export function Dashboard() {
         </>
       )}
 
+      {/* ── e o treino dele ────────────────────────── */}
+      <SelfBanner log={data!.myLog} calendar={data!.myCalendar} />
+
       <p className="dash__foot muted">
-        Semana de {shortDate(isoDate())} · toca num aluno para abrir a ficha
+        Semana de {shortDate(today)} · toca num aluno para abrir a ficha
       </p>
     </div>
+  )
+}
+
+/**
+ * Um número do dia que leva a algum lado. O número continua a ser o que se lê
+ * primeiro; o resto do cartão é só o que basta para se perceber que se toca.
+ */
+function Tile({
+  label,
+  value,
+  hint,
+  tone = 'default',
+  to,
+}: {
+  label: string
+  value: ReactNode
+  hint?: string
+  tone?: 'default' | 'good' | 'warn'
+  to: string
+}) {
+  return (
+    <Link className={`dash__tile dash__tile--${tone}`} to={to}>
+      <span className="dash__tile-head">
+        <span className="stat__label">{label}</span>
+        <span className="dash__tile-go" aria-hidden="true">
+          ›
+        </span>
+      </span>
+      <strong className="dash__tile-value">{value}</strong>
+      {hint && <span className="dash__tile-hint">{hint}</span>}
+    </Link>
+  )
+}
+
+/**
+ * O treinador passa o dia a olhar para os números dos outros e esquece-se dos
+ * dele. Este é o lembrete, no fim de tudo: o que lhe falta registar hoje, e a
+ * porta para a sua área — onde os cartões de registo são os mesmos que os
+ * alunos usam.
+ *
+ * Diz sempre o que falta, e não só "vai ali": quem já registou o dia não tem
+ * de lá ir, e ver isso escrito vale mais do que um botão.
+ */
+function SelfBanner({
+  log,
+  calendar,
+}: {
+  log: DailyLog | null
+  calendar: CalendarEntry[]
+}) {
+  const missing: string[] = []
+  if (log?.weight_kg === null || log?.weight_kg === undefined) missing.push('peso')
+  if (log?.sleep_hours === null || log?.sleep_hours === undefined) missing.push('sono')
+  if (log?.steps === null || log?.steps === undefined) missing.push('passos')
+
+  // Um treino marcado para hoje e ainda por fechar é o que manda no cartão:
+  // é a única coisa aqui que tem hora para acontecer.
+  const workout = calendar.find((entry) => entry.session?.status !== 'done') ?? null
+  const workoutDone = calendar.length > 0 && workout === null
+  const settled = missing.length === 0 && workout === null
+
+  return (
+    <Link
+      className={`card dash__self ${settled ? 'card--good' : 'card--ink'}`}
+      to={workout ? '/eu?zona=hoje' : '/eu'}
+    >
+      <span className="dash__self-text">
+        <span className="eyebrow dash__self-eyebrow">O teu treino</span>
+        <strong className="dash__self-title">
+          {workout
+            ? `Tens treino ${workout.day?.label ?? ''} marcado para hoje`
+            : settled
+              ? 'O teu dia está arrumado'
+              : 'Falta registares o teu dia'}
+        </strong>
+        <em className="dash__self-meta">
+          {missing.length > 0
+            ? `por registar: ${missing.join(', ')}`
+            : workout
+              ? 'o registo do dia já está feito'
+              : workoutDone
+                ? 'treino feito · peso, sono e passos registados'
+                : 'peso, sono e passos registados'}
+        </em>
+      </span>
+      <span className="dash__self-go" aria-hidden="true">
+        →
+      </span>
+    </Link>
   )
 }

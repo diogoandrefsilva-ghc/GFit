@@ -20,6 +20,7 @@ import type {
   Plan,
   PlanDay,
   PlanExercise,
+  PlanStatus,
   Profile,
   Role,
   ScheduledWorkout,
@@ -37,6 +38,17 @@ export interface ActivePlan {
   library: Map<string, Exercise>
 }
 
+/** Um plano escrito pela própria pessoa: o autor e o dono são o mesmo. */
+export function isSelfPlan(plan: { athlete_id: string; coach_id: string }): boolean {
+  return plan.athlete_id === plan.coach_id
+}
+
+/**
+ * O plano que manda no dia a dia do aluno. Com auto-treino a mesma pessoa pode
+ * ter dois planos a correr — o que o treinador lhe escreveu e o que escreveu
+ * para si —, e nesse caso o do treinador é que é o plano: o auto-treino vive à
+ * parte, na lista dos "meus treinos". Quem não tem treinador só tem os seus.
+ */
 export async function fetchActivePlan(
   athleteId: string,
   { includeDrafts = false } = {},
@@ -46,17 +58,31 @@ export async function fetchActivePlan(
     .select('*')
     .eq('athlete_id', athleteId)
     .order('start_date', { ascending: false })
-    .limit(1)
+    .limit(8)
 
   query = includeDrafts
     ? query.in('status', ['published', 'draft'])
     : query.eq('status', 'published')
 
   const plans = unwrap(await query)
-  const plan = plans[0]
+  const plan = plans.find((item) => !isSelfPlan(item)) ?? plans[0]
   if (!plan) return null
 
   return loadPlanContents(plan)
+}
+
+/** Os planos que a própria pessoa escreveu para si, do mais recente ao mais antigo. */
+export async function fetchSelfPlans(athleteId: string): Promise<Plan[]> {
+  const plans = unwrap(
+    await supabase
+      .from('plans')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .eq('coach_id', athleteId)
+      .neq('status', 'archived')
+      .order('start_date', { ascending: false }),
+  )
+  return plans
 }
 
 /**
@@ -170,6 +196,24 @@ export async function fetchMeasurements(athleteId: string): Promise<Measurement[
       .eq('athlete_id', athleteId)
       .order('measured_on', { ascending: false }),
   )
+}
+
+/**
+ * Só a data do último registo de perímetros. O cartão de registo do Hoje quer
+ * dizer quando foi a última vez, e não tem de trazer a tabela toda para isso.
+ */
+export async function fetchLatestMeasurementDate(
+  athleteId: string,
+): Promise<string | null> {
+  const rows = unwrap(
+    await supabase
+      .from('measurements')
+      .select('measured_on')
+      .eq('athlete_id', athleteId)
+      .order('measured_on', { ascending: false })
+      .limit(1),
+  )
+  return rows[0]?.measured_on ?? null
 }
 
 export async function fetchAthleteProfile(
@@ -486,8 +530,13 @@ export async function fetchAthleteCalendar(
   return decorateSchedules(schedules, { withAthletes: false })
 }
 
+/**
+ * A semana do treinador. Não filtra por `coach_id`: o que interessa é de quem é
+ * o treino, não quem o marcou — senão os auto-treinos dos alunos ficavam de
+ * fora, que é precisamente o que o treinador quer ver. Quem pode ver o quê já
+ * está decidido no RLS (os seus alunos, e ele próprio).
+ */
 export async function fetchCoachCalendar(
-  coachId: string,
   from: string,
   to: string,
 ): Promise<CalendarEntry[]> {
@@ -495,7 +544,6 @@ export async function fetchCoachCalendar(
     await supabase
       .from('scheduled_workouts')
       .select('*')
-      .eq('coach_id', coachId)
       .gte('scheduled_on', from)
       .lte('scheduled_on', to)
       .order('scheduled_on'),
@@ -827,13 +875,20 @@ export interface AthleteSummary {
   lastSeen: string | null
   /** Para que lado o peso deve ir, para saber se a variação é boa notícia. */
   weightDirection: WeightDirection | null
+  /** Quantos treinos o aluno escreveu para si próprio. */
+  selfPlans: number
 }
 
 /** Porque é que um aluno precisa de atenção — null quando está tudo em dia. */
 export function attentionReason(summary: AthleteSummary): string | null {
   if (summary.unreadFeedback) return 'Feedback por ler'
-  if (!summary.plan) return 'Sem plano publicado'
-  if (summary.plan.num_weeks - summary.week <= 0) return 'Plano a acabar'
+  // Sem plano prescrito, mas a treinar por sua conta: é uma escolha do aluno,
+  // não um esquecimento do treinador. O resto — silêncio, treinos em falta —
+  // continua a contar como em qualquer outro aluno.
+  if (!summary.plan && summary.selfPlans === 0) return 'Sem plano publicado'
+  if (summary.plan && summary.plan.num_weeks - summary.week <= 0) {
+    return 'Plano a acabar'
+  }
 
   const missed = summary.sessionsPlanned - summary.sessionsDone
   // Só a partir de sexta é que faltarem treinos quer mesmo dizer alguma coisa.
@@ -919,10 +974,13 @@ export async function fetchAthleteSummaries(
   const planDayCounts = await countPlanDays(plans.map((plan) => plan.id))
 
   return athletes.map((athlete) => {
-    const plan =
-      plans.find(
-        (item) => item.athlete_id === athlete.id && item.status === 'published',
-      ) ?? null
+    const published = plans.filter(
+      (item) => item.athlete_id === athlete.id && item.status === 'published',
+    )
+    // O plano do aluno é o que o treinador lhe escreveu. Os auto-treinos contam
+    // à parte: quem treina por sua conta continua a ser um aluno sem plano
+    // prescrito, e é isso que a lista tem de dizer.
+    const plan = published.find((item) => !isSelfPlan(item)) ?? null
 
     const week = plan ? weekOfPlan(plan.start_date, isoDate()) : 1
     const mySessions = sessions.filter(
@@ -954,6 +1012,7 @@ export async function fetchAthleteSummaries(
       unreadFeedback: unread,
       lastSeen: myLogs[myLogs.length - 1]?.log_date ?? null,
       weightDirection: directionOf.get(athlete.id) ?? null,
+      selfPlans: published.filter(isSelfPlan).length,
     }
   })
 }
@@ -1004,11 +1063,18 @@ export async function createPlan(
   coachId: string,
   athleteId: string,
   values: { name: string; block_name: string | null; num_weeks: number; start_date: string },
+  status: PlanStatus = 'draft',
 ): Promise<Plan> {
   const plans = unwrap(
     await supabase
       .from('plans')
-      .insert({ ...values, coach_id: coachId, athlete_id: athleteId, status: 'draft' })
+      .insert({
+        ...values,
+        coach_id: coachId,
+        athlete_id: athleteId,
+        status,
+        published_at: status === 'published' ? new Date().toISOString() : null,
+      })
       .select(),
   )
   const plan = plans[0]
@@ -1027,6 +1093,18 @@ export async function createPlan(
       .select(),
   )
   return plan
+}
+
+/**
+ * Um auto-treino nasce publicado. O rascunho existe para o plano não chegar ao
+ * aluno antes de estar pronto, e aqui quem escreve é quem o vai fazer — não há
+ * ninguém a quem esconder o que ainda está a meio.
+ */
+export async function createSelfPlan(
+  athleteId: string,
+  values: { name: string; block_name: string | null; num_weeks: number; start_date: string },
+): Promise<Plan> {
+  return createPlan(athleteId, athleteId, values, 'published')
 }
 
 export async function fetchPlanDetail(planId: string) {
@@ -1207,6 +1285,21 @@ export async function markFeedbackRead(feedbackId: string): Promise<void> {
       .from('weekly_feedback')
       .update({ read_at: new Date().toISOString() })
       .eq('id', feedbackId)
+      .select(),
+  )
+}
+
+/**
+ * Deixar de esperar por um convite e passar a treinar por sua conta. Não apaga
+ * nada nem fecha portas: o convite que chegar depois continua a ligar a pessoa
+ * ao treinador.
+ */
+export async function startTrainingAlone(profileId: string): Promise<void> {
+  unwrap(
+    await supabase
+      .from('profiles')
+      .update({ status: 'active' })
+      .eq('id', profileId)
       .select(),
   )
 }

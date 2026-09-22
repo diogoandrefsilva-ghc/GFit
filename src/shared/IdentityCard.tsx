@@ -3,6 +3,7 @@ import { saveAthleteProfile } from '@/lib/api'
 import { describeError } from '@/lib/supabase'
 import { num, parseIso } from '@/lib/format'
 import type { AthleteProfile } from '@/lib/database.types'
+import './ficha.css'
 
 /** Idade a partir da data de nascimento, contando se já fez anos este ano. */
 function ageOf(birthDate: string): number {

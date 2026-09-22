@@ -1,7 +1,9 @@
-import { useState } from 'react'
-import { useProfile } from '@/auth/useAuth'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { useAuth, useProfile, useTrainsAlone } from '@/auth/useAuth'
 import { Loading, ScreenHeader, Stat } from '@/components/Screen'
 import { Sparkline } from '@/components/Sparkline'
+import { SelfFicha } from '@/shared/SelfFicha'
 import { supabase } from '@/lib/supabase'
 import {
   fetchAthleteProfile,
@@ -32,7 +34,25 @@ type PerimeterKey = (typeof PERIMETERS)[number]['key']
 
 export function Measurements() {
   const profile = useProfile()
-  const [adding, setAdding] = useState(false)
+  const { isCoach } = useAuth()
+  // O aluno sem treinador não tem quem lhe preencha a ficha nem quem lhe ponha
+  // metas: fica aqui, ao pé das medidas, que é o que a ficha explica. Na área
+  // do treinador isto vive na sua própria zona, e não se repete.
+  const ownFicha = useTrainsAlone() && !isCoach
+
+  // O cartão "Registar medidas" do Hoje chega aqui com o formulário já aberto.
+  const [params, setParams] = useSearchParams()
+  const [adding, setAdding] = useState(params.get('registar') === '1')
+
+  // A marca sai da barra de endereço mal é lida: serve para abrir o formulário
+  // uma vez, e não para ele voltar a abrir-se sozinho a quem recarregue a
+  // página ou volte a este ecrã pelo histórico.
+  useEffect(() => {
+    if (!params.has('registar')) return
+    const next = new URLSearchParams(params)
+    next.delete('registar')
+    setParams(next, { replace: true })
+  }, [params, setParams])
 
   const { data, loading, error, reload } = useQuery(
     ['medidas', profile.id],
@@ -156,6 +176,8 @@ export function Measurements() {
           />
         )}
       </section>
+
+      {ownFicha && <SelfFicha />}
 
       {measurements.length > 1 && (
         <section className="card card--flat">
