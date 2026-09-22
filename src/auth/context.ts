@@ -8,6 +8,8 @@ export interface AuthValue {
   loading: boolean
   error: string | null
   isCoach: boolean
+  /** Pode criar/editar/apagar na biblioteca partilhada (exercícios, …). */
+  isAdmin: boolean
   /** Perfil criado, sem treinador, e ainda à espera do convite. */
   awaitingInvite: boolean
   refreshProfile: () => Promise<void>

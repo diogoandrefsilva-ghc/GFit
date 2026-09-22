@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useAuth } from '@/auth/useAuth'
 import { Loading, ScreenHeader } from '@/components/Screen'
 import { MuscleFilter } from '@/components/MuscleFilter'
 import { MuscleThumb } from '@/components/MuscleThumb'
@@ -25,6 +26,7 @@ type MuscleOption = { slug: string; name: string }
 
 /** A base de exercícios do Treinador, para consultar e acrescentar. */
 export function ExerciseLibrary() {
+  const { isAdmin } = useAuth()
   const [term, setTerm] = useState('')
   const [debounced, setDebounced] = useState('')
   const [muscle, setMuscle] = useState<string | null>(null)
@@ -82,17 +84,19 @@ export function ExerciseLibrary() {
             : undefined
         }
         action={
-          <button
-            type="button"
-            className="btn btn--sm btn--quiet"
-            onClick={() => setCreating((value) => !value)}
-          >
-            {creating ? 'Fechar' : '+ Novo'}
-          </button>
+          isAdmin ? (
+            <button
+              type="button"
+              className="btn btn--sm btn--quiet"
+              onClick={() => setCreating((value) => !value)}
+            >
+              {creating ? 'Fechar' : '+ Novo'}
+            </button>
+          ) : undefined
         }
       />
 
-      {creating && (
+      {isAdmin && creating && (
         <ExerciseForm
           title="Novo exercício"
           muscles={muscles ?? []}
@@ -145,6 +149,7 @@ export function ExerciseLibrary() {
                 exercise={exercise}
                 muscles={muscles ?? []}
                 muscleNames={muscleNames}
+                canManage={isAdmin}
                 onVideo={() => setVideo(exercise)}
                 onChanged={refreshAfterChange}
               />
@@ -434,12 +439,14 @@ function LibraryRow({
   exercise,
   muscles,
   muscleNames,
+  canManage,
   onVideo,
   onChanged,
 }: {
   exercise: Exercise
   muscles: MuscleOption[]
   muscleNames: Map<string, string>
+  canManage: boolean
   onVideo: () => void
   onChanged: () => void
 }) {
@@ -447,7 +454,7 @@ function LibraryRow({
   const [deleting, setDeleting] = useState(false)
   const [failure, setFailure] = useState<string | null>(null)
 
-  if (editing) {
+  if (canManage && editing) {
     return (
       <li className="library__item library__item--editing">
         <ExerciseForm
@@ -483,32 +490,36 @@ function LibraryRow({
           ) : (
             <span className="library__novideo">sem vídeo</span>
           )}
-          <button
-            type="button"
-            className="library__edit"
-            onClick={() => setEditing(true)}
-          >
-            editar
-          </button>
-          <button
-            type="button"
-            className="library__delete"
-            disabled={deleting}
-            onClick={async () => {
-              if (!window.confirm(`Apagar "${exercise.name}" da base de exercícios?`)) return
-              setDeleting(true)
-              setFailure(null)
-              try {
-                await deleteExercise(exercise.id)
-                onChanged()
-              } catch (caught) {
-                setFailure(describeError(caught))
-                setDeleting(false)
-              }
-            }}
-          >
-            {deleting ? 'a apagar…' : 'apagar'}
-          </button>
+          {canManage && (
+            <>
+              <button
+                type="button"
+                className="library__edit"
+                onClick={() => setEditing(true)}
+              >
+                editar
+              </button>
+              <button
+                type="button"
+                className="library__delete"
+                disabled={deleting}
+                onClick={async () => {
+                  if (!window.confirm(`Apagar "${exercise.name}" da base de exercícios?`)) return
+                  setDeleting(true)
+                  setFailure(null)
+                  try {
+                    await deleteExercise(exercise.id)
+                    onChanged()
+                  } catch (caught) {
+                    setFailure(describeError(caught))
+                    setDeleting(false)
+                  }
+                }}
+              >
+                {deleting ? 'a apagar…' : 'apagar'}
+              </button>
+            </>
+          )}
         </div>
         {failure && <p className="error-banner">{failure}</p>}
       </div>
