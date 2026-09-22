@@ -33,6 +33,8 @@ export type Profile = {
   coach_id: string | null
   status: ProfileStatus
   phone: string | null
+  /** Pode criar/editar/apagar na biblioteca partilhada (exercícios, …). */
+  is_admin: boolean
   created_at: string
   updated_at: string
 }
