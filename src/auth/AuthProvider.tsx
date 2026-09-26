@@ -9,6 +9,7 @@ import {
 import type { Session } from '@supabase/supabase-js'
 import { clearCache, setScope } from '@/lib/cache'
 import { describeError, supabase } from '@/lib/supabase'
+import { setHouseTheme } from '@/lib/theme'
 import { AuthContext, type AuthValue } from './context'
 import type { Profile } from '@/lib/database.types'
 
@@ -47,6 +48,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onboarded.current = userId
     setProfile(current)
     setError(null)
+    // O tema da casa vem com o perfil: quem ainda não escolheu nenhum no
+    // telemóvel passa a abrir nele.
+    if (current) setHouseTheme(current.theme ?? null)
   }, [])
 
   const loadProfile = useCallback(

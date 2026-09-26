@@ -3,10 +3,15 @@ import { useSyncExternalStore } from 'react'
 /**
  * O tema da app: cores, letra e forma, escolhidos no Perfil.
  *
- * Fica no dispositivo e não no perfil, como a apresentação (`tour.ts`): o tema
- * tem de estar posto antes do primeiro desenho, e o `index.html` lê-o do
- * `localStorage` antes de haver sessão ou rede. Quem tem a app em dois
- * telemóveis escolhe nos dois.
+ * A escolha fica no dispositivo e não no perfil, como a apresentação
+ * (`tour.ts`): o tema tem de estar posto antes do primeiro desenho, e o
+ * `index.html` lê-o do `localStorage` antes de haver sessão ou rede. Quem tem
+ * a app em dois telemóveis escolhe nos dois.
+ *
+ * Quem ainda não escolheu nada abre no tema da casa (`profiles.theme`): o do
+ * seu treinador, que no caso do Filipe Guerreiro é o Guerreiro. Chega com o
+ * perfil, e fica também guardado no telemóvel para o arranque seguinte já
+ * abrir nele. Escolher no Perfil ganha sempre ao da casa.
  *
  * Um tema é duas coisas. O `look` é a forma — Papel, Caderno ou Arena — e vive
  * em `themes.css`. As cores vivem em `tokens.css`, por `id`. O Guerreiro é a
@@ -64,8 +69,10 @@ export const THEMES: Theme[] = [
 
 const DEFAULT: ThemeId = 'papel'
 
-/** A mesma chave que o `index.html` lê antes de a app arrancar. */
+/** As mesmas chaves que o `index.html` lê antes de a app arrancar: a escolha
+ *  de quem está a usar, e o tema da casa que veio com o perfil. */
 const KEY = 'gfit.tema'
+const HOUSE_KEY = 'gfit.tema.casa'
 
 /**
  * As letras de cada forma. A Archivo do Papel já vem no `index.html`; as
@@ -92,8 +99,43 @@ function find(id: string | null | undefined): Theme {
   return THEMES.find((theme) => theme.id === id) ?? THEMES[0]
 }
 
-let current: Theme = find(storage()?.getItem(KEY) ?? DEFAULT)
+function read(key: string): string | null {
+  try {
+    return storage()?.getItem(key) ?? null
+  } catch {
+    return null
+  }
+}
+
+function write(key: string, value: string | null) {
+  try {
+    if (value === null) storage()?.removeItem(key)
+    else storage()?.setItem(key, value)
+  } catch {
+    // Sem espaço ou sem permissão: o tema muda na mesma, só não fica guardado.
+  }
+}
+
+interface ThemeState {
+  /** O tema em uso. */
+  theme: Theme
+  /** O da casa, quando há: é o que se vê sem escolher nada. */
+  house: Theme | null
+}
+
+const chosen = read(KEY)
+const house = read(HOUSE_KEY)
+let state: ThemeState = {
+  theme: find(chosen ?? house ?? DEFAULT),
+  house: house ? find(house) : null,
+}
 const listeners = new Set<() => void>()
+
+function update(next: ThemeState) {
+  state = next
+  applyTheme(state.theme)
+  listeners.forEach((listener) => listener())
+}
 
 function loadFonts(look: Look) {
   const href = FONTS[look]
@@ -108,7 +150,7 @@ function loadFonts(look: Look) {
 }
 
 /** Põe o tema na raiz do documento. Chama-se uma vez antes de desenhar. */
-export function applyTheme(theme: Theme = current) {
+export function applyTheme(theme: Theme = state.theme) {
   const root = document.documentElement
   root.dataset.theme = theme.id
   root.dataset.look = theme.look
@@ -118,15 +160,27 @@ export function applyTheme(theme: Theme = current) {
     ?.setAttribute('content', theme.chrome)
 }
 
+/**
+ * A escolha no Perfil. Escolher o tema que já se veria sem escolher nada — o da
+ * casa, ou o Papel — é voltar a seguir a casa: se o treinador mudar de tema, a
+ * pessoa acompanha.
+ */
 export function setTheme(id: ThemeId) {
-  current = find(id)
-  try {
-    storage()?.setItem(KEY, current.id)
-  } catch {
-    // Sem espaço ou sem permissão: o tema muda na mesma, só não fica guardado.
-  }
-  applyTheme(current)
-  listeners.forEach((listener) => listener())
+  const fallback = state.house?.id ?? DEFAULT
+  write(KEY, id === fallback ? null : id)
+  update({ ...state, theme: find(id) })
+}
+
+/**
+ * O tema da casa, que chega com o perfil a cada login. Só muda o ecrã a quem
+ * ainda não escolheu nada no telemóvel.
+ */
+export function setHouseTheme(id: ThemeId | null) {
+  if ((state.house?.id ?? null) === id) return
+  write(HOUSE_KEY, id)
+  const nextHouse = id ? find(id) : null
+  const mine = read(KEY)
+  update({ theme: find(mine ?? id ?? DEFAULT), house: nextHouse })
 }
 
 function subscribe(listener: () => void) {
@@ -138,5 +192,10 @@ function subscribe(listener: () => void) {
 
 /** O tema em uso, e os ecrãs voltam a desenhar quando ele muda. */
 export function useTheme(): Theme {
-  return useSyncExternalStore(subscribe, () => current)
+  return useThemeState().theme
+}
+
+/** O tema em uso e o da casa, para o cartão de escolha. */
+export function useThemeState(): ThemeState {
+  return useSyncExternalStore(subscribe, () => state)
 }
