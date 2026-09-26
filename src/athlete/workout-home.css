@@ -10,7 +10,7 @@
   align-items: center;
   gap: 14px;
   padding: 14px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   text-align: left;
@@ -90,7 +90,7 @@
   align-items: stretch;
   gap: 10px;
   padding: 8px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
 }

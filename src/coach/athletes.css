@@ -17,7 +17,7 @@
   align-items: center;
   gap: 12px;
   padding: 14px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   color: var(--ink);

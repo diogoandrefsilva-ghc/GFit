@@ -7,7 +7,7 @@
   margin: 0 auto;
   max-width: 560px;
   display: flex;
-  background: rgba(244, 241, 236, 0.94);
+  background: var(--tabbar-bg);
   backdrop-filter: blur(12px);
   border-top: 1px solid var(--line);
   padding-bottom: var(--safe-bottom);
@@ -51,7 +51,7 @@
   width: 18px;
   height: 3px;
   border-radius: 2px;
-  background: var(--gold);
+  background: var(--brand);
 }
 
 .tabbar__icon {
@@ -67,8 +67,8 @@
   height: 16px;
   padding: 0 4px;
   border-radius: 8px;
-  background: var(--gold);
-  color: var(--gold-ink);
+  background: var(--brand);
+  color: var(--brand-ink);
   font-size: 10px;
   font-style: normal;
   font-weight: 700;

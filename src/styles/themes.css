@@ -1,0 +1,731 @@
+/*
+ * A forma de cada tema: letra, barra, cartões. As cores estão em `tokens.css`;
+ * aqui fica o que um tema faz de diferente além de pintar.
+ *
+ * Três formas para quatro temas, escolhidas por `data-look` na raiz:
+ * - papel — a app como sempre foi. Não tem regras aqui.
+ * - caderno — claro e editorial: serifa (Instrument Serif) nos números e nos
+ *   títulos, menos caixas, o registo do dia como lista de verificação.
+ * - arena — Arena e Guerreiro: letra condensada de placar (Barlow Condensed),
+ *   a letra do treino em grande no cartão de hoje, o registo em mosaico com o
+ *   que falta a tracejado.
+ *
+ * Todas as regras começam em `:root[data-look=…]`. Não é só para dizer a que
+ * tema pertencem: os ecrãs do treinador e a sessão de treino chegam em chunks
+ * próprios, com o CSS deles injetado *depois* deste, e só ganham ao desempate
+ * as regras mais específicas do que as deles.
+ */
+
+/* ════════════════════════════════════════════════════════════
+   Caderno e Arena: o que as duas formas novas partilham
+   ════════════════════════════════════════════════════════════ */
+
+/* A barra de separadores sai do fundo e flutua, como nos protótipos. */
+:root:is([data-look='caderno'], [data-look='arena']) .tabbar {
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--safe-bottom) + var(--tabbar-lift));
+  max-width: 536px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+}
+
+/* ════════════════════════════════════════════════════════════
+   Caderno
+   ════════════════════════════════════════════════════════════ */
+
+:root[data-look='caderno'] {
+  --font: 'Schibsted Grotesk', system-ui, -apple-system, sans-serif;
+  --font-narrow: 'Schibsted Grotesk', system-ui, -apple-system, sans-serif;
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --radius: 16px;
+  --radius-lg: 22px;
+}
+
+/* ── barra da marca e separadores ────────────────────────── */
+
+:root[data-look='caderno'] .appbar {
+  background: var(--paper);
+  border-bottom-color: var(--line);
+}
+
+:root[data-look='caderno'] .appbar__word {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+
+:root[data-look='caderno'] .tabbar {
+  left: 8px;
+  right: 8px;
+  padding: 0 4px;
+  border-color: var(--tabbar-bg);
+}
+
+/* Sobre a pílula de tinta o cinzento do costume não se lê: este dá 8,6:1. */
+:root[data-look='caderno'] .tabbar__item {
+  color: #bdb8ac;
+}
+
+/* A grotesca do Caderno é mais larga: "Calendário" não cabia na pílula. */
+:root[data-look='caderno'] .tabbar__label {
+  font-size: 10px;
+  letter-spacing: -0.02em;
+}
+
+/* O separador onde se está é uma pastilha dourada, ícone e nome por cima. */
+:root[data-look='caderno'] .tabbar__item.is-on {
+  height: calc(var(--tabbar-h) - 12px);
+  margin: 6px 0;
+  border-radius: 18px;
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+:root[data-look='caderno'] .tabbar__item.is-on .tabbar__icon::before {
+  display: none;
+}
+
+/* ── letra ───────────────────────────────────────────────── */
+
+:root[data-look='caderno'] .title {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+:root[data-look='caderno'] .eyebrow,
+:root[data-look='caderno'] .field__label,
+:root[data-look='caderno'] .stat__label {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+}
+
+:root[data-look='caderno'] .reg-block__title,
+:root[data-look='caderno'] .sheet__title,
+:root[data-look='caderno'] .today__workout-title,
+:root[data-look='caderno'] .card.dash__self .dash__self-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+:root[data-look='caderno'] .reg-block__title {
+  font-size: 28px;
+}
+
+:root[data-look='caderno'] .sheet__title {
+  font-size: 26px;
+}
+
+:root[data-look='caderno'] .today__workout-title {
+  font-size: 32px;
+  line-height: 1.05;
+}
+
+:root[data-look='caderno'] .card.dash__self .dash__self-title {
+  font-size: 22px;
+}
+
+:root[data-look='caderno'] .exercise .exercise__name {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Os números grandes em serifa: é o que mais distingue o Caderno. */
+:root[data-look='caderno'] .reg .reg__value:not(.reg__value--empty),
+:root[data-look='caderno'] .stat .stat__value,
+:root[data-look='caderno'] .dash__tile .dash__tile-value,
+:root[data-look='caderno'] .measure__weight,
+:root[data-look='caderno'] .detail__weight,
+:root[data-look='caderno'] .stepper .stepper__value,
+:root[data-look='caderno'] .session__top .session__clock,
+:root[data-look='caderno'] .timed .timed__clock,
+:root[data-look='caderno'] .reg-sheet__input {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+:root[data-look='caderno'] .stat .stat__value {
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+:root[data-look='caderno'] .dash__tile .dash__tile-value {
+  font-size: 36px;
+  line-height: 1;
+}
+
+:root[data-look='caderno'] .measure__weight {
+  font-size: 30px;
+}
+
+:root[data-look='caderno'] .stepper .stepper__value {
+  font-size: 24px;
+}
+
+:root[data-look='caderno'] .stepper--lg .stepper__value {
+  font-size: 44px;
+}
+
+:root[data-look='caderno'] .session__top .session__clock {
+  font-size: 30px;
+  color: var(--ink);
+}
+
+:root[data-look='caderno'] .sets tbody td {
+  font-family: var(--font-display);
+  font-size: 19px;
+}
+
+/* ── cartões ─────────────────────────────────────────────── */
+
+/* Os cartões "planos" deixam de ser caixa: ficam uma secção com uma linha
+   fina por cima, como num caderno. */
+:root[data-look='caderno'] .card--flat {
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  padding: 18px 2px 4px;
+}
+
+:root[data-look='caderno'] .card:not(.card--flat) {
+  box-shadow: 0 1px 2px rgba(20, 19, 16, 0.03), 0 8px 24px rgba(20, 19, 16, 0.04);
+}
+
+:root[data-look='caderno'] .btn {
+  border-radius: 16px;
+}
+
+/* O treino de hoje: cartão branco com a letra num círculo dourado. */
+:root[data-look='caderno'] .today__workout.card--ink {
+  position: relative;
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+  box-shadow: 0 1px 0 rgba(20, 19, 16, 0.03), 0 10px 30px rgba(20, 19, 16, 0.06);
+}
+
+:root[data-look='caderno'] .today__workout.card--ink .today__workout-eyebrow {
+  color: var(--brand-text);
+}
+
+:root[data-look='caderno'] .today__workout.card--ink .today__workout-meta {
+  color: var(--muted);
+}
+
+:root[data-look='caderno'] .today__workout[data-letter]::before {
+  content: attr(data-letter);
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-family: var(--font-display);
+  font-size: 36px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:root[data-look='caderno'] .today__workout[data-letter] .card__head,
+:root[data-look='caderno'] .today__workout[data-letter] .today__workout-title {
+  padding-right: 70px;
+}
+
+/* ── registo do dia: uma lista de verificação ────────────── */
+
+:root[data-look='caderno'] .reg-grid {
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+:root[data-look='caderno'] .reg {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'top label value'
+    'top hint value'
+    'top bar value';
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 2px;
+  min-height: 62px;
+  padding: 10px 2px;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+}
+
+:root[data-look='caderno'] .reg:active {
+  transform: none;
+  background: var(--paper-2);
+}
+
+:root[data-look='caderno'] .reg .reg__top {
+  grid-area: top;
+  justify-content: center;
+}
+
+:root[data-look='caderno'] .reg .reg__icon {
+  display: none;
+}
+
+/* Por fazer: um círculo vazio. Feito: o círculo cheio com o visto. */
+:root[data-look='caderno'] .reg .reg__top::before {
+  content: '';
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-3);
+}
+
+:root[data-look='caderno'] .reg--done .reg__top::before {
+  display: none;
+}
+
+:root[data-look='caderno'] .reg .reg__tick {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:root[data-look='caderno'] .reg .reg__body {
+  display: contents;
+}
+
+:root[data-look='caderno'] .reg .reg__label {
+  grid-area: label;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+:root[data-look='caderno'] .reg:not(.reg--wide) .reg__label {
+  min-height: 0;
+}
+
+:root[data-look='caderno'] .reg .reg__value {
+  grid-area: value;
+  justify-self: end;
+  margin: 0;
+  font-size: 30px;
+  line-height: 1;
+}
+
+:root[data-look='caderno'] .reg .reg__value--empty {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brand-text);
+}
+
+:root[data-look='caderno'] .reg .reg__unit {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+:root[data-look='caderno'] .reg .reg__hint {
+  grid-area: hint;
+}
+
+:root[data-look='caderno'] .reg .reg__bar {
+  grid-area: bar;
+  width: 120px;
+  height: 3px;
+  margin-top: 4px;
+  background: var(--paper-3);
+}
+
+:root[data-look='caderno'] .reg .reg__chevron {
+  grid-area: value;
+  justify-self: end;
+}
+
+/* ════════════════════════════════════════════════════════════
+   Arena (e Guerreiro)
+   ════════════════════════════════════════════════════════════ */
+
+:root[data-look='arena'] {
+  --font: 'Barlow', system-ui, -apple-system, sans-serif;
+  --font-narrow: 'Barlow Condensed', 'Barlow', system-ui, sans-serif;
+  --font-display: 'Barlow Condensed', 'Barlow', system-ui, sans-serif;
+  --radius-lg: 20px;
+}
+
+/* ── barra da marca e separadores ────────────────────────── */
+
+/* A cinta preta do Papel já é o fundo de tudo: a barra passa a ser o próprio
+   ecrã, com uma linha a separá-la. */
+:root[data-look='arena'] .appbar {
+  background: var(--paper);
+  border-bottom-color: var(--line);
+}
+
+:root[data-look='arena'] .appbar__word {
+  font-family: var(--font-display);
+  font-size: 23px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+:root[data-look='arena'] .tabbar__item.is-on {
+  color: var(--brand-text);
+}
+
+/* Em vez do traço por cima do ícone, uma pastilha por trás dele. */
+:root[data-look='arena'] .tabbar__icon {
+  z-index: 0;
+}
+
+:root[data-look='arena'] .tabbar__item.is-on .tabbar__icon::before {
+  top: -4px;
+  width: 48px;
+  height: 30px;
+  border-radius: 15px;
+  background: var(--brand-soft);
+  z-index: -1;
+}
+
+/* ── letra ───────────────────────────────────────────────── */
+
+:root[data-look='arena'] .title,
+:root[data-look='arena'] .reg-block__title,
+:root[data-look='arena'] .sheet__title,
+:root[data-look='arena'] .today__workout-title,
+:root[data-look='arena'] .card.dash__self .dash__self-title,
+:root[data-look='arena'] .exercise .exercise__name,
+:root[data-look='arena'] .timed .timed__name {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+:root[data-look='arena'] .title {
+  font-size: 34px;
+  line-height: 1;
+}
+
+:root[data-look='arena'] .reg-block__title {
+  font-size: 16px;
+  letter-spacing: 0.14em;
+}
+
+:root[data-look='arena'] .sheet__title {
+  font-size: 22px;
+}
+
+:root[data-look='arena'] .today__workout-title {
+  font-size: 34px;
+  line-height: 1;
+}
+
+:root[data-look='arena'] .card.dash__self .dash__self-title {
+  font-size: 20px;
+}
+
+:root[data-look='arena'] .exercise .exercise__name {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 0.98;
+}
+
+:root[data-look='arena'] .timed .timed__name {
+  font-size: 32px;
+}
+
+/* Números de placar. */
+:root[data-look='arena'] .reg .reg__value:not(.reg__value--empty),
+:root[data-look='arena'] .stat .stat__value,
+:root[data-look='arena'] .dash__tile .dash__tile-value,
+:root[data-look='arena'] .measure__weight,
+:root[data-look='arena'] .detail__weight,
+:root[data-look='arena'] .stepper .stepper__value,
+:root[data-look='arena'] .session__top .session__clock,
+:root[data-look='arena'] .timed .timed__clock,
+:root[data-look='arena'] .reg-sheet__input,
+:root[data-look='arena'] .sets tbody td {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+}
+
+:root[data-look='arena'] .reg .reg__value:not(.reg__value--empty) {
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+:root[data-look='arena'] .stat .stat__value {
+  font-size: 26px;
+  font-weight: 700;
+}
+
+:root[data-look='arena'] .dash__tile .dash__tile-value {
+  font-size: 40px;
+  line-height: 1;
+}
+
+:root[data-look='arena'] .measure__weight {
+  font-size: 30px;
+}
+
+:root[data-look='arena'] .stepper--lg .stepper__value {
+  font-size: 44px;
+  font-weight: 800;
+}
+
+:root[data-look='arena'] .session__top .session__clock {
+  font-size: 30px;
+}
+
+:root[data-look='arena'] .sets tbody td {
+  font-size: 18px;
+}
+
+/* ── botões ──────────────────────────────────────────────── */
+
+:root[data-look='arena'] .btn {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+:root[data-look='arena'] .btn--sm {
+  font-size: 14px;
+}
+
+:root[data-look='arena'] .btn--accent {
+  font-weight: 800;
+}
+
+/* ── o treino de hoje: a letra do treino em grande ───────── */
+
+/* O cartão de tinta seria um bloco claro num ecrã escuro; passa a cartão
+   escuro com o contorno da marca. */
+:root[data-look='arena'] .card--ink {
+  background: var(--surface);
+  border-color: var(--brand-line);
+  color: var(--ink);
+}
+
+:root[data-look='arena'] .card--ink .today__workout-eyebrow,
+:root[data-look='arena'] .card.dash__self.card--ink .dash__self-eyebrow {
+  color: var(--brand-text);
+}
+
+:root[data-look='arena'] .card.dash__self.card--ink {
+  color: var(--ink);
+}
+
+:root[data-look='arena'] .card.dash__self.card--ink .dash__self-meta {
+  color: var(--muted);
+}
+
+:root[data-look='arena'] .today__workout[data-letter] {
+  position: relative;
+  overflow: hidden;
+}
+
+:root[data-look='arena'] .today__workout[data-letter]::before {
+  content: attr(data-letter);
+  position: absolute;
+  top: -58px;
+  right: -12px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 250px;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--brand);
+  opacity: 0.32;
+  pointer-events: none;
+}
+
+/* O conteúdo à frente da letra: posicionado, pinta-se depois dela. */
+:root[data-look='arena'] .today__workout[data-letter] > * {
+  position: relative;
+}
+
+/* ── registo do dia: mosaico, o que falta a tracejado ────── */
+
+:root[data-look='arena'] .reg {
+  background: var(--surface);
+}
+
+:root[data-look='arena'] .reg:not(.reg--wide) {
+  min-height: 118px;
+}
+
+:root[data-look='arena'] .reg--done {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+:root[data-look='arena'] .reg:not(.reg--done):not(.reg--wide) {
+  background: transparent;
+  border: 1.5px dashed var(--line-3);
+}
+
+:root[data-look='arena'] .reg .reg__icon,
+:root[data-look='arena'] .reg--done .reg__icon {
+  background: var(--paper-3);
+  color: var(--muted-strong);
+}
+
+:root[data-look='arena'] .reg .reg__tick {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--good);
+  color: var(--good-ink);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:root[data-look='arena'] .reg .reg__label {
+  font-family: var(--font-narrow);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+:root[data-look='arena'] .reg--wide .reg__label {
+  color: var(--ink);
+}
+
+:root[data-look='arena'] .reg .reg__value--empty {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--brand-text);
+}
+
+:root[data-look='arena'] .reg .reg__bar,
+:root[data-look='arena'] .reg--done .reg__bar {
+  height: 4px;
+  background: var(--paper-3);
+}
+
+/* ── treino: letras do plano como placas ─────────────────── */
+
+:root[data-look='arena'] .workout-day .workout-day__label,
+:root[data-look='arena'] .week-day__card .week-day__tag {
+  background: var(--paper-3);
+  color: var(--brand-text);
+  font-family: var(--font-display);
+  font-size: 20px;
+}
+
+:root[data-look='arena'] .workout-day.is-done .workout-day__label,
+:root[data-look='arena'] .week-day__card .week-day__tag.is-done {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+:root[data-look='arena'] .week-day.is-today .week-day__date,
+:root[data-look='arena'] .cal-day.is-today .cal-day__date {
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+:root[data-look='arena'] .week-day.is-today .week-day__date em,
+:root[data-look='arena'] .cal-day.is-today .cal-day__date em {
+  color: var(--brand-ink);
+}
+
+/* ── sessão de treino ────────────────────────────────────── */
+
+:root[data-look='arena'] .exercise .exercise__rir-btn.is-on {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+}
+
+:root[data-look='arena'] .session__dots .session__dot.is-on {
+  background: var(--brand);
+}
+
+/* O temporizador a trabalhar enche o ecrã com a cor da marca; a descansar
+   fica no verde escuro do "feito". No Papel era a tinta, que aqui é clara. */
+:root[data-look='arena'] .timed.is-work {
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+:root[data-look='arena'] .timed.is-work .muted,
+:root[data-look='arena'] .timed.is-work .timed__clock.is-close {
+  color: var(--brand-ink);
+}
+
+:root[data-look='arena'] .timed.is-work .timed__bar {
+  background: var(--brand-ink);
+}
+
+:root[data-look='arena'] .timed.is-work .btn--quiet {
+  background: rgba(0, 0, 0, 0.12);
+  border-color: rgba(0, 0, 0, 0.22);
+  color: var(--brand-ink);
+}
+
+:root[data-look='arena'] .timed.is-work .timed__pause {
+  background: var(--brand-ink);
+  color: var(--brand);
+}
+
+/* ── o que sobe do fundo ─────────────────────────────────── */
+
+:root[data-look='arena'] .sheet__panel {
+  background: var(--surface);
+  box-shadow: 0 -1px 0 var(--line);
+}
+
+:root[data-look='arena'] .sheet__scrim {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* ── o corpo ─────────────────────────────────────────────── */
+
+/* Com o papel escuro a silhueta afundava no cartão: sobe um tom e as linhas
+   também. */
+:root[data-look='arena'] .body-map .gfit-shape {
+  fill: var(--paper-3);
+}
+
+:root[data-look='arena'] .body-map .gfit-muscle,
+:root[data-look='arena'] .body-map .gfit-line,
+:root[data-look='arena'] .body-map .gfit-detail,
+:root[data-look='arena'] .body-map .gfit-hair {
+  stroke: var(--line-3);
+}
+
+:root[data-look='arena'] .body-map .gfit-hair {
+  fill: var(--line-2);
+}

@@ -41,7 +41,7 @@
 }
 
 .scale__dot.is-on.scale__dot--accent {
-  background: var(--gold);
-  border-color: var(--gold);
-  color: var(--gold-ink);
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-ink);
 }

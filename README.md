@@ -24,6 +24,9 @@ ginásio onde a rede é fraca) e está publicada no GitHub Pages.
   telemóvel dos alunos, o aluno percebe o que o treinador faz com o que ele
   regista. Vê-se uma vez, salta-se a qualquer altura, e fica no *Perfil* para
   quem a quiser rever.
+- **Temas** — quatro caras para a app, à escolha no *Perfil*: Papel, Caderno,
+  Arena e Guerreiro, este com o logótipo do Guerreiro Personal Trainer (ver
+  *Os temas*).
 
 ## De onde vêm os dados
 
@@ -199,9 +202,12 @@ src/
                corpo, tab bar)
   lib/         cliente Supabase, tipos, consultas, formatação, cálculos
   assets/      o SVG do corpo
-  styles/      tokens e folha de estilo base
-brand/         o logótipo em tamanho grande, de onde saem os ícones
-public/        ícones da app e do separador, gerados a partir do logótipo
+  styles/      tokens (as cores de cada tema), temas (a forma de cada um) e
+               folha de estilo base
+brand/         o logótipo em tamanho grande, de onde saem os ícones, e o do
+               Guerreiro
+public/        ícones da app e do separador, gerados a partir do logótipo, e a
+               palavra do logótipo do Guerreiro para o tema dele
 ```
 
 Os ícones não se editam à mão: saem todos de `brand/gfit-logo.png` com
@@ -221,15 +227,58 @@ só lhes tocam por nome:
 
 | Família | Para quê |
 |---|---|
-| `--gold`, `--gold-ink`, `--gold-dark`, `--gold-soft`, `--gold-line` | a marca: o botão que inicia, o separador onde se está, o rótulo da semana |
+| `--brand`, `--brand-ink`, `--brand-text`, `--brand-soft`, `--brand-line` | a marca: o botão que inicia, o separador onde se está, o rótulo da semana |
 | `--warn`, `--warn-soft`, `--warn-line` | o que corre mal: erros, alunos a precisar do treinador, limitações activas |
 | `--good`, `--good-soft`, `--good-line` | o que está feito |
 
-Há duas regras que não se dobram. **O dourado de encher não escreve**: sobre
-papel fica em 1,8:1 de contraste, por isso quem preenche é `--gold` (com
-`--gold-ink` por cima) e quem escreve é `--gold-dark`. E **a marca não faz de
+Há duas regras que não se dobram. **A cor de encher não escreve**: o dourado
+sobre papel fica em 1,8:1 de contraste, por isso quem preenche é `--brand` (com
+`--brand-ink` por cima) e quem escreve é `--brand-text`. E **a marca não faz de
 aviso**: se o dourado também servir para dizer que algo está mal, deixa de
 querer dizer o que quer que seja — daí a família `--warn` à parte.
+
+A família da marca chamava-se `--gold`. Mudou de nome quando deixou de ser
+sempre dourada: no tema Guerreiro é verde.
+
+Os cartões pintam-se com `--surface` e nunca com `#fff`, e o texto por cima de
+`--good` a cheio é `--good-ink`. Num tema escuro, um branco escrito à mão fica
+uma ilha no meio do ecrã.
+
+### Os temas
+
+No *Perfil*, o cartão *Tema* troca a cara da app inteira. Há quatro:
+
+| Tema | Como é |
+|---|---|
+| Papel | o de sempre, e o que se vê sem escolher nada |
+| Caderno | claro e editorial: números e títulos com serifa (Instrument Serif), cartões planos como secções, o registo do dia como lista de verificação |
+| Arena | o preto e o dourado do logótipo: letra condensada de placar (Barlow Condensed), a letra do treino em grande no cartão de hoje, o que falta registar a tracejado |
+| Guerreiro | a Arena em preto neutro e verde, com o logótipo do Guerreiro Personal Trainer na barra de cima |
+
+O Caderno e a Arena trazem também a barra de separadores a flutuar, afastada
+do fundo do ecrã.
+
+Um tema são duas coisas. As **cores** estão em `tokens.css`, um bloco por tema
+(`:root[data-theme='arena']`). A **forma** — letra, barra, cartões — está em
+`themes.css`, por `data-look`: `papel`, `caderno` ou `arena`, e o Guerreiro usa
+a forma da Arena. Os ecrãs não sabem de nada disto: o Papel continua a ser
+exactamente o que era, ao píxel.
+
+Todas as regras de `themes.css` começam em `:root[data-look=…]`, e não é só
+arrumação. Os ecrãs do treinador e a sessão de treino vêm em chunks próprios,
+com o CSS injetado depois do principal, e só perdem ao desempate as regras
+mais específicas do que as deles.
+
+A escolha fica no telemóvel (`localStorage`, chave `gfit.tema`), como a
+apresentação: o `index.html` lê-a antes de a app arrancar, para quem usa um
+tema escuro não ver um clarão de papel a cada abertura. Quem usa a app em dois
+telemóveis escolhe nos dois. As letras de cada tema só se descarregam para
+quem o escolhe, e ficam no cache do service worker para o ginásio sem rede.
+
+O logótipo do Guerreiro, com fundo transparente, está inteiro em
+`brand/guerreiro-logo.png`. Na barra vai só a palavra
+(`public/guerreiro-wordmark.png`): à altura da barra o *personal trainer* do
+logótipo inteiro não se lê.
 
 Os protótipos do Claude Design (`FG Coach App.dc.html`,
 `FG Coach Protótipo.dc.html`) ficam no repositório como referência do desenho.
@@ -449,7 +498,7 @@ tenha levado uma série contra as vinte de outro.
 O SVG tem de ficar inline no DOM, senão o CSS da app não lhe chega: `BodyMap`
 importa o ficheiro como texto, parte-o nas duas vistas uma única vez e injecta
 a que precisa. A cor vem de `--accent` — a variável do contrato do SVG, que a app
-preenche com `--gold-dark` — e a intensidade de cada grupo entra noutra
+preenche com `--brand-text` — e a intensidade de cada grupo entra noutra
 variável CSS no contentor (`--bm-<slug>`), o que deixa o React fora do DOM do
 desenho e mantém a transição de cor a funcionar.
 

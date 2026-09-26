@@ -41,6 +41,22 @@ export default defineConfig({
               expiration: { maxEntries: 64, maxAgeSeconds: 60 * 60 * 24 * 7 },
             },
           },
+          {
+            // As letras de cada tema: sem elas, no ginásio sem rede, o Caderno
+            // e a Arena caíam para a letra do sistema.
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\//,
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'gfit-fontes-css' },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'gfit-fontes',
+              expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
         ],
       },
       manifest: {

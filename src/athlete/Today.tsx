@@ -155,8 +155,10 @@ export function Today() {
       />
 
       {/* ── treino ─────────────────────────────────────── */}
+      {/* A letra do treino vai em `data-letter`: a Arena desenha-a em grande
+          por trás do cartão, o Caderno num círculo dourado. */}
       {marked ? (
-        <section className="card card--ink today__workout">
+        <section className="card card--ink today__workout" data-letter={marked.day?.label}>
           <div className="card__head">
             <span className="eyebrow today__workout-eyebrow">Treino de hoje</span>
             {marked.session?.status === 'in_progress' && (
@@ -226,7 +228,7 @@ export function Today() {
           </button>
         </section>
       ) : nextDay ? (
-        <section className="card card--ink today__workout">
+        <section className="card card--ink today__workout" data-letter={nextDay.label}>
           <div className="card__head">
             <span className="eyebrow today__workout-eyebrow">Treino de hoje</span>
             {sessions.some((s) => s.status === 'in_progress') && (

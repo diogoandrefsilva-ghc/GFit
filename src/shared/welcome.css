@@ -125,9 +125,9 @@
   height: 52px;
   margin-bottom: 8px;
   border-radius: var(--radius);
-  background: var(--gold-soft);
-  border: 1px solid var(--gold-line);
-  color: var(--gold-dark);
+  background: var(--brand-soft);
+  border: 1px solid var(--brand-line);
+  color: var(--brand-text);
 }
 
 /* O símbolo do separador é desenhado à medida da barra de baixo (22 px);
@@ -174,7 +174,7 @@
 .welcome__dot.is-on {
   width: 20px;
   border-radius: 4px;
-  background: var(--gold-dark);
+  background: var(--brand-text);
 }
 
 .welcome__actions {
@@ -201,5 +201,5 @@
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  accent-color: var(--gold-dark);
+  accent-color: var(--brand-text);
 }

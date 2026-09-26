@@ -4,7 +4,7 @@
   justify-content: space-between;
   gap: 10px;
   padding: 8px 10px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
 }
@@ -41,6 +41,6 @@
 
 .week-nav__today {
   font-size: 11px;
-  color: var(--gold-dark);
+  color: var(--brand-text);
   text-decoration: underline;
 }

@@ -70,7 +70,7 @@
   min-height: 48px;
   padding: 0 8px;
   border-radius: var(--radius);
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   font-size: 15px;
   font-weight: 700;
@@ -88,9 +88,9 @@
  * onde a cor tem de querer dizer alguma coisa.
  */
 .nsheet__opt.is-on {
-  background: var(--gold);
-  border-color: var(--gold);
-  color: var(--gold-ink);
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-ink);
 }
 
 .nsheet__hint {

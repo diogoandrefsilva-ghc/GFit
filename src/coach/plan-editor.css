@@ -14,7 +14,7 @@
 }
 
 .plan-ex {
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   padding: 14px;
@@ -208,7 +208,7 @@
   padding: 2px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  background: #fff;
+  background: var(--surface);
 }
 
 .plan-cal__day.is-outside .plan-cal__number,
@@ -255,8 +255,8 @@
 }
 
 .plan-cal__marks em.is-active {
-  background: var(--gold);
-  color: var(--gold-ink);
+  background: var(--brand);
+  color: var(--brand-ink);
 }
 
 .plan-cal__repeat {

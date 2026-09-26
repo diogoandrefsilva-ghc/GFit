@@ -1,7 +1,20 @@
 /*
- * Paleta e tipografia. A base continua a ser papel; o que mudou foi o acento:
- * o laranja deu lugar ao dourado do logótipo, e o que precisa de atenção
- * passou a ter família própria em vez de pedir a cor emprestada à marca.
+ * Paleta e tipografia. Há quatro temas e os ecrãs não sabem de nenhum: tocam
+ * nas cores só pelo nome, e cada tema dá a esses nomes os seus valores.
+ *
+ * - Papel (`:root`) — o de sempre, e o que se vê sem escolher nada.
+ * - Caderno — claro e editorial: serifa nos números e títulos, menos caixas.
+ * - Arena — o preto e o dourado do logótipo por inteiro.
+ * - Guerreiro — a Arena com o verde e o logótipo do Guerreiro Personal Trainer.
+ *
+ * O que muda na forma (barra flutuante, letra condensada, registo em lista)
+ * vive em `themes.css`; aqui só as cores. O tema escolhe-se no Perfil e chega
+ * como `data-theme` na raiz — ver `src/lib/theme.ts`.
+ *
+ * Os nomes são de papel e tinta mesmo nos temas escuros: `--paper` é o fundo
+ * do ecrã e `--ink` o texto, seja qual for a cor de cada um. Quem enche um
+ * botão com `--ink` e escreve por cima com `--paper` fica invertido em
+ * qualquer tema.
  */
 :root {
   --ink: #16150f;
@@ -13,9 +26,15 @@
   --paper-3: #edeae3;
   --shell: #dad6cc;
 
+  /* O cartão por cima do papel. Era `#fff` escrito em cada cartão, o que num
+     tema escuro deixava ilhas brancas no meio do ecrã. */
+  --surface: #fff;
+  --surface-veil: rgba(255, 255, 255, 0.7);
+
   --line: #e3dfd7;
   --line-2: #c9c4b8;
   --line-3: #b9b4a8;
+  --line-soft: rgba(0, 0, 0, 0.07);
 
   /* O cinzento do texto secundário escureceu (#8a867c → #6e6a60): a 13px
      sobre papel o anterior ficava-se por 3,2:1 de contraste, aquém dos 4,5:1
@@ -26,14 +45,16 @@
   --muted-soft: #8a867c;
 
   /* ── marca ───────────────────────────────────────────────
-     O dourado do logótipo é para preencher, não para escrever: como texto
-     sobre papel dá 1,8:1 e não se lê. Daí serem dois — `--gold` enche (com
-     `--gold-ink` por cima) e `--gold-dark` escreve. */
-  --gold: #e3b04b;
-  --gold-ink: #16150f;
-  --gold-dark: #8a5c12;
-  --gold-soft: #f7efdc;
-  --gold-line: #e4d2a6;
+     A cor do logótipo é para preencher, não para escrever: o dourado como
+     texto sobre papel dá 1,8:1 e não se lê. Daí serem dois — `--brand` enche
+     (com `--brand-ink` por cima) e `--brand-text` escreve. Chamava-se
+     `--gold`; deixou de ser sempre dourado quando chegou o verde do
+     Guerreiro. */
+  --brand: #e3b04b;
+  --brand-ink: #16150f;
+  --brand-text: #8a5c12;
+  --brand-soft: #f7efdc;
+  --brand-line: #e4d2a6;
 
   /* ── atenção ─────────────────────────────────────────────
      Um erro, um aluno a precisar do treinador ou uma limitação activa não são
@@ -45,6 +66,8 @@
   --good: #1f5d45;
   --good-soft: #eaf3ee;
   --good-line: #d8ebe1;
+  /* O que se escreve por cima de `--good` a cheio. */
+  --good-ink: #fff;
 
   --radius-sm: 10px;
   --radius: 14px;
@@ -58,4 +81,129 @@
 
   /* Altura da barra de separadores, para o conteúdo não ficar por baixo. */
   --tabbar-h: 64px;
+  --tabbar-bg: rgba(244, 241, 236, 0.94);
+  /* Quanto a barra flutua acima do fundo do ecrã. No Papel está colada. */
+  --tabbar-lift: 0px;
+}
+
+/* ── Caderno ─────────────────────────────────────────────── */
+
+:root[data-theme='caderno'] {
+  --ink: #141310;
+  --ink-2: #2b2924;
+  --ink-3: #3d3a33;
+
+  --paper: #fbfaf6;
+  --paper-2: #f3f0e8;
+  --paper-3: #ece8de;
+  --shell: #e6e1d5;
+
+  --surface: #fff;
+  --surface-veil: rgba(255, 255, 255, 0.75);
+
+  --line: #e6e2d8;
+  --line-2: #d3cdc0;
+  --line-3: #bdb7a9;
+  --line-soft: rgba(0, 0, 0, 0.06);
+
+  --muted: #6b675e;
+  --muted-strong: #55524a;
+  --muted-soft: #8a857a;
+
+  --brand-soft: #f8edd3;
+  --brand-line: #ead9ad;
+
+  /* A barra é uma pílula de tinta a flutuar sobre o papel. */
+  --tabbar-bg: #141310;
+  --tabbar-lift: 12px;
+}
+
+/* ── Arena e Guerreiro: os escuros ───────────────────────── */
+
+:root[data-theme='arena'],
+:root[data-theme='guerreiro'] {
+  color-scheme: dark;
+
+  --ink: #f4f1ec;
+  --ink-2: #e7e2d6;
+  --ink-3: #cfc9bc;
+
+  --paper: #0c0b09;
+  --paper-2: #14130f;
+  --paper-3: #1f1d18;
+  --shell: #050504;
+
+  --surface: #17150f;
+  --surface-veil: rgba(255, 255, 255, 0.04);
+
+  --line: #2c2921;
+  --line-2: #3a362d;
+  --line-3: #4d483d;
+  --line-soft: rgba(255, 255, 255, 0.07);
+
+  /* Sobre o cartão (#17150f) dão 7,3:1, 11:1 e 5,3:1. */
+  --muted: #a9a397;
+  --muted-strong: #cfc9bc;
+  --muted-soft: #8f8a7e;
+
+  /* No escuro o dourado já se lê como texto (8:1), por isso escreve com a
+     própria cor. */
+  --brand: #e3b04b;
+  --brand-ink: #16150f;
+  --brand-text: #e3b04b;
+  --brand-soft: #2a2213;
+  --brand-line: #4a3c1c;
+
+  --warn: #ff9a70;
+  --warn-soft: #24150e;
+  --warn-line: #5c2d1b;
+
+  --good: #86d9ab;
+  --good-soft: #13251b;
+  --good-line: #1f4030;
+  --good-ink: #0c0b09;
+
+  --tabbar-bg: rgba(26, 24, 19, 0.94);
+  --tabbar-lift: 12px;
+}
+
+/* O Guerreiro troca o preto quente da Arena pelo preto neutro do logótipo, e
+   o dourado pelo verde. O "feito" fica num verde mais frio, para não se
+   confundir com a marca. */
+:root[data-theme='guerreiro'] {
+  --ink: #f2f2f0;
+  --ink-2: #e2e2df;
+  --ink-3: #c8c8c4;
+
+  --paper: #0a0a0a;
+  --paper-2: #121212;
+  --paper-3: #1c1c1c;
+  --shell: #000;
+
+  --surface: #151515;
+
+  --line: #262626;
+  --line-2: #353535;
+  --line-3: #4a4a4a;
+
+  --muted: #a3a3a0;
+  --muted-strong: #cacac6;
+  --muted-soft: #8a8a86;
+
+  --brand: #7ee04e;
+  --brand-ink: #0a0a0a;
+  --brand-text: #8be65c;
+  --brand-soft: #16240f;
+  --brand-line: #2f4a1f;
+
+  --warn: #ff8f6b;
+  --warn-soft: #231410;
+  --warn-line: #5a2a1c;
+
+  --good: #6fd6a8;
+  --good-soft: #10231a;
+  --good-line: #1c3d2d;
+  --good-ink: #0a0a0a;
+
+  --tabbar-bg: rgba(21, 21, 21, 0.94);
 }

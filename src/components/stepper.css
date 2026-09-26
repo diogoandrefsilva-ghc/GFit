@@ -12,7 +12,7 @@
   width: 40px;
   height: 40px;
   border-radius: var(--radius-sm);
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   font-size: 20px;
   font-weight: 700;

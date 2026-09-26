@@ -2,15 +2,19 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth, useProfile } from '@/auth/useAuth'
 import { Avatar } from '@/components/Avatar'
 import { Logo } from '@/components/Logo'
+import { useTheme } from '@/lib/theme'
 import './appbar.css'
 
 /**
  * Barra da marca, no topo de todos os ecrãs com separadores. O avatar à
- * direita é o atalho para o perfil.
+ * direita é o atalho para o perfil. No tema Guerreiro a marca é a do
+ * Guerreiro Personal Trainer: só a palavra, porque o "personal trainer" do
+ * logótipo inteiro fica ilegível à altura da barra.
  */
 export function AppBar() {
   const profile = useProfile()
   const { isCoach } = useAuth()
+  const theme = useTheme()
   const navigate = useNavigate()
 
   return (
@@ -20,8 +24,19 @@ export function AppBar() {
         className="appbar__brand"
         onClick={() => navigate(isCoach ? '/inicio' : '/hoje')}
       >
-        <Logo size={26} />
-        <span className="appbar__word">GFit</span>
+        {theme.id === 'guerreiro' ? (
+          <img
+            className="appbar__guerreiro"
+            src={`${import.meta.env.BASE_URL}guerreiro-wordmark.png`}
+            alt="Guerreiro Personal Trainer"
+            decoding="async"
+          />
+        ) : (
+          <>
+            <Logo size={26} />
+            <span className="appbar__word">GFit</span>
+          </>
+        )}
       </button>
 
       <button

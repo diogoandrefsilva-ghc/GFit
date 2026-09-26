@@ -148,5 +148,5 @@
 .picker__add.is-on {
   background: var(--good);
   border-color: var(--good);
-  color: #fff;
+  color: var(--good-ink);
 }

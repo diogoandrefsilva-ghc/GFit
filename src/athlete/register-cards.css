@@ -32,7 +32,7 @@
   padding: 14px;
   text-align: left;
   color: var(--ink);
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   transition: transform 0.06s ease, background 0.16s ease, border-color 0.16s ease;
@@ -80,7 +80,7 @@
 }
 
 .reg--done .reg__icon {
-  background: #fff;
+  background: var(--surface);
   color: var(--good);
 }
 
@@ -158,20 +158,20 @@
   display: block;
   height: 6px;
   border-radius: 3px;
-  background: var(--gold-soft);
+  background: var(--brand-soft);
   overflow: hidden;
   margin-top: auto;
 }
 
 .reg--done .reg__bar {
-  background: #fff;
+  background: var(--surface);
 }
 
 .reg__bar i {
   display: block;
   height: 100%;
   border-radius: 3px;
-  background: var(--gold);
+  background: var(--brand);
   transition: width 0.25s ease;
 }
 
