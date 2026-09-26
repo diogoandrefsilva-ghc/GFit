@@ -1,0 +1,1750 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guia da GFit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&family=Instrument+Serif&display=swap">
+<style>
+/* ── A página: as cores do tema Papel da app, e as da Arena no escuro ── */
+:root {
+  color-scheme: light;
+  --bg: #f4f1ec;
+  --bg-2: #ebe7df;
+  --surface: #ffffff;
+  --stage: #e4dfd4;
+  --ink: #16150f;
+  --ink-2: #3a372f;
+  --muted: #6e6a60;
+  --line: #e1dcd2;
+  --line-2: #cbc5b8;
+  --brand: #e3b04b;
+  --brand-ink: #16150f;
+  --brand-text: #8a5c12;
+  --brand-soft: #f7efdc;
+  --brand-line: #e4d2a6;
+  --good: #1f5d45;
+  --good-soft: #eaf3ee;
+  --warn: #b2350f;
+  --warn-soft: #fbe9e2;
+  --bezel: #0b0b0b;
+  --bezel-line: rgba(0, 0, 0, 0.18);
+  --shadow: 0 28px 50px -30px rgba(40, 30, 10, 0.55);
+
+  --display: 'Barlow Condensed', 'Arial Narrow', 'Roboto Condensed', system-ui, sans-serif;
+  --body: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0c0b09;
+    --bg-2: #14130f;
+    --surface: #17150f;
+    --stage: #191712;
+    --ink: #f4f1ec;
+    --ink-2: #d9d3c6;
+    --muted: #a9a397;
+    --line: #2c2921;
+    --line-2: #423d33;
+    --brand: #e3b04b;
+    --brand-ink: #16150f;
+    --brand-text: #e8bb5f;
+    --brand-soft: #2a2213;
+    --brand-line: #4a3c1c;
+    --good: #86d9ab;
+    --good-soft: #13251b;
+    --warn: #ff9a70;
+    --warn-soft: #24150e;
+    --bezel: #000;
+    --bezel-line: rgba(255, 255, 255, 0.14);
+    --shadow: 0 28px 50px -30px rgba(0, 0, 0, 0.9);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0c0b09;
+  --bg-2: #14130f;
+  --surface: #17150f;
+  --stage: #191712;
+  --ink: #f4f1ec;
+  --ink-2: #d9d3c6;
+  --muted: #a9a397;
+  --line: #2c2921;
+  --line-2: #423d33;
+  --brand: #e3b04b;
+  --brand-ink: #16150f;
+  --brand-text: #e8bb5f;
+  --brand-soft: #2a2213;
+  --brand-line: #4a3c1c;
+  --good: #86d9ab;
+  --good-soft: #13251b;
+  --warn: #ff9a70;
+  --warn-soft: #24150e;
+  --bezel: #000;
+  --bezel-line: rgba(255, 255, 255, 0.14);
+  --shadow: 0 28px 50px -30px rgba(0, 0, 0, 0.9);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 16px/1.6 var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--brand-text); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+b, strong { font-weight: 700; }
+p { margin: 0; max-width: 66ch; }
+ul, ol { margin: 0; padding: 0; }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 40px); }
+
+.eyebrow {
+  display: block;
+  font: 600 0.74rem/1.2 var(--body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand-text);
+}
+h1, h2 {
+  font-family: var(--display);
+  text-transform: uppercase;
+  margin: 0;
+  text-wrap: balance;
+}
+h1 { font-weight: 800; font-size: clamp(2.7rem, 8vw, 4.8rem); line-height: 0.92; letter-spacing: 0.005em; }
+h2 { font-weight: 700; font-size: clamp(2rem, 5vw, 2.9rem); line-height: 0.98; letter-spacing: 0.01em; }
+h3 { font: 700 1.3rem/1.25 var(--body); margin: 0; text-wrap: balance; }
+h4 { font: 700 1rem/1.3 var(--body); margin: 0; }
+
+/* O que está escrito no ecrã: um botão, um separador, um rótulo. */
+.ui {
+  font: 600 0.86em/1.3 var(--body);
+  padding: 0.06em 0.42em;
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* ── cabeçalho ─────────────────────────────────────────── */
+.hero { padding-block: clamp(36px, 7vw, 72px) 28px; display: grid; gap: 22px; }
+.hero__brand { display: flex; align-items: center; gap: 12px; }
+.logo {
+  display: inline-block;
+  width: 44px; height: 44px;
+  border-radius: 11px;
+  background: #000 url("data:image/png;base64,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") center / cover no-repeat;
+  flex: none;
+}
+.hero__lead { font-size: 1.14rem; line-height: 1.6; color: var(--ink-2); max-width: 60ch; }
+.app-link {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  max-width: 720px;
+}
+.app-link__label { font-size: 0.85rem; color: var(--muted); }
+.app-link code {
+  font: 600 0.95rem/1.3 ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  color: var(--ink);
+  user-select: all;
+  overflow-wrap: anywhere;
+  flex: 1 1 220px;
+}
+.app-link__actions { display: flex; gap: 8px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 700 0.88rem/1 var(--body);
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn--accent { background: var(--brand); color: var(--brand-ink); }
+.btn--ghost { background: transparent; color: var(--ink); border-color: var(--line-2); }
+
+/* O ciclo: tu escreves, o aluno regista, tu acompanhas. */
+.loop {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 10px;
+  margin-top: 8px;
+}
+.loop__node {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: grid; gap: 6px; align-content: start;
+}
+.loop__node--you { background: var(--brand-soft); border-color: var(--brand-line); }
+.loop__who { font: 700 1.5rem/1 var(--display); text-transform: uppercase; }
+.loop__node p { font-size: 0.93rem; color: var(--ink-2); }
+.loop__arrow { align-self: center; font: 700 1.6rem/1 var(--display); color: var(--brand-text); }
+.loop__back {
+  grid-column: 1 / -1;
+  font-size: 0.9rem; color: var(--muted);
+  display: flex; align-items: center; gap: 8px;
+}
+.loop__back span { font-size: 1.1rem; color: var(--brand-text); }
+@media (max-width: 760px) {
+  .loop { grid-template-columns: 1fr; }
+  .loop__arrow { justify-self: center; transform: rotate(90deg); }
+}
+
+/* ── navegação ─────────────────────────────────────────── */
+.nav {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-block: 1px solid var(--line);
+}
+.nav__list {
+  display: flex; gap: 6px;
+  overflow-x: auto; scrollbar-width: none;
+  padding-block: 10px;
+  list-style: none;
+}
+.nav__list::-webkit-scrollbar { display: none; }
+.nav a {
+  display: block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  color: var(--ink);
+  text-decoration: none;
+  font: 600 0.84rem/1.2 var(--body);
+  white-space: nowrap;
+}
+.nav a:hover { border-color: var(--brand); }
+
+/* ── secções ───────────────────────────────────────────── */
+.section { padding-block: clamp(48px, 8vw, 88px) 8px; }
+.section__head { display: grid; gap: 12px; margin-bottom: 28px; }
+.section__head p { color: var(--ink-2); font-size: 1.05rem; }
+
+/* Escolher o tema das ilustrações. */
+.skins {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  margin-top: 28px;
+}
+.skins p { font-size: 0.9rem; color: var(--ink-2); flex: 1 1 280px; }
+.skins__options { display: flex; flex-wrap: wrap; gap: 6px; }
+.skins__options button {
+  display: inline-flex; align-items: center; gap: 7px;
+  font: 600 0.84rem/1 var(--body);
+  padding: 7px 11px 7px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.skins__options button[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.swatch { width: 16px; height: 16px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.35); }
+
+/* Um ecrã: o telemóvel de um lado, a explicação do outro. */
+.screen-row {
+  display: grid;
+  grid-template-columns: 310px minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 48px);
+  align-items: start;
+  padding-block: 36px;
+  border-top: 1px solid var(--line);
+}
+.screen-row:first-of-type { border-top: 0; }
+.shot { margin: 0; display: grid; gap: 10px; justify-items: center; }
+.stage {
+  background: var(--stage);
+  border-radius: 22px;
+  padding: 22px 16px;
+  width: 100%;
+  display: flex; justify-content: center;
+}
+.shot figcaption { font-size: 0.8rem; color: var(--muted); text-align: center; max-width: 300px; }
+.text { display: grid; gap: 14px; align-content: start; min-width: 0; }
+.text > .eyebrow { margin-bottom: -6px; }
+.text p { color: var(--ink-2); }
+@media (max-width: 820px) {
+  .screen-row { grid-template-columns: 1fr; }
+  .shot { order: 2; }
+}
+
+.do { list-style: none; display: grid; gap: 8px; }
+.do li { position: relative; padding-left: 20px; color: var(--ink-2); max-width: 66ch; }
+.do li::before {
+  content: ""; position: absolute; left: 2px; top: 0.62em;
+  width: 7px; height: 7px; border-radius: 2px;
+  background: var(--brand);
+}
+.do li b { color: var(--ink); }
+
+.steps { list-style: none; counter-reset: step; display: grid; gap: 14px; }
+.steps li {
+  counter-increment: step;
+  display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 12px;
+  color: var(--ink-2);
+}
+.steps li::before {
+  content: counter(step);
+  font: 700 1.7rem/1 var(--display);
+  color: var(--brand-text);
+  text-align: right;
+  padding-top: 1px;
+}
+.steps li b { color: var(--ink); }
+
+.note {
+  background: var(--brand-soft);
+  border: 1px solid var(--brand-line);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: grid; gap: 6px;
+}
+.note p { color: var(--ink); font-size: 0.95rem; }
+.note--quiet { background: var(--bg-2); border-color: var(--line); }
+
+/* Os separadores da app, lado a lado. */
+.tabs-strip {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.tabs-strip li {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 12px;
+  display: grid; gap: 6px; align-content: start;
+}
+.tabs-strip svg { width: 24px; height: 24px; color: var(--brand-text); }
+.tabs-strip b { font: 700 1.2rem/1 var(--display); text-transform: uppercase; letter-spacing: 0.02em; }
+.tabs-strip span { font-size: 0.86rem; line-height: 1.4; color: var(--ink-2); }
+@media (max-width: 900px) { .tabs-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 460px) { .tabs-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
+.t th, .t td { text-align: left; vertical-align: top; padding: 11px 14px; border-top: 1px solid var(--line); }
+.t thead th {
+  border-top: 0;
+  font: 600 0.72rem/1.2 var(--body); letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted); background: var(--bg-2);
+}
+.t td { color: var(--ink-2); }
+.t td:first-child, .t th[scope="row"] { color: var(--ink); font-weight: 600; }
+.t .group th {
+  background: var(--bg-2);
+  font: 700 0.95rem/1.2 var(--display); text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--brand-text);
+}
+.flag { color: var(--warn); font-weight: 700; }
+
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.cards--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 900px) { .cards--3 { grid-template-columns: 1fr; } }
+@media (max-width: 680px) { .cards { grid-template-columns: 1fr; } }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: grid; gap: 10px; align-content: start;
+}
+.card p { color: var(--ink-2); font-size: 0.95rem; }
+.card .when { font: 700 1.35rem/1 var(--display); text-transform: uppercase; letter-spacing: 0.02em; }
+
+.checks { list-style: none; display: grid; gap: 7px; }
+.checks li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; font-size: 0.95rem; color: var(--ink-2); }
+.checks li::before {
+  content: ""; width: 14px; height: 14px; margin-top: 4px;
+  border: 1.5px solid var(--line-2); border-radius: 4px;
+}
+
+.themes { display: flex; flex-wrap: wrap; gap: 8px; }
+.theme-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--ink-2); }
+.theme-chip i { display: flex; border-radius: 6px; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.35); }
+.theme-chip i span { width: 12px; height: 18px; }
+
+.foot {
+  margin-top: clamp(56px, 8vw, 96px);
+  border-top: 1px solid var(--line);
+  padding-block: 28px 40px;
+  display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between;
+  color: var(--muted); font-size: 0.85rem;
+}
+
+/* ── os telemóveis ─────────────────────────────────────────
+   Cada tema da app dá valores próprios às mesmas variáveis. O Guerreiro é o
+   que vem por omissão nas ilustrações. */
+.phone {
+  --p-paper: #0a0a0a;
+  --p-surface: #151515;
+  --p-line: #262626;
+  --p-ink: #f2f2f0;
+  --p-muted: #a3a3a0;
+  --p-brand: #7ee04e;
+  --p-brand-ink: #0a0a0a;
+  --p-brand-text: #8be65c;
+  --p-brand-soft: #16240f;
+  --p-brand-line: #2f4a1f;
+  --p-warn: #ff8f6b;
+  --p-warn-soft: #231410;
+  --p-warn-line: #5a2a1c;
+  --p-good: #6fd6a8;
+  --p-good-soft: #10231a;
+  --p-good-line: #1c3d2d;
+  --p-bodyfill: #2e2e2e;
+  --p-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --p-text: 'Barlow', 'Archivo', system-ui, sans-serif;
+  --p-upper: uppercase;
+  --p-title-w: 700;
+  --p-title-s: 21px;
+  --m-base: var(--p-bodyfill);
+
+  width: 272px;
+  max-width: 100%;
+  padding: 7px;
+  border-radius: 38px;
+  background: var(--bezel);
+  box-shadow: 0 0 0 1px var(--bezel-line), var(--shadow);
+}
+[data-skin="arena"] .phone {
+  --p-paper: #0c0b09;
+  --p-surface: #17150f;
+  --p-line: #2c2921;
+  --p-ink: #f4f1ec;
+  --p-muted: #a9a397;
+  --p-brand: #e3b04b;
+  --p-brand-ink: #16150f;
+  --p-brand-text: #e3b04b;
+  --p-brand-soft: #2a2213;
+  --p-brand-line: #4a3c1c;
+  --p-warn: #ff9a70;
+  --p-warn-soft: #24150e;
+  --p-warn-line: #5c2d1b;
+  --p-good: #86d9ab;
+  --p-good-soft: #13251b;
+  --p-good-line: #1f4030;
+  --p-bodyfill: #34302a;
+}
+[data-skin="papel"] .phone,
+[data-skin="caderno"] .phone {
+  --p-paper: #f4f1ec;
+  --p-surface: #ffffff;
+  --p-line: #e3dfd7;
+  --p-ink: #16150f;
+  --p-muted: #6e6a60;
+  --p-brand: #e3b04b;
+  --p-brand-ink: #16150f;
+  --p-brand-text: #8a5c12;
+  --p-brand-soft: #f7efdc;
+  --p-brand-line: #e4d2a6;
+  --p-warn: #b2350f;
+  --p-warn-soft: #fbe9e2;
+  --p-warn-line: #f1cfc2;
+  --p-good: #1f5d45;
+  --p-good-soft: #eaf3ee;
+  --p-good-line: #d8ebe1;
+  --p-bodyfill: #dcd7cc;
+  --p-display: 'Archivo', system-ui, sans-serif;
+  --p-text: 'Archivo', system-ui, sans-serif;
+  --p-upper: none;
+  --p-title-w: 800;
+  --p-title-s: 19px;
+}
+[data-skin="caderno"] .phone {
+  --p-paper: #fbfaf6;
+  --p-line: #e6e2d8;
+  --p-display: 'Instrument Serif', Georgia, serif;
+  --p-title-w: 400;
+  --p-title-s: 25px;
+}
+
+.phone-in {
+  background: var(--p-paper);
+  color: var(--p-ink);
+  border-radius: 31px;
+  overflow: hidden;
+  font: 400 11px/1.35 var(--p-text);
+  display: flex; flex-direction: column;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+@media (prefers-reduced-motion: reduce) { .phone-in { transition: none; } }
+.phone-in em { font-style: normal; }
+.ph-status {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 20px 2px;
+  font: 600 10px/1 var(--p-text);
+}
+.ph-batt { width: 20px; height: 9px; border: 1.3px solid currentColor; border-radius: 3px; position: relative; opacity: 0.8; }
+.ph-batt::after { content: ""; position: absolute; inset: 1.2px 5px 1.2px 1.2px; background: currentColor; border-radius: 1px; }
+.ph-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 12px 7px;
+  border-bottom: 1px solid var(--p-line);
+}
+.ph-brand { display: flex; align-items: center; gap: 6px; font: 800 13px/1 var(--p-display); letter-spacing: 0.02em; text-transform: var(--p-upper); }
+.ph-brand .logo { width: 20px; height: 20px; border-radius: 5px; }
+.ph-av {
+  width: 24px; height: 24px; flex: none;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--p-brand-soft); color: var(--p-brand-text);
+  border: 1px solid var(--p-brand-line);
+  font: 700 8.5px/1 var(--p-text);
+}
+.ph-body { padding: 10px 11px 12px; display: flex; flex-direction: column; gap: 7px; }
+.ph-head { display: grid; gap: 2px; margin-bottom: 1px; }
+.ph-back { font-size: 13px; color: var(--p-muted); line-height: 1; margin-bottom: 2px; }
+.ph-eyebrow { font: 600 8.3px/1.2 var(--p-text); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-muted); }
+.ph-eyebrow.brand { color: var(--p-brand-text); }
+.ph-title { font: var(--p-title-w) var(--p-title-s)/1.02 var(--p-display); text-transform: var(--p-upper); letter-spacing: 0.005em; }
+.ph-sub { color: var(--p-muted); font-size: 9.5px; }
+.ph-card {
+  background: var(--p-surface);
+  border: 1px solid var(--p-line);
+  border-radius: 12px;
+  padding: 8px 9px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.ph-card.warn { background: var(--p-warn-soft); border-color: var(--p-warn-line); }
+.ph-card.good { background: var(--p-good-soft); border-color: var(--p-good-line); }
+.ph-card.brand { background: var(--p-brand-soft); border-color: var(--p-brand-line); }
+.ph-cardhead { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.ph-link { font-size: 9px; color: var(--p-brand-text); font-weight: 600; }
+.ph-muted { color: var(--p-muted); }
+.ph-small { font-size: 9.5px; }
+.ph-warn { color: var(--p-warn); }
+.ph-good { color: var(--p-good); }
+.ph-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.ph-chip {
+  display: inline-flex; align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--p-line);
+  background: var(--p-surface);
+  font: 600 8.8px/1.35 var(--p-text);
+  color: var(--p-ink);
+  white-space: nowrap;
+}
+.ph-chip.on { background: var(--p-ink); color: var(--p-paper); border-color: var(--p-ink); }
+.ph-chip.brand { background: var(--p-brand-soft); color: var(--p-brand-text); border-color: var(--p-brand-line); }
+.ph-chip.good { background: var(--p-good-soft); color: var(--p-good); border-color: var(--p-good-line); }
+.ph-chip.warn { background: var(--p-warn-soft); color: var(--p-warn); border-color: var(--p-warn-line); }
+.ph-btn {
+  display: block; text-align: center;
+  padding: 7px 8px;
+  border-radius: 10px;
+  font: 700 10px/1.2 var(--p-text);
+  border: 1px solid transparent;
+}
+.ph-btn.accent { background: var(--p-brand); color: var(--p-brand-ink); }
+.ph-btn.primary { background: var(--p-ink); color: var(--p-paper); }
+.ph-btn.ghost { border-color: var(--p-line); color: var(--p-ink); background: var(--p-surface); }
+.ph-btn.quiet { color: var(--p-muted); }
+.ph-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+
+.ph-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.ph-tile {
+  background: var(--p-surface); border: 1px solid var(--p-line); border-radius: 11px;
+  padding: 6px 8px; display: flex; flex-direction: column; gap: 1px;
+}
+.ph-tile em { font-size: 7.8px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-muted); display: flex; justify-content: space-between; }
+.ph-tile b { font: 700 20px/1.05 var(--p-display); font-variant-numeric: tabular-nums; }
+.ph-tile small { font-size: 8.3px; color: var(--p-muted); }
+.ph-tile.warn { background: var(--p-warn-soft); border-color: var(--p-warn-line); }
+.ph-tile.warn b { color: var(--p-warn); }
+
+.ph-people { list-style: none; display: grid; }
+.ph-people li {
+  display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 7px; align-items: center;
+  padding-block: 5px; border-top: 1px solid var(--p-line);
+}
+.ph-people li:first-child { border-top: 0; padding-top: 1px; }
+.ph-people .ph-av { width: 22px; height: 22px; }
+.ph-people span { display: grid; min-width: 0; }
+.ph-people b { font-size: 10.3px; }
+.ph-people em { font-size: 9px; color: var(--p-muted); }
+.ph-people em.ph-warn { color: var(--p-warn); font-weight: 600; }
+.ph-people em.ph-good { color: var(--p-good); font-weight: 600; }
+.ph-people small { font-size: 8.5px; color: var(--p-muted); }
+
+.ph-facts { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; }
+.ph-facts li { display: grid; }
+.ph-facts span { font-size: 8.3px; color: var(--p-muted); }
+.ph-facts b { font-size: 10.3px; }
+.ph-big { font: 700 22px/1 var(--p-display); font-variant-numeric: tabular-nums; }
+.ph-spark { width: 100%; height: 34px; display: block; }
+.ph-spark .raw { fill: none; stroke: var(--p-muted); stroke-width: 1.2; opacity: 0.6; }
+.ph-spark .avg { fill: none; stroke: var(--p-brand); stroke-width: 2; }
+.ph-spark .end { fill: var(--p-brand); }
+
+.ph-ex {
+  display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 8px;
+  background: var(--p-surface); border: 1px solid var(--p-line); border-radius: 12px;
+  padding: 7px 8px;
+}
+.ph-ex svg { width: 26px; height: 55px; }
+.ph-ex__main { display: grid; gap: 5px; min-width: 0; }
+.ph-ex__name { display: flex; justify-content: space-between; gap: 6px; }
+.ph-ex__name b { font-size: 10.3px; }
+.ph-ex__name em { font-size: 8.5px; color: var(--p-muted); display: block; }
+.ph-ex__name i { font-style: normal; color: var(--p-muted); }
+.ph-nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.ph-nums span { border: 1px solid var(--p-line); border-radius: 8px; text-align: center; padding: 3px 2px 2px; }
+.ph-nums b { display: block; font: 700 14px/1.05 var(--p-display); font-variant-numeric: tabular-nums; }
+.ph-nums small { font-size: 7.8px; color: var(--p-muted); }
+.ph-seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--p-line); border-radius: 8px; overflow: hidden; }
+.ph-seg span { text-align: center; padding: 4px; font-size: 9px; font-weight: 600; color: var(--p-muted); }
+.ph-seg span.on { background: var(--p-ink); color: var(--p-paper); }
+.ph-label { font-size: 8.5px; color: var(--p-muted); font-weight: 600; }
+.ph-input { border: 1px solid var(--p-line); border-radius: 8px; padding: 5px 7px; background: var(--p-paper); font-size: 10px; }
+.ph-input.placeholder { color: var(--p-muted); }
+.ph-area { min-height: 30px; }
+
+.ph-days { list-style: none; display: grid; gap: 4px; }
+.ph-days > li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 6px; align-items: start; }
+.ph-date { display: grid; justify-items: center; line-height: 1.05; padding-top: 3px; }
+.ph-date em { font-size: 7.8px; text-transform: uppercase; color: var(--p-muted); letter-spacing: 0.06em; }
+.ph-date strong { font: 700 14px/1 var(--p-display); }
+.ph-days > li.today .ph-date strong { color: var(--p-brand-text); }
+.ph-slot {
+  display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 6px; align-items: center;
+  background: var(--p-surface); border: 1px solid var(--p-line); border-radius: 10px;
+  padding: 5px 7px;
+}
+.ph-days > li.today .ph-slot { border-color: var(--p-brand-line); }
+.ph-slot + .ph-slot { margin-top: 3px; }
+.ph-slot .ph-av { width: 18px; height: 18px; font-size: 7px; }
+.ph-slot span { display: grid; min-width: 0; }
+.ph-slot b { font-size: 9.8px; }
+.ph-slot em { font-size: 8.5px; color: var(--p-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ph-rest { font-size: 9px; color: var(--p-muted); padding: 6px 2px; }
+.ph-weeknav { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 10.5px; padding: 3px 2px; }
+.ph-weeknav i { font-style: normal; color: var(--p-muted); font-size: 14px; }
+
+.ph-reg { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.ph-regcard {
+  background: var(--p-surface); border: 1px solid var(--p-line); border-radius: 11px;
+  padding: 6px 8px; display: grid; gap: 1px; align-content: start;
+}
+.ph-regcard.done { background: var(--p-good-soft); border-color: var(--p-good-line); }
+.ph-regcard.wide { grid-column: 1 / -1; }
+.ph-regcard em { font-size: 8.3px; font-weight: 600; color: var(--p-muted); }
+.ph-regcard.done em { color: var(--p-good); }
+.ph-regcard b { font: 700 16px/1.1 var(--p-display); font-variant-numeric: tabular-nums; }
+.ph-regcard b small { font-size: 9px; font-weight: 600; margin-left: 2px; }
+.ph-regcard .todo { font: 600 10px/1.5 var(--p-text); color: var(--p-muted); }
+.ph-regcard em { display: flex; justify-content: space-between; gap: 4px; }
+.ph-regcard em i { font-style: normal; }
+.ph-regcard small.hint { font-size: 8.2px; color: var(--p-muted); }
+.ph-bar-track { height: 4px; border-radius: 3px; background: var(--p-line); overflow: hidden; margin-top: 2px; }
+.ph-bar-track i { display: block; height: 100%; width: 0; background: var(--p-brand); }
+
+.ph-session-top { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 6px; align-items: center; padding: 8px 11px; border-bottom: 1px solid var(--p-line); }
+.ph-session-top span { display: grid; }
+.ph-session-top b { font-size: 10.5px; }
+.ph-session-top em { font-size: 8.5px; color: var(--p-muted); }
+.ph-clock { font: 700 15px/1 var(--p-display); font-variant-numeric: tabular-nums; color: var(--p-brand-text); }
+.ph-exname { font: var(--p-title-w) 19px/1.05 var(--p-display); text-transform: var(--p-upper); }
+.ph-sets { width: 100%; border-collapse: collapse; font-size: 9.5px; font-variant-numeric: tabular-nums; }
+.ph-sets th, .ph-sets td { padding: 3px 4px; text-align: left; border-bottom: 1px solid var(--p-line); }
+.ph-sets thead th { font-size: 7.8px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--p-muted); font-weight: 600; }
+.ph-sets tr.done td, .ph-sets tr.done th { color: var(--p-good); }
+.ph-sets tr.active { background: var(--p-brand-soft); }
+.ph-step { display: grid; grid-template-columns: 26px 1fr 26px; align-items: center; border: 1px solid var(--p-line); border-radius: 10px; background: var(--p-surface); }
+.ph-step i { font-style: normal; text-align: center; font-size: 14px; color: var(--p-muted); }
+.ph-step b { text-align: center; font: 700 15px/1.6 var(--p-display); font-variant-numeric: tabular-nums; }
+.ph-rir { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.ph-rir span { border: 1px solid var(--p-line); border-radius: 8px; text-align: center; padding: 3px 0; font-weight: 700; font-size: 10px; background: var(--p-surface); }
+.ph-rir span.on { background: var(--p-brand); color: var(--p-brand-ink); border-color: var(--p-brand); }
+.ph-field2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+
+.ph-timed { background: var(--p-brand-soft); display: flex; flex-direction: column; min-height: 420px; }
+.ph-timed__bar { height: 4px; background: var(--p-line); }
+.ph-timed__bar i { display: block; height: 100%; width: 46%; background: var(--p-brand); }
+.ph-timed__top { display: flex; justify-content: space-between; padding: 9px 12px; font-size: 9.5px; color: var(--p-muted); font-weight: 600; }
+.ph-timed__stage { flex: 1; display: grid; justify-items: center; align-content: center; gap: 6px; text-align: center; padding: 10px 14px; }
+.ph-timed__kind { font: 700 10px/1 var(--p-text); letter-spacing: 0.16em; text-transform: uppercase; color: var(--p-brand-text); }
+.ph-timed__name { font: var(--p-title-w) 26px/1 var(--p-display); text-transform: var(--p-upper); }
+.ph-timed__clock { font: 700 92px/0.9 var(--p-display); font-variant-numeric: tabular-nums; color: var(--p-ink); }
+.ph-timed__controls { display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 6px; padding: 10px 12px 14px; }
+
+.ph-scale { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; }
+.ph-scale span { text-align: center; border: 1px solid var(--p-line); border-radius: 6px; font-size: 8.5px; font-weight: 700; padding: 3px 0; background: var(--p-surface); }
+.ph-scale span.on { background: var(--p-brand); color: var(--p-brand-ink); border-color: var(--p-brand); }
+.ph-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.ph-stats span { display: grid; }
+.ph-stats small { font-size: 7.8px; color: var(--p-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+.ph-stats b { font: 700 14px/1.1 var(--p-display); font-variant-numeric: tabular-nums; }
+
+.ph-welcome { padding: 34px 16px 30px; display: grid; gap: 10px; justify-items: center; text-align: center; }
+.ph-welcome .logo { width: 44px; height: 44px; border-radius: 11px; }
+.ph-welcome p { font-size: 10px; color: var(--p-muted); line-height: 1.45; }
+.ph-welcome p b { color: var(--p-ink); }
+.ph-welcome .ph-btn { width: 100%; }
+
+.ph-tabs {
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  border-top: 1px solid var(--p-line);
+  background: var(--p-surface);
+  padding: 6px 3px 12px;
+  column-gap: 2px;
+  margin-top: auto;
+}
+.ph-tabs span { display: grid; justify-items: center; gap: 2px; font-size: 7.2px; font-weight: 600; letter-spacing: -0.01em; color: var(--p-muted); min-width: 0; overflow: hidden; }
+.ph-tabs svg { width: 15px; height: 15px; }
+.ph-tabs .on { color: var(--p-brand-text); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-today" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></g></symbol>
+    <symbol id="i-workout" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6M20 9v6M7 7v10M17 7v10M7 12h10"/></g></symbol>
+    <symbol id="i-ruler" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="8" rx="2"/><path d="M7 8v3M11 8v4M15 8v3M19 8v4"/></g></symbol>
+    <symbol id="i-plate" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/></g></symbol>
+    <symbol id="i-week" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18V9M10 18V5M16 18v-6M22 18H2"/></g></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M7.5 14h2M14.5 14h2M7.5 17.5h2M14.5 17.5h2"/></g></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.4"/><path d="M3 19c0-3.2 2.7-5.2 6-5.2s6 2 6 5.2M17 8.2a3 3 0 0 1 0 5.6M18 19c0-2.2-.9-3.7-2.2-4.6"/></g></symbol>
+    <symbol id="i-library" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h6v14H4zM14 5h6v14h-6M14 10h6"/></g></symbol>
+    <symbol id="i-person" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 19.5c0-3.4 3.1-5.6 7-5.6s7 2.2 7 5.6"/></g></symbol>
+    <!-- Um corpo simplificado: cada parte pinta-se pela variável do seu músculo. -->
+    <symbol id="body" viewBox="0 0 40 84">
+      <circle cx="20" cy="7.5" r="6" style="fill:var(--m-base)"/>
+      <circle cx="9.5" cy="19" r="4.2" style="fill:var(--m-shoulder,var(--m-base))"/>
+      <circle cx="30.5" cy="19" r="4.2" style="fill:var(--m-shoulder,var(--m-base))"/>
+      <rect x="12" y="15.5" width="16" height="11.5" rx="4" style="fill:var(--m-chest,var(--m-base))"/>
+      <rect x="13" y="28" width="14" height="13" rx="3" style="fill:var(--m-abs,var(--m-base))"/>
+      <rect x="4.5" y="23.5" width="5.5" height="22" rx="2.75" style="fill:var(--m-arms,var(--m-base))"/>
+      <rect x="30" y="23.5" width="5.5" height="22" rx="2.75" style="fill:var(--m-arms,var(--m-base))"/>
+      <rect x="12.5" y="42" width="7" height="37" rx="3.5" style="fill:var(--m-legs,var(--m-base))"/>
+      <rect x="20.5" y="42" width="7" height="37" rx="3.5" style="fill:var(--m-legs,var(--m-base))"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="page" id="page" data-skin="guerreiro">
+
+<header class="wrap hero">
+  <div class="hero__brand">
+    <i class="logo" role="img" aria-label="Logótipo GFit"></i>
+    <span class="eyebrow">GFit · guia para o treinador</span>
+  </div>
+  <h1>Como funciona<br>a GFit</h1>
+  <p class="hero__lead">A GFit substitui a planilha de Excel. Tu escreves os planos de treino, as dietas e as metas. O aluno recebe-os no telemóvel e regista o que faz, e tudo o que ele regista volta para ti. Este guia mostra os ecrãs dos dois lados, o que podes fazer em cada um e por onde começar.</p>
+
+  <div class="app-link">
+    <span class="app-link__label">A app está em</span>
+    <code id="app-url">https://diogoandrefsilva-ghc.github.io/GFit/</code>
+    <span class="app-link__actions">
+      <a class="btn btn--accent" href="https://diogoandrefsilva-ghc.github.io/GFit/" target="_blank" rel="noopener">Abrir a app ↗</a>
+      <button type="button" class="btn btn--ghost" id="copy-url">Copiar link</button>
+    </span>
+  </div>
+
+  <div class="loop" aria-label="O ciclo entre treinador e aluno">
+    <div class="loop__node loop__node--you">
+      <span class="loop__who">Tu escreves</span>
+      <p>O plano de treino e os dias em que se faz, a dieta, as metas, as limitações e as notas do dia.</p>
+    </div>
+    <span class="loop__arrow" aria-hidden="true">→</span>
+    <div class="loop__node">
+      <span class="loop__who">O aluno regista</span>
+      <p>Cada série do treino, o peso, os passos, o sono, como se sente, as medidas e o feedback da semana.</p>
+    </div>
+    <span class="loop__arrow" aria-hidden="true">→</span>
+    <div class="loop__node loop__node--you">
+      <span class="loop__who">Tu acompanhas</span>
+      <p>O Início diz-te quem precisa de ti. Lês o feedback, respondes e ajustas o plano.</p>
+    </div>
+    <p class="loop__back"><span aria-hidden="true">↺</span> E decides a semana seguinte com números, em vez de às cegas.</p>
+  </div>
+</header>
+
+<nav class="nav" aria-label="Secções do guia">
+  <ul class="wrap nav__list">
+    <li><a href="#comecar">Começar</a></li>
+    <li><a href="#treinador">Os teus ecrãs</a></li>
+    <li><a href="#planos">Plano e dieta</a></li>
+    <li><a href="#aluno">O lado do aluno</a></li>
+    <li><a href="#ligacoes">O que chega a quem</a></li>
+    <li><a href="#auto-treino">Auto-treino</a></li>
+    <li><a href="#rotina">A tua rotina</a></li>
+    <li><a href="#bom-saber">Bom saber</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<div class="wrap">
+  <div class="skins">
+    <p>Os ecrãs deste guia são ilustrações, com nomes e números de exemplo. Estão no tema Guerreiro; podes vê-los nos outros temas da app.</p>
+    <div class="skins__options" role="group" aria-label="Tema das ilustrações">
+      <button type="button" data-skin-pick="guerreiro" aria-pressed="true"><i class="swatch" style="background:linear-gradient(135deg,#0a0a0a 55%,#7ee04e 55%)"></i>Guerreiro</button>
+      <button type="button" data-skin-pick="arena" aria-pressed="false"><i class="swatch" style="background:linear-gradient(135deg,#0c0b09 55%,#e3b04b 55%)"></i>Arena</button>
+      <button type="button" data-skin-pick="papel" aria-pressed="false"><i class="swatch" style="background:linear-gradient(135deg,#f4f1ec 55%,#e3b04b 55%)"></i>Papel</button>
+      <button type="button" data-skin-pick="caderno" aria-pressed="false"><i class="swatch" style="background:linear-gradient(135deg,#fbfaf6 55%,#16150f 55%)"></i>Caderno</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ COMEÇAR ═══════════════════════ -->
+<section class="wrap section" id="comecar">
+  <div class="section__head">
+    <span class="eyebrow">Primeira vez</span>
+    <h2>Por onde começar</h2>
+    <p>Da primeira vez, por esta ordem. Depois disto, o dia a dia faz-se quase todo no Início.</p>
+  </div>
+
+  <div class="screen-row">
+    <figure class="shot">
+      <div class="stage">
+        <div class="phone" role="img" aria-label="Ilustração do cartão Convidar, no Perfil">
+          <div class="phone-in">
+            <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
+            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i>GFit</span><span class="ph-av">T</span></div>
+            <div class="ph-body">
+              <div class="ph-head"><span class="ph-back">←</span><strong class="ph-title">Perfil</strong></div>
+              <div class="ph-card">
+                <span class="ph-eyebrow">Convidar</span>
+                <div class="ph-row"><span class="ph-chip on">Aluno</span><span class="ph-chip">Treinador</span></div>
+                <p class="ph-small ph-muted">O aluno entra com este email — Google ou palavra-passe — e fica logo ligado a ti.</p>
+                <span class="ph-label">Email</span>
+                <span class="ph-input">ana.ribeiro@exemplo.pt</span>
+                <span class="ph-label">Nome (opcional)</span>
+                <span class="ph-input">Ana Ribeiro</span>
+                <span class="ph-btn primary">Criar convite</span>
+              </div>
+              <div class="ph-card brand">
+                <p class="ph-small">Convite criado para <b>ana.ribeiro@exemplo.pt</b>. Falta avisá-lo — a app não envia emails sozinha.</p>
+                <div class="ph-btns"><span class="ph-btn accent">Enviar convite</span><span class="ph-btn quiet">Copiar texto</span></div>
+              </div>
+              <div class="ph-card">
+                <div class="ph-cardhead"><span class="ph-eyebrow">Convites</span><span class="ph-small ph-muted">1 por aceitar · 4 aceites</span></div>
+                <p class="ph-small"><b>ana.ribeiro@exemplo.pt</b><br><span class="ph-muted">por aceitar · 26 set</span></p>
+              </div>
+            </div>
+            <div class="ph-tabs">
+              <span><svg><use href="#i-today"/></svg>Início</span>
+              <span><svg><use href="#i-people"/></svg>Alunos</span>
+              <span><svg><use href="#i-calendar"/></svg>Calendário</span>
+              <span><svg><use href="#i-library"/></svg>Exercícios</span>
+              <span><svg><use href="#i-workout"/></svg>Eu</span>
+              <span class="on"><svg><use href="#i-person"/></svg>Perfil</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Perfil → Convidar. Depois de criares o convite, és tu que o envias.</figcaption>
+    </figure>
+
+    <div class="text">
+      <ol class="steps">
+        <li><div><b>Entra com o teu email.</b> Abre a app e entra com Google, ou com email e palavra-passe. Tem de ser o email que está registado como treinador. Se a app te mostrar o ecrã <span class="ui">Ainda sem treinador</span>, entraste com outro email (acontece com contas Google): sai e entra com o certo.</div></li>
+        <li><div><b>Instala-a no telemóvel.</b> No iPhone: <span class="ui">Partilhar</span> → <span class="ui">Adicionar ao ecrã principal</span>. No Android: menu do browser → <span class="ui">Instalar aplicação</span>. Fica com ícone próprio, abre sem a barra do browser e guarda o que já abriste, para o ginásio onde a rede falha.</div></li>
+        <li><div><b>Vê a apresentação.</b> Na primeira vez aparecem seis cartões com o que faz cada separador. O botão <span class="ui">Aluno</span> em cima mostra-te o que os alunos veem. Podes revê-la no <b>Perfil</b>.</div></li>
+        <li><div><b>Convida os alunos.</b> <b>Perfil</b> → <span class="ui">Convidar</span> → <span class="ui">Aluno</span>, escreve o email e carrega em <span class="ui">Criar convite</span>. Depois toca em <span class="ui">Enviar convite</span> para o mandar por WhatsApp, email ou o que usares, ou em <span class="ui">Copiar texto</span>. O aluno tem de entrar com esse mesmo email.</div></li>
+        <li><div><b>Preenche a ficha.</b> Quando o aluno entra, aparece em <b>Alunos</b>. Abre-o e preenche <span class="ui">Quem é</span>, as <span class="ui">Metas</span> e as <span class="ui">Limitações</span>.</div></li>
+        <li><div><b>Escreve o plano, publica-o e marca os dias.</b> Na ficha, separador <span class="ui">Planos</span> → <span class="ui">+ Novo plano</span>. Está explicado em <a href="#planos">Plano e dieta</a>.</div></li>
+        <li><div><b>Monta a dieta.</b> No mesmo separador, <span class="ui">+ Nova dieta</span>. Publica quando as contas fecharem.</div></li>
+        <li><div><b>Acompanha.</b> A partir daqui, abre o <b>Início</b> todos os dias. É lá que aparece quem precisa de ti.</div></li>
+      </ol>
+      <div class="note note--quiet">
+        <p><b>Convidar outro treinador:</b> no mesmo cartão escolhe <span class="ui">Treinador</span>. Ele fica com os seus próprios alunos e usa as mesmas bases de exercícios e alimentos, mas não vê os teus alunos.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ TREINADOR ═══════════════════════ -->
+<section class="wrap section" id="treinador">
+  <div class="section__head">
+    <span class="eyebrow">O teu lado</span>
+    <h2>Os teus separadores</h2>
+    <p>Em baixo tens seis separadores. O logótipo, em cima à esquerda, volta ao Início; o círculo com a tua inicial, à direita, abre o Perfil.</p>
+  </div>
+
+  <ul class="tabs-strip">
+    <li><svg aria-hidden="true"><use href="#i-today"/></svg><b>Início</b><span>O resumo do dia e quem precisa de ti.</span></li>
+    <li><svg aria-hidden="true"><use href="#i-people"/></svg><b>Alunos</b><span>A lista e a ficha de cada aluno.</span></li>
+    <li><svg aria-hidden="true"><use href="#i-calendar"/></svg><b>Calendário</b><span>A semana de treinos de todos os alunos.</span></li>
+    <li><svg aria-hidden="true"><use href="#i-library"/></svg><b>Exercícios</b><span>A base de exercícios, com vídeos.</span></li>
+    <li><svg aria-hidden="true"><use href="#i-workout"/></svg><b>Eu</b><span>O teu lado de aluno: o teu dia e os teus treinos.</span></li>
+    <li><svg aria-hidden="true"><use href="#i-person"/></svg><b>Perfil</b><span>Convites, tema, apresentação e sessão.</span></li>
+  </ul>
+
+  <!-- Início -->
+  <div class="screen-row" style="margin-top:28px">
+    <figure class="shot">
+      <div class="stage">
+        <div class="phone" role="img" aria-label="Ilustração do ecrã Início do treinador">
+          <div class="phone-in">
+            <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
+            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i>GFit</span><span class="ph-av">T</span></div>
+            <div class="ph-body">
+              <div class="ph-head"><span class="ph-eyebrow">Sábado, 26 set</span><strong class="ph-title">Olá, Treinador</strong></div>
+              <div class="ph-tiles">
+                <span class="ph-tile"><em>Alunos<i>›</i></em><b>12</b><small>activos</small></span>
+                <span class="ph-tile warn"><em>A precisar<i>›</i></em><b>3</b><small>de ti</small></span>
+                <span class="ph-tile"><em>Treinos<i>›</i></em><b>24/36</b><small>esta semana</small></span>
+                <span class="ph-tile"><em>Registaram hoje<i>›</i></em><b>7/12</b><small>peso, sono, passos</small></span>
+              </div>
+              <div class="ph-card">
+                <div class="ph-cardhead"><span class="ph-eyebrow">A precisar de ti</span><span class="ph-link">ver todos</span></div>
+                <ul class="ph-people">
+                  <li><span class="ph-av">AR</span><span><b>Ana Ribeiro</b><em class="ph-warn">Feedback por ler</em></span><small>hoje</small></li>
+                  <li><span class="ph-av">TC</span><span><b>Tiago Costa</b><em class="ph-warn">Sem registos há 5 dias</em></span><small>há 5 dias</small></li>
+                  <li><span class="ph-av">ML</span><span><b>Marta Lopes</b><em class="ph-warn">Plano a acabar</em></span><small>ontem</small></li>
+                </ul>
+              </div>
+              <div class="ph-card">
+                <span class="ph-eyebrow">Planos a acabar</span>
+                <div class="ph-cardhead"><span class="ph-small"><b>Marta Lopes</b><br><span class="ph-muted">Hipertrofia · semana 4 de 4</span></span><span class="ph-chip warn">renovar</span></div>
+              </div>
+              <div class="ph-card brand">
+                <span class="ph-eyebrow brand">O teu treino</span>
+                <b>Falta registares o teu dia</b>
+                <span class="ph-small ph-muted">por registar: peso, sono</span>
+              </div>
+            </div>
+            <div class="ph-tabs">
+              <span class="on"><svg><use href="#i-today"/></svg>Início</span>
+              <span><svg><use href="#i-people"/></svg>Alunos</span>
+              <span><svg><use href="#i-calendar"/></svg>Calendário</span>
+              <span><svg><use href="#i-library"/></svg>Exercícios</span>
+              <span><svg><use href="#i-workout"/></svg>Eu</span>
+              <span><svg><use href="#i-person"/></svg>Perfil</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Início. Os quatro números do topo abrem a lista ou o calendário que os explica.</figcaption>
+    </figure>
+
+    <div class="text">
+      <span class="eyebrow">Separador Início</span>
+      <h3>O que não pode esperar</h3>
+      <p>É o ecrã que abre sempre. Em cima, quatro números, e cada um leva a algum lado quando lhe tocas:</p>
+      <ul class="do">
+        <li><b>Alunos</b>: quantos estão ativos. Abre a lista toda.</li>
+        <li><b>A precisar</b>: quantos precisam de ti. Abre a lista já filtrada.</li>
+        <li><b>Treinos</b>: feitos e previstos esta semana, somando todos os alunos. Abre o Calendário.</li>
+        <li><b>Registaram hoje</b>: quem já registou peso, sono ou passos hoje. Abre a lista toda, onde cada linha diz quando foi o último registo.</li>
+      </ul>
+      <p>Por baixo aparecem, só quando há alguma coisa: <span class="ui">A precisar de ti</span> (até cinco alunos, com o motivo), <span class="ui">feedback por ler</span>, <span class="ui">Planos a acabar</span> (nas duas últimas semanas, com a marca <em>renovar</em>) e o <span class="ui">Peso, últimos 60 dias</span> dos alunos que mais mexeram. Toca num aluno para abrir a ficha.</p>
+      <p>No fim, o cartão <span class="ui">O teu treino</span> diz-te o que te falta registar a ti, ou que tens treino marcado para hoje. Fica verde quando o teu dia está arrumado.</p>
+    </div>
+  </div>
+
+  <div class="table-wrap" role="region" aria-label="Motivos para um aluno precisar de ti" tabindex="0">
+    <table class="t">
+      <thead><tr><th scope="col">Motivo que aparece</th><th scope="col">Quando</th></tr></thead>
+      <tbody>
+        <tr><td class="flag">Feedback por ler</td><td>O aluno enviou o feedback da semana e ainda não lhe respondeste. Sai da lista quando respondes.</td></tr>
+        <tr><td class="flag">Sem plano publicado</td><td>Não tem nenhum plano teu publicado. Não aparece se ele treinar por conta própria, com um plano escrito por ele.</td></tr>
+        <tr><td class="flag">Plano a acabar</td><td>Está na última semana do plano.</td></tr>
+        <tr><td class="flag">2 treinos em falta</td><td>À sexta e ao sábado, se lhe faltarem dois ou mais dos treinos do plano nessa semana.</td></tr>
+        <tr><td class="flag">Ainda sem registos</td><td>Nunca registou nada.</td></tr>
+        <tr><td class="flag">Sem registos há 4 dias</td><td>Quatro dias ou mais sem registar peso, sono ou passos.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top:10px;font-size:.9rem;color:var(--muted)">Cada aluno mostra um motivo só: o primeiro desta lista que se aplicar.</p>
+
+  <!-- Alunos -->
+  <div class="screen-row" style="margin-top:28px">
+    <figure class="shot">
+      <div class="stage">
+        <div class="phone" role="img" aria-label="Ilustração da lista de alunos">
+          <div class="phone-in">
+            <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
+            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i>GFit</span><span class="ph-av">T</span></div>
+            <div class="ph-body">
+              <div class="ph-head"><strong class="ph-title">Alunos</strong><span class="ph-sub">12 alunos activos · 3 precisam de ti</span></div>
+              <div class="ph-row"><span class="ph-chip">A precisar (3)</span><span class="ph-chip on">Todos (12)</span><span class="ph-chip">Em pausa</span><span class="ph-chip brand">+ Aluno</span></div>
+              <p class="ph-small ph-muted">1 convite por aceitar · <span class="ph-link">ver</span></p>
+              <div class="ph-card">
+                <ul class="ph-people">
+                  <li><span class="ph-av">AR</span><span><b>Ana Ribeiro</b><em>Semana 3/4 · 64,2 kg (−0,8)</em><em class="ph-warn">Feedback por ler</em></span><small>hoje</small></li>
+                  <li><span class="ph-av">BM</span><span><b>Bruno Matos</b><em>Semana 2/6 · 82,5 kg (+0,4)</em><em class="ph-good">2/3 treinos</em></span><small>hoje</small></li>
+                  <li><span class="ph-av">IS</span><span><b>Inês Santos</b><em>Sem plano · treina por sua conta</em><em class="ph-good">0/0 treinos</em></span><small>ontem</small></li>
+                  <li><span class="ph-av">ML</span><span><b>Marta Lopes</b><em>Semana 4/4 · 58,9 kg (−1,6)</em><em class="ph-warn">Plano a acabar</em></span><small>ontem</small></li>
+                  <li><span class="ph-av">TC</span><span><b>Tiago Costa</b><em>Semana 1/4 · 91,0 kg</em><em class="ph-warn">Sem registos há 5 dias</em></span><small>há 5 dias</small></li>
+                </ul>
+              </div>
+            </div>
+            <div class="ph-tabs">
+              <span><svg><use href="#i-today"/></svg>Início</span>
+              <span class="on"><svg><use href="#i-people"/></svg>Alunos</span>
+              <span><svg><use href="#i-calendar"/></svg>Calendário</span>
+              <span><svg><use href="#i-library"/></svg>Exercícios</span>
+              <span><svg><use href="#i-workout"/></svg>Eu</span>
+              <span><svg><use href="#i-person"/></svg>Perfil</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Alunos, na vista Todos. A lista abre sempre em A precisar.</figcaption>
+    </figure>
+
+    <div class="text">
+      <span class="eyebrow">Separador Alunos</span>
+      <h3>A lista</h3>
+      <p>Três vistas: <span class="ui">A precisar</span>, que é onde abre, <span class="ui">Todos</span> e <span class="ui">Em pausa</span>. Cada linha diz:</p>
+      <ul class="do">
+        <li>a semana em que o aluno vai no plano (<em>Semana 3/4</em>), o último peso e quanto mudou;</li>
+        <li>a vermelho, o motivo, se precisa de ti; a verde, quantos treinos fez esta semana, se não precisa;</li>
+        <li>à direita, quando foi o último registo.</li>
+      </ul>
+      <p><span class="ui">+ Aluno</span> leva ao Perfil para convidar. Se houver convites por aceitar, aparece um aviso por cima da lista.</p>
+      <p>Um aluno sem plano teu, mas com um treino escrito por ele, aparece como <em>Sem plano · treina por sua conta</em>, e isso só não basta para aparecer em A precisar. Vê <a href="#auto-treino">Auto-treino</a>.</p>
+    </div>
+  </div>
+
+  <!-- Ficha -->
+  <div class="screen-row" id="ficha">
+    <figure class="shot">
+      <div class="stage">
+        <div class="phone" role="img" aria-label="Ilustração da ficha de uma aluna, separador Resumo">
+          <div class="phone-in">
+            <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
+            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i>GFit</span><span class="ph-av">T</span></div>
+            <div class="ph-body">
+              <div class="ph-cardhead">
+                <div class="ph-head"><span class="ph-back">←</span><span class="ph-eyebrow">ana.ribeiro@exemplo.pt</span><strong class="ph-title">Ana Ribeiro</strong></div>
+                <span class="ph-av" style="width:32px;height:32px;font-size:10px">AR</span>
+              </div>
+              <div class="ph-row"><span class="ph-chip on">Resumo</span><span class="ph-chip">Metas</span><span class="ph-chip">Planos</span></div>
+              <div class="ph-card">
+                <div class="ph-cardhead"><span class="ph-eyebrow">Quem é</span><span class="ph-link">Editar</span></div>
+                <ul class="ph-facts">
+                  <li><span>Idade</span><b>29 anos</b></li>
+                  <li><span>Altura</span><b>165 cm</b></li>
+                  <li><span>Sexo</span><b>Feminino</b></li>
+                  <li><span>Profissão</span><b>Enfermeira</b></li>
+                </ul>
+              </div>
+              <div class="ph-card">
+                <div class="ph-cardhead"><span class="ph-eyebrow">Peso</span><span class="ph-small ph-muted">hoje</span></div>
+                <div class="ph-row" style="gap:8px"><span class="ph-big">64,2 kg</span><span class="ph-small ph-good" style="font-weight:700">▼ −0,8 kg</span><span class="ph-small ph-muted">perder peso</span></div>
+                <svg class="ph-spark" viewBox="0 0 240 34" preserveAspectRatio="none" aria-hidden="true">
+                  <polyline class="raw" points="0,6 16,9 32,5 48,11 64,9 80,14 96,12 112,16 128,15 144,19 160,17 176,22 192,21 208,25 224,24 240,27"/>
+                  <polyline class="avg" points="0,7 30,8 60,10 90,12 120,15 150,17 180,20 210,23 240,25"/>
+                  <circle class="end" cx="237" cy="25" r="3"/>
+                </svg>
+                <span class="ph-small ph-muted">Meta 62,0 kg · faltam 2,2 kg</span>
+              </div>
+              <div class="ph-card warn">
+                <div class="ph-cardhead"><span class="ph-eyebrow">Limitações · 1 activa</span><span class="ph-link">+ Nova</span></div>
+                <p class="ph-small">Dor no joelho esquerdo no agachamento profundo.</p>
+                <span class="ph-small ph-muted">desde 2 set · <span class="ph-link">Resolvida</span></span>
+              </div>
+              <div class="ph-card brand">
+                <span class="ph-eyebrow brand">Notas e conselhos</span>
+                <span class="ph-input placeholder ph-area">Hoje sobe 2,5 kg no supino…</span>
+                <span class="ph-btn primary">Enviar nota</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption>A ficha de uma aluna, no separador Resumo. Continua para baixo com o feedback e os perímetros.</figcaption>
+    </figure>
+
+    <div class="text">
+      <span class="eyebrow">Alunos → um aluno</span>
+      <h3>A ficha do aluno</h3>
+      <p>Toca num aluno para abrir a ficha. Tem três separadores.</p>
+      <h4>Resumo</h4>
+      <ul class="do">
+        <li><b>Quem é</b>: idade, altura, sexo e profissão. <span class="ui">Preencher</span> ou <span class="ui">Editar</span>.</li>
+        <li><b>Peso</b>: o último registo, a variação desde a pesagem anterior, o gráfico dos últimos 90 dias com a média de 7 dias, e quanto falta para a meta.</li>
+        <li><b>Bem-estar da última semana</b>: médias de sono, energia, fome e stress.</li>
+        <li><b>Limitações</b>: lesões e restrições, com a data de início. Quando saram, marcas como resolvidas em vez de as apagar, e ficam no histórico.</li>
+        <li><b>Notas e conselhos</b>: o que escreves aqui aparece no ecrã Hoje do aluno (a nota mais recente). As anteriores ficam guardadas.</li>
+        <li><b>Feedback semanal</b>: as respostas do aluno, a motivação, a aderência à dieta e os treinos feitos. Escreves a resposta e carregas em <span class="ui">Responder</span>.</li>
+        <li><b>Perímetros</b>: o último registo e a diferença para o anterior.</li>
+      </ul>
+      <h4>Metas</h4>
+      <p>Objetivo, direção do peso (perder, ganhar ou manter), kcal, proteína, gordura, hidratos, peso alvo, passos por dia e horas de sono. Cada mudança é uma revisão nova, com data: <span class="ui">+ Nova revisão de metas</span> parte dos valores em vigor, e as anteriores ficam no histórico. Assim vês, meses depois, que metas estavam postas quando o peso começou a mexer.</p>
+      <h4>Planos</h4>
+      <p>Os planos de treino, com <span class="ui">+ Novo plano</span>, e os planos alimentares, com <span class="ui">+ Nova dieta</span>. Cada um tem a marca do estado: <span class="ui">rascunho</span>, <span class="ui">publicado</span> ou <span class="ui">auto-treino</span> (escrito pelo próprio aluno).</p>
+    </div>
+  </div>
+
+  <!-- Calendário -->
+  <div class="screen-row">
+    <figure class="shot">
+      <div class="stage">
+        <div class="phone" role="img" aria-label="Ilustração do calendário do treinador">
+          <div class="phone-in">
+            <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
+            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i>GFit</span><span class="ph-av">T</span></div>
+            <div class="ph-body">
+              <div class="ph-head"><strong class="ph-title">Calendário</strong><span class="ph-sub">5 de 9 treinos marcados feitos</span></div>
+              <div class="ph-weeknav"><i>‹</i><span>21 set – 27 set</span><i>›</i></div>
+              <div class="ph-row"><span class="ph-chip on">Todos</span><span class="ph-chip">Eu</span><span class="ph-chip">Ana</span><span class="ph-chip">Bruno</span><span class="ph-chip">Inês</span></div>
+              <ul class="ph-days">
+                <li><span class="ph-date"><em>seg</em><strong>21</strong></span><div><span class="ph-slot"><span class="ph-av">AR</span><span><b>Ana Ribeiro</b><em>A · Empurrar · 6 exercícios</em></span><span class="ph-chip good">feito</span></span><span class="ph-slot"><span class="ph-av">BM</span><span><b>Bruno Matos</b><em>A · Tronco · 7 exercícios</em></span><span class="ph-chip good">feito</span></span></div></li>
+                <li><span class="ph-date"><em>ter</em><strong>22</strong></span><div><span class="ph-slot"><span class="ph-av">TC</span><span><b>Tiago Costa</b><em>B · Puxar · 6 exercícios</em></span><span class="ph-chip">em falta</span></span></div></li>
+                <li><span class="ph-date"><em>qua</em><strong>23</strong></span><div><span class="ph-slot"><span class="ph-av">IS</span><span><b>Inês Santos · auto</b><em>A · Full body · 5 exercícios</em></span><span class="ph-chip good">feito</span></span></div></li>
+                <li><span class="ph-date"><em>qui</em><strong>24</strong></span><div><span class="ph-rest">sem treinos</span></div></li>
+                <li class="today"><span class="ph-date"><em>sáb</em><strong>26</strong></span><div><span class="ph-slot"><span class="ph-av">AR</span><span><b>Ana Ribeiro</b><em>C · Pernas · 6 exercícios</em></span><span class="ph-chip brand">a meio</span></span><span class="ph-slot"><span class="ph-av">T</span><span><b>Eu</b><em>B · Costas · 5 exercícios</em></span></span></div></li>
+              </ul>
+            </div>
+            <div class="ph-tabs">
+              <span><svg><use href="#i-today"/></svg>Início</span>
+              <span><svg><use href="#i-people"/></svg>Alunos</span>
+              <span class="on"><svg><use href="#i-calendar"/></svg>Calendário</span>
+              <span><svg><use href="#i-library"/></svg>Exercícios</span>
+              <span><svg><use href="#i-workout"/></svg>Eu</span>
+              <span><svg><use href="#i-person"/></svg>Perfil</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Calendário: a semana de todos. Na app aparecem os sete dias; aqui alguns ficaram de fora.</figcaption>
+    </figure>
+
+    <div class="text">
+      <span class="eyebrow">Separador Calendário</span>
+      <h3>A semana de todos</h3>
+      <p>Os treinos marcados de todos os alunos, dia a dia. As setas mudam de semana e os botões filtram por aluno. Se tiveres treinos teus marcados, aparece também <span class="ui">Eu</span>.</p>
+      <ul class="do">
+        <li>Cada treino diz o aluno, a letra e o nome do treino e quantos exercícios tem.</li>
+        <li>O estado: <span class="ui">feito</span>, <span class="ui">a meio</span> (começou e não terminou) ou <span class="ui">em falta</span> (o dia já passou e não o fez).</li>
+        <li>A marca <b>auto</b> quer dizer que foi o próprio aluno a marcar esse treino, num plano escrito por ele. Não foste tu a prescrevê-lo.</li>
+        <li>Toca num treino para abrir a ficha do aluno.</li>
+      </ul>
+      <p>Os treinos marcam-se no plano de cada aluno, depois de publicado. Vê o passo 8 em <a href="#planos">Plano e dieta</a>.</p>
+    </div>
+  </div>
+
+  <!-- Exercícios, Eu e Perfil: sem ilustração -->
+  <div class="cards cards--3" style="margin-top:8px">
+    <div class="card">
+      <span class="eyebrow">Separador Exercícios</span>
+      <h3>A base de exercícios</h3>
+      <p>Perto de trezentos exercícios, a maior parte com vídeo de demonstração. O topo diz quantos são e quantos têm vídeo. Procura pelo nome, filtra por padrão (<span class="ui">Puxar</span>, <span class="ui">Empurrar</span>, <span class="ui">Perna</span>, <span class="ui">Core</span>, <span class="ui">Geral</span>) ou toca num músculo no desenho do corpo. Cada exercício mostra os músculos que trabalha, com o peso de cada um.</p>
+      <p>Criar e editar exercícios é só para contas de administrador: nessas aparece <span class="ui">+ Novo</span> no topo e a opção de editar em cada exercício. O músculo principal conta uma série inteira; os secundários contam 0,5 ou 0,3.</p>
+    </div>
+    <div class="card">
+      <span class="eyebrow">Separador Eu</span>
+      <h3>O teu lado de aluno</h3>
+      <p>Tu também treinas. O separador Eu tem quatro zonas: <span class="ui">Hoje</span>, <span class="ui">Treino</span>, <span class="ui">Medidas</span> e <span class="ui">Ficha e metas</span>. São os mesmos ecrãs que os teus alunos usam, por isso é a melhor forma de os conhecer.</p>
+      <p>Escreves o teu plano em Treino e defines o teu objetivo, metas, limitações e notas em Ficha e metas. Mais em <a href="#auto-treino">Auto-treino</a>.</p>
+    </div>
+    <div class="card">
+      <span class="eyebrow">Separador Perfil</span>
+      <h3>Conta e convites</h3>
+      <p>O teu nome (toca para editar), o <span class="ui">Tema</span> da app, o cartão <span class="ui">Convidar</span> e a lista de <span class="ui">Convites</span>, onde vês os que estão por aceitar e os aceites. Um convite por aceitar pode ser reenviado ou anulado.</p>
+      <p>Tem ainda <span class="ui">Rever a apresentação</span>, as instruções para instalar a app e <span class="ui">Terminar sessão</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ PLANOS ═══════════════════════ -->
+<section class="wrap section" id="planos">
+  <div class="section__head">
+    <span class="eyebrow">O trabalho principal</span>
+    <h2>Escrever o plano e a dieta</h2>
+    <p>O plano diz o que se faz; o calendário diz quando. O aluno só vê o plano depois de o publicares.</p>
+  </div>
+
+  <div class="screen-row">
+    <figure class="shot">
+      <div class="stage">
+        <div class="phone" role="img" aria-label="Ilustração do editor de planos">
+          <div class="phone-in">
+            <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
+            <div class="ph-body">
+              <div class="ph-head"><span class="ph-back">←</span><span class="ph-eyebrow">Ana Ribeiro</span><strong class="ph-title">Plano 2</strong><span class="ph-sub">Rascunho · o aluno ainda não vê</span></div>
+              <div class="ph-card warn">
+                <span class="ph-eyebrow">Limitações a respeitar</span>
+                <p class="ph-small">Dor no joelho esquerdo no agachamento profundo.</p>
+              </div>
+              <div class="ph-row"><span class="ph-chip on">A · Empurrar</span><span class="ph-chip">B · Puxar</span><span class="ph-chip">C · Pernas</span><span class="ph-chip">+</span></div>
+              <div class="ph-card">
+                <span class="ph-label">Nome do treino A</span>
+                <span class="ph-input">Empurrar</span>
+                <span class="ph-label">Este treino conta-se em</span>
+                <div class="ph-seg"><span class="on">Repetições</span><span>Tempo</span></div>
+              </div>
+              <div class="ph-ex" style="--m-chest:var(--p-brand);--m-shoulder:var(--p-brand-line);--m-arms:var(--p-brand-line)">
+                <svg viewBox="0 0 40 84" aria-hidden="true"><use href="#body"/></svg>
+                <div class="ph-ex__main">
+                  <div class="ph-ex__name"><span><b>Supino Plano com Barra</b><em>Peito · Barra · vídeo</em></span><i>⋯</i></div>
+                  <div class="ph-nums"><span><b>4</b><small>séries</small></span><span><b>6-8</b><small>reps</small></span><span><b>2min</b><small>descanso</small></span></div>
+                </div>
+              </div>
+              <div class="ph-ex" style="--m-shoulder:var(--p-brand);--m-arms:var(--p-brand-line)">
+                <svg viewBox="0 0 40 84" aria-hidden="true"><use href="#body"/></svg>
+                <div class="ph-ex__main">
+                  <div class="ph-ex__name"><span><b>Desenvolvimento com Halteres</b><em>Ombro · Halteres · vídeo</em></span><i>⋯</i></div>
+                  <div class="ph-nums"><span><b>3</b><small>séries</small></span><span><b>8-10</b><small>reps</small></span><span><b>90s</b><small>descanso</small></span></div>
+                </div>
+              </div>
+              <span class="ph-btn ghost">+ Adicionar da base de exercícios</span>
+              <div class="ph-btns"><span class="ph-btn quiet">Fechar</span><span class="ph-btn accent">Publicar ao aluno</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption>O editor de planos, com um rascunho. Por baixo dos exercícios ficam o volume por músculo e o calendário do plano.</figcaption>
+    </figure>
+
+    <div class="text">
+      <span class="eyebrow">Ficha → Planos → + Novo plano</span>
+      <h3>O plano de treino, passo a passo</h3>
+      <ol class="steps">
+        <li><div><b>Cria o plano.</b> Na ficha do aluno, <span class="ui">Planos</span> → <span class="ui">+ Novo plano</span>. Nasce um rascunho de 4 semanas, a começar hoje, com três treinos vazios: A, B e C.</div></li>
+        <li><div><b>Escolhe o treino</b> nos botões de cima. O <span class="ui">+</span> acrescenta outro (D, E…).</div></li>
+        <li><div><b>Dá-lhe nome</b> (Empurrar, Pernas, Full body) e escolhe se se conta em <span class="ui">Repetições</span> ou em <span class="ui">Tempo</span>.</div></li>
+        <li><div><b>Junta os exercícios</b> com <span class="ui">+ Adicionar da base de exercícios</span>. Procura pelo nome, filtra por padrão ou toca num músculo no corpo. Podes juntar vários seguidos; o painel fica aberto.</div></li>
+        <li><div><b>Afina os três números</b> de cada exercício: séries, repetições (um intervalo, como 8-12, porque o aluno fica entre as duas pontas conforme o dia) e descanso. Um toque abre um painel com os valores do costume e botões para acertar o resto.</div></li>
+        <li><div><b>Em <span class="ui">⋯</span></b>: deixar uma nota para o aluno (técnica, amplitude, o que vigiar), contar só este exercício por tempo, subir, descer ou remover.</div></li>
+        <li><div><b>Publica.</b> <span class="ui">Publicar ao aluno</span>. Até aqui é um rascunho que só tu vês. Depois de publicado continuas a poder mexer-lhe, e o aluno vê as alterações.</div></li>
+        <li><div><b>Marca os dias.</b> Com o plano publicado, aparece o calendário do plano por baixo. Escolhe o treino lá em cima e toca nos dias em que se faz. O <span class="ui">⟳</span> de uma semana repete essas marcações até ao fim do plano.</div></li>
+      </ol>
+      <div class="note">
+        <p><b>Enquanto escreves:</b> as limitações ativas do aluno ficam no topo do editor. Por baixo dos exercícios, o desenho do corpo mostra o volume por músculo, deste treino ou da semana toda. O músculo principal conta a série inteira e os auxiliares 0,5 ou 0,3, como na planilha. Na semana, a cor cheia são 20 séries.</p>
+      </div>
+      <h4>Treinos por tempo</h4>
+      <p>Se escolheres <span class="ui">Tempo</span>, os números passam a ser séries, tempo de trabalho e descanso, e escolhes a ordem: <span class="ui">Série a série</span> (todas as séries de um exercício antes de passar ao seguinte) ou <span class="ui">Circuito</span> (a lista toda de seguida, repetida em voltas, com o número de voltas e o descanso entre elas). O aluno recebe um temporizador que o conduz. Um exercício isolado por tempo, como uma prancha num treino de cargas, muda-se em <span class="ui">⋯</span>.</p>
+    </div>
+  </div>
+
+  <div class="cards" style="margin-top:8px">
+    <div class="card">
+      <span class="eyebrow">Ficha → Planos → + Nova dieta</span>
+      <h3>O plano alimentar</h3>
+      <ol class="steps">
+        <li><div><b>Cria a dieta.</b> Vem com as metas de kcal e macros que estão em vigor na ficha.</div></li>
+        <li><div><b>Ajusta as metas diárias</b> deste plano em <span class="ui">Editar</span>, se forem diferentes.</div></li>
+        <li><div><b>Acrescenta as refeições</b> com <span class="ui">+ Adicionar refeição</span>. Toca no nome para o mudar (Pequeno-almoço, Lanche…).</div></li>
+        <li><div><b>Junta os alimentos</b> com <span class="ui">+ Alimento</span>: procura na base de alimentos e escolhe a quantidade. As macros acompanham a quantidade, e podes mudá-la depois na própria linha.</div></li>
+        <li><div><b>Fecha as contas.</b> O cartão <span class="ui">Total do plano</span> diz quanto falta para cada meta.</div></li>
+        <li><div><b>Publica</b> com <span class="ui">Publicar ao aluno</span>. Antes disso o aluno não a vê.</div></li>
+      </ol>
+    </div>
+    <div class="card">
+      <span class="eyebrow">Regras que convém saber</span>
+      <h3>Rascunhos, publicação e calendário</h3>
+      <ul class="do">
+        <li><b>Rascunhos são só teus.</b> Planos e dietas por publicar não aparecem ao aluno, nem sabe que existem.</li>
+        <li><b>Rascunhos não se marcam.</b> O calendário do plano só aparece depois de publicares.</li>
+        <li><b>O mesmo treino pode ir a várias datas</b>, e o mesmo dia pode levar mais de um treino.</li>
+        <li><b>Sem marcações, nada estorva:</b> o aluno escolhe o treino da lista do plano, e o Hoje sugere-lhe o próximo que ainda não fez nessa semana.</li>
+        <li><b>O plano que manda</b> no dia a dia do aluno é o teu último plano publicado.</li>
+        <li><b>Plano a acabar:</b> nas duas últimas semanas o Início avisa-te, para escreveres o seguinte a tempo.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ ALUNO ═══════════════════════ -->
+<section class="wrap section" id="aluno">
+  <div class="section__head">
+    <span class="eyebrow">O lado de lá</span>
+    <h2>O que o aluno vê</h2>
+    <p>O aluno tem seis separadores. Os três primeiros também estão no teu separador Eu, por isso podes experimentá-los tu mesmo.</p>
+  </div>
+
+  <ul class="tabs-strip">
+    <li><svg aria-hidden="true"><use href="#i-today"/></svg><b>Hoje</b><span>O treino do dia e o registo do dia.</span></li>
+    <li><svg aria-hidden="true"><use href="#i-workout"/></svg><b>Treino</b><span>A semana marcada e o plano inteiro.</span></li>
+    <li><svg aria-hidden="true"><use href="#i-plate"/></svg><b>Dieta</b><span>As refeições do plano e o que comeu.</span></li>
+    <li><svg aria-hidden="true"><use href="#i-ruler"/></svg><b>Medidas</b><span>Peso ao longo do tempo e perímetros.</span></li>
+    <li><svg aria-hidden="true"><use href="#i-week"/></svg><b>Semana</b><span>O feedback semanal para ti.</span></li>
+    <li><svg aria-hidden="true"><use href="#i-person"/></svg><b>Perfil</b><span>O treinador, as metas e o tema.</span></li>
+  </ul>
+
+  <!-- Hoje -->
+  <div class="screen-row" style="margin-top:28px">
+    <figure class="shot">
+      <div class="stage">
+        <div class="phone" role="img" aria-label="Ilustração do ecrã Hoje do aluno">
+          <div class="phone-in">
+            <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
+            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i>GFit</span><span class="ph-av">AR</span></div>
+            <div class="ph-body">
+              <div class="ph-head"><span class="ph-eyebrow">Semana 3 de 4 · Hipertrofia</span><strong class="ph-title">Sábado, 26 set</strong></div>
+              <div class="ph-card brand">
+                <span class="ph-eyebrow brand">Treino de hoje</span>
+                <strong class="ph-exname">Treino C · Pernas</strong>
+                <span class="ph-small ph-muted">marcado pelo treinador · 6 exercícios</span>
+                <span class="ph-btn accent">Começar treino</span>
+              </div>
+              <strong style="font-size:11px">Registo de hoje</strong>
+              <div class="ph-reg">
+                <span class="ph-regcard done"><em>Registar peso <i>✓</i></em><b>64,2<small>kg</small></b><small class="hint">média 7d 64,5 kg</small></span>
+                <span class="ph-regcard"><em>Registar passos</em><span class="todo">por registar</span><small class="hint">meta 9000</small><span class="ph-bar-track"><i></i></span></span>
+                <span class="ph-regcard done"><em>Registar sono <i>✓</i></em><b>7h 30</b><small class="hint">esta noite</small></span>
+                <span class="ph-regcard"><em>Registar como te sentes</em><span class="todo">por registar</span><small class="hint">energia · fome · stress</small></span>
+                <span class="ph-regcard wide"><em>Registar medidas <i>›</i></em><small class="hint">perímetros · há 2 semanas</small></span>
+              </div>
+              <div class="ph-card brand">
+                <div class="ph-cardhead" style="justify-content:flex-start;gap:7px"><span class="ph-av">T</span><span class="ph-eyebrow brand">Nota do treinador</span></div>
+                <p class="ph-small">Hoje sobe 2,5 kg no agachamento. Se o joelho incomodar, avisa-me.</p>
+              </div>
+            </div>
+            <div class="ph-tabs">
+              <span class="on"><svg><use href="#i-today"/></svg>Hoje</span>
+              <span><svg><use href="#i-workout"/></svg>Treino</span>
+              <span><svg><use href="#i-plate"/></svg>Dieta</span>
+              <span><svg><use href="#i-ruler"/></svg>Medidas</span>
+              <span><svg><use href="#i-week"/></svg>Semana</span>
+              <span><svg><use href="#i-person"/></svg>Perfil</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Hoje, a meio do registo: o peso e o sono já estão feitos, a verde.</figcaption>
+    </figure>
+
+    <div class="text">
+      <span class="eyebrow">Separador Hoje</span>
+      <h3>O dia começa aqui</h3>
+      <p>Em cima, o treino de hoje. Se marcaste um, é esse que aparece, com <span class="ui">Começar treino</span> (ou <span class="ui">Continuar treino</span>, se ficou a meio). Num dia sem treino aparece <em>Dia de descanso</em> e quando é o próximo. Se o plano não tiver marcações, a app sugere o próximo treino do plano que o aluno ainda não fez nessa semana.</p>
+      <p>Por baixo está o <b>registo de hoje</b>, em cartões:</p>
+      <ul class="do">
+        <li><b>Peso</b>, com a média dos últimos 7 dias.</li>
+        <li><b>Passos</b>, com a meta que lhe puseste e uma barra de progresso.</li>
+        <li><b>Sono</b> da noite anterior.</li>
+        <li><b>Como te sentes</b>: energia, fome e stress, de 1 a 5.</li>
+        <li><b>Medidas</b>, que abre o formulário de perímetros.</li>
+      </ul>
+      <p>Cada toque abre um painel com um número grande que já vem no último valor, por isso quem se pesa todos os dias regista com um toque. O cartão fica verde quando está feito, e o aluno vê logo o que lhe falta.</p>
+      <p>No fim aparece a tua nota mais recente.</p>
+    </div>
+  </div>
+
+  <!-- Sessão -->
+  <div class="screen-row" id="sessao">
+    <figure class="shot">
+      <div class="stage">
+        <div class="phone" role="img" aria-label="Ilustração de um treino a decorrer">
+          <div class="phone-in">
+            <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
+            <div class="ph-session-top"><span class="ph-back">←</span><span><b>Treino C · Pernas</b><em>Exercício 2 de 6 · 5/22 séries</em></span><span class="ph-clock">18:42</span></div>
+            <div class="ph-body">
+              <div class="ph-head"><strong class="ph-exname">Agachamento com Barra</strong><span class="ph-sub">Quadríceps · descanso 2min</span><span class="ph-link">▸ Ver demonstração</span></div>
+              <table class="ph-sets">
+                <thead><tr><th>Sér</th><th>Carga</th><th>Reps</th><th>Falha</th></tr></thead>
+                <tbody>
+                  <tr class="done"><th>1</th><td>60 kg</td><td>8</td><td>RIR 2</td></tr>
+                  <tr class="active"><th>2</th><td>—</td><td>—</td><td>—</td></tr>
+                  <tr><th>3</th><td>—</td><td>—</td><td>—</td></tr>
+                  <tr><th>4</th><td>—</td><td>—</td><td>—</td></tr>
+                </tbody>
+              </table>
+              <span class="ph-small ph-muted">Objetivo: 4 × 6-8 reps</span>
+              <div class="ph-card">
+                <span class="ph-eyebrow">Da última vez</span>
+                <span class="ph-small">57,5 kg × 8, 57,5 kg × 8, 57,5 kg × 7 <b class="ph-good">+2,5 kg</b></span>
+              </div>
+              <span class="ph-eyebrow">Série 2</span>
+              <div class="ph-field2">
+                <div style="display:grid;gap:2px"><span class="ph-label">Carga</span><span class="ph-step"><i>−</i><b>60 kg</b><i>+</i></span></div>
+                <div style="display:grid;gap:2px"><span class="ph-label">Repetições feitas</span><span class="ph-step"><i>−</i><b>8</b><i>+</i></span></div>
+              </div>
+              <span class="ph-label">Reps em reserva</span>
+              <div class="ph-rir"><span>0</span><span>1</span><span class="on">2</span><span>3</span><span>4+</span></div>
+              <span class="ph-btn accent">Guardar série 2</span>
+              <div class="ph-btns"><span class="ph-btn quiet">Anterior</span><span class="ph-btn primary">Próximo exercício</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Um treino a decorrer, na segunda série do agachamento.</figcaption>
+    </figure>
+
+    <div class="text">
+      <span class="eyebrow">Dentro de um treino</span>
+      <h3>Série a série</h3>
+      <p>O treino mostra um exercício de cada vez. Em cada série o aluno regista três coisas, que são as colunas C, R e F da planilha:</p>
+      <ul class="do">
+        <li><b>Carga</b>, em passos de 1,25 kg. Já vem proposta: a da série anterior ou a da última vez.</li>
+        <li><b>Repetições feitas.</b></li>
+        <li><b>Reps em reserva</b>, de 0 a 4+.</li>
+      </ul>
+      <p>Ao lado fica o que fez da última vez neste exercício, com a diferença de carga, para saber o que tem de bater. A tua nota do exercício aparece por baixo. <span class="ui">▸ Ver demonstração</span> abre o vídeo sem sair da app. Os pontos em baixo saltam para qualquer exercício, e em cima corre o cronómetro do treino.</p>
+      <p><span class="ui">Terminar treino</span>, no último exercício, fecha a sessão e mostra um resumo: o tempo, as séries registadas e o desenho do corpo com o que trabalhou.</p>
+      <p>Onde começa um treino: no <b>Hoje</b>, na semana do separador <b>Treino</b> (só no próprio dia; os dias futuros veem-se mas não abrem), ou na lista <span class="ui">Todos os treinos do plano</span>, para treinar fora do que está marcado.</p>
+    </div>
+  </div>
+
+  <!-- Por tempo -->
+  <div class="screen-row">
+    <figure class="shot">
+      <div class="stage">
+        <div class="phone" role="img" aria-label="Ilustração de um treino por tempo">
+          <div class="phone-in ph-timed">
+            <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
+            <div class="ph-timed__bar"><i></i></div>
+            <div class="ph-timed__top"><span>✕</span><span>Volta 2 de 3 · 3/5</span></div>
+            <div class="ph-timed__stage">
+              <span class="ph-timed__kind">Trabalho</span>
+              <strong class="ph-timed__name">Prancha</strong>
+              <span class="ph-timed__clock">32</span>
+              <span class="ph-link">▸ Ver como se faz</span>
+            </div>
+            <div class="ph-timed__controls"><span class="ph-btn ghost">+15s</span><span class="ph-btn primary">Pausa</span><span class="ph-btn ghost">Saltar</span></div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Um treino por tempo, em circuito. A app conta e passa sozinha ao passo seguinte.</figcaption>
+    </figure>
+
+    <div class="text">
+      <span class="eyebrow">Treinos por tempo</span>
+      <h3>A app conduz</h3>
+      <p>Quando o treino é todo por tempo, o aluno não regista série a série. Vê primeiro a lista dos exercícios e a duração total, carrega em <span class="ui">Começar</span> e a app faz o resto:</p>
+      <ul class="do">
+        <li>conta o trabalho e o descanso e passa sozinha ao passo seguinte;</li>
+        <li>dá sinal sonoro nas mudanças e nos últimos três segundos;</li>
+        <li>no descanso, mostra o que vem a seguir;</li>
+        <li>mantém o ecrã do telemóvel aceso.</li>
+      </ul>
+      <p>O aluno pode fazer <span class="ui">Pausa</span>, somar 15 segundos ou <span class="ui">Saltar</span>. No fim, <span class="ui">Guardar treino</span> regista o que foi feito. Num treino misto (cargas com uma prancha pelo meio), manda o registo série a série e o exercício por tempo mostra a sua duração.</p>
+    </div>
+  </div>
+
+  <!-- Semana -->
+  <div class="screen-row">
+    <figure class="shot">
+      <div class="stage">
+        <div class="phone" role="img" aria-label="Ilustração do feedback semanal">
+          <div class="phone-in">
+            <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
+            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i>GFit</span><span class="ph-av">AR</span></div>
+            <div class="ph-body">
+              <div class="ph-head"><span class="ph-eyebrow">Semana 3</span><strong class="ph-title">Feedback da semana</strong><span class="ph-sub">21 set a 27 set</span></div>
+              <div class="ph-card">
+                <span class="ph-eyebrow">Aderência, pelos teus registos</span>
+                <div class="ph-stats"><span><small>Treinos</small><b>2 de 3</b></span><span><small>Sono médio</small><b>7h 10</b></span><span><small>Energia</small><b>3,8 / 5</b></span></div>
+              </div>
+              <div class="ph-card">
+                <span class="ph-eyebrow">Ajuda-me a ajudar-te</span>
+                <span class="ph-label">O que achaste da semana em geral?</span>
+                <span class="ph-input ph-area">Boa. Subi carga em quase tudo.</span>
+                <span class="ph-label">O que correu bem?</span>
+                <span class="ph-input ph-area">Consegui fazer os passos todos os dias.</span>
+                <span class="ph-label">Que dificuldades sentiste?</span>
+                <span class="ph-input ph-area placeholder">dieta, treino, descanso</span>
+                <span class="ph-label">Aderência à dieta (%)</span>
+                <span class="ph-input">85</span>
+                <span class="ph-label">Motivação para a próxima semana</span>
+                <div class="ph-scale"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span class="on">8</span><span>9</span><span>10</span></div>
+                <div class="ph-btns"><span class="ph-btn quiet">Guardar rascunho</span><span class="ph-btn accent">Enviar ao treinador</span></div>
+              </div>
+            </div>
+            <div class="ph-tabs">
+              <span><svg><use href="#i-today"/></svg>Hoje</span>
+              <span><svg><use href="#i-workout"/></svg>Treino</span>
+              <span><svg><use href="#i-plate"/></svg>Dieta</span>
+              <span><svg><use href="#i-ruler"/></svg>Medidas</span>
+              <span class="on"><svg><use href="#i-week"/></svg>Semana</span>
+              <span><svg><use href="#i-person"/></svg>Perfil</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Semana: o feedback semanal da planilha, a meio de ser preenchido.</figcaption>
+    </figure>
+
+    <div class="text">
+      <span class="eyebrow">Separador Semana</span>
+      <h3>Fechar a semana</h3>
+      <p>É a folha de feedback semanal da planilha. A app preenche a aderência a partir dos registos do aluno: treinos feitos, sono, energia, fome e stress. O aluno responde a quatro perguntas:</p>
+      <ul class="do">
+        <li>O que achaste da semana em geral?</li>
+        <li>O que correu bem?</li>
+        <li>Que dificuldades sentiste?</li>
+        <li>Qual a tua perspetiva para a próxima semana?</li>
+      </ul>
+      <p>Junta a aderência à dieta, em percentagem, e a motivação para a semana seguinte, de 1 a 10. Pode <span class="ui">Guardar rascunho</span> e continuar depois. Quando carrega em <span class="ui">Enviar ao treinador</span>, aparece-te no Início como feedback por ler. A tua resposta fica no topo deste ecrã, a verde.</p>
+      <p>Se se enganar depois de enviar, o aluno carrega em <span class="ui">Quero corrigir</span>.</p>
+    </div>
+  </div>
+
+  <div class="cards cards--3" style="margin-top:8px">
+    <div class="card">
+      <span class="eyebrow">Separador Treino</span>
+      <h3>A semana e o plano</h3>
+      <p>Os sete dias da semana com os treinos que marcaste e o estado de cada um: feito, a meio ou em falta. As setas mudam de semana. Por baixo: o desenho do corpo com o que a semana trabalha, a lista <span class="ui">Todos os treinos do plano</span>, as notas do plano e os treinos <span class="ui">Escritos por mim</span>.</p>
+    </div>
+    <div class="card">
+      <span class="eyebrow">Separador Dieta</span>
+      <h3>O plano alimentar</h3>
+      <p>As refeições com as kcal de cada uma, e o total do dia contra as metas. Toca numa refeição para ver os alimentos, as quantidades e as macros. Em <span class="ui">Hoje comi</span>, o aluno regista <span class="ui">Cumpri o plano</span> com um toque, ou <span class="ui">Registar outros valores</span> se comeu outra coisa.</p>
+    </div>
+    <div class="card">
+      <span class="eyebrow">Separador Medidas</span>
+      <h3>Peso e perímetros</h3>
+      <p>O gráfico do peso com a média de 7 dias e a variação total. Os perímetros (cintura, glúteo, peito, e coxa, braço e gémeo dos dois lados) com a diferença para o registo anterior. <span class="ui">+ Novo registo</span> abre o formulário, e o histórico fica por baixo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ LIGAÇÕES ═══════════════════════ -->
+<section class="wrap section" id="ligacoes">
+  <div class="section__head">
+    <span class="eyebrow">Os dois lados juntos</span>
+    <h2>O que chega a quem</h2>
+    <p>O que fazes de um lado, e onde aparece do outro.</p>
+  </div>
+
+  <div class="table-wrap" role="region" aria-label="O que chega a quem" tabindex="0">
+    <table class="t">
+      <thead><tr><th scope="col">Quando…</th><th scope="col">…aparece</th></tr></thead>
+      <tbody>
+        <tr class="group"><th colspan="2" scope="colgroup">Tu</th></tr>
+        <tr><td>publicas um plano de treino</td><td>nos separadores Hoje e Treino do aluno</td></tr>
+        <tr><td>marcas os dias no calendário do plano</td><td>na semana do aluno (Treino), no treino de hoje (Hoje) e no teu Calendário</td></tr>
+        <tr><td>publicas uma dieta</td><td>no separador Dieta do aluno</td></tr>
+        <tr><td>defines ou revês as metas</td><td>no Perfil do aluno; a meta de passos no cartão do Hoje; as macros na Dieta, se o plano alimentar não tiver as suas</td></tr>
+        <tr><td>deixas uma nota</td><td>no fim do Hoje do aluno (a mais recente)</td></tr>
+        <tr><td>respondes ao feedback</td><td>no topo do separador Semana do aluno</td></tr>
+        <tr class="group"><th colspan="2" scope="colgroup">O aluno</th></tr>
+        <tr><td>regista peso, passos, sono e como se sente</td><td>em Registaram hoje (Início) e nos cartões Peso e Bem-estar da ficha</td></tr>
+        <tr><td>faz um treino</td><td>no teu Calendário (feito ou a meio), nos Treinos da semana do Início, e como “da última vez” no treino seguinte dele</td></tr>
+        <tr><td>regista perímetros</td><td>no cartão Perímetros da ficha</td></tr>
+        <tr><td>envia o feedback da semana</td><td>em feedback por ler (Início) e no cartão Feedback semanal da ficha</td></tr>
+        <tr><td>deixa de registar</td><td>em A precisar de ti, ao fim de quatro dias</td></tr>
+        <tr><td>escreve e marca um treino seu</td><td>no separador Planos da ficha (auto-treino) e no teu Calendário (auto)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════ AUTO-TREINO ═══════════════════════ -->
+<section class="wrap section" id="auto-treino">
+  <div class="section__head">
+    <span class="eyebrow">Quem escreve o seu próprio treino</span>
+    <h2>Auto-treino</h2>
+    <p>Nem todo o treino vem de ti. Qualquer pessoa pode escrever o seu próprio plano, no mesmo editor que tu usas. Um auto-treino é um plano em que o autor e quem o faz são a mesma pessoa. Não se publica, porque quem o escreve já o vê.</p>
+  </div>
+
+  <div class="screen-row">
+    <figure class="shot">
+      <div class="stage">
+        <div class="phone" role="img" aria-label="Ilustração do ecrã Ainda sem treinador">
+          <div class="phone-in">
+            <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
+            <div class="ph-welcome">
+              <i class="logo"></i>
+              <strong class="ph-title">Ainda sem treinador</strong>
+              <p>A tua conta está criada. Se tens treinador, pede-lhe que te convide com <b>ines.santos@exemplo.pt</b> e volta a verificar. Se não tens, podes começar já — escreves os teus treinos e registas o teu dia na mesma.</p>
+              <span class="ph-btn primary">Já fui convidado</span>
+              <span class="ph-btn ghost">Treinar por minha conta</span>
+              <span class="ph-small ph-muted" style="text-decoration:underline">Sair</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption>O que vê quem cria conta sem ter convite.</figcaption>
+    </figure>
+
+    <div class="text">
+      <div class="card">
+        <span class="when">1 · Quem entra sem convite</span>
+        <p>Quem cria conta sem ter convite vê o ecrã <span class="ui">Ainda sem treinador</span>, com duas saídas. <span class="ui">Já fui convidado</span> volta a verificar, e serve para quando lhe criares o convite depois. <span class="ui">Treinar por minha conta</span> deixa-o usar a app sozinho.</p>
+        <p>Quem treina por conta própria escreve o plano no separador Treino (<span class="ui">Escrever o meu treino</span>), marca-o no calendário e define as suas metas, limitações e notas no ecrã Medidas. Tem os mesmos ecrãs que um aluno teu.</p>
+        <p>Se mais tarde o convidares com o email dele, fica ligado a ti com tudo o que já registou. Passas a ser tu a definir-lhe as metas.</p>
+      </div>
+      <div class="card">
+        <span class="when">2 · Um aluno teu que também escreve treinos</span>
+        <p>Um aluno com treinador pode escrever treinos seus em Treino → <span class="ui">Escritos por mim</span> → <span class="ui">+ Novo</span>. Tu vês esses planos na ficha dele, separador Planos, com a marca <span class="ui">auto-treino</span>. Abres e lês tudo, mas não os podes editar, porque foi ele que os escreveu.</p>
+        <p>O teu plano continua a mandar no dia a dia dele. Os treinos que ele marcar aparecem no teu Calendário com a marca <b>auto</b>.</p>
+      </div>
+      <div class="card">
+        <span class="when">3 · Tu</span>
+        <p>Para a app, és um aluno que é o seu próprio treinador. No separador <b>Eu</b> tens o Hoje, o Treino e as Medidas dos alunos, e ainda <span class="ui">Ficha e metas</span>, onde defines o teu objetivo, as tuas metas, as tuas limitações e as tuas notas. O teu plano escreve-se em Eu → Treino → <span class="ui">Escrever o meu treino</span>.</p>
+        <p>No fim do Início, o cartão <span class="ui">O teu treino</span> lembra-te o que falta registar, ou que tens treino hoje, e leva-te ao teu lado.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin:8px 0 14px">Quem pode escrever o quê</h3>
+  <div class="table-wrap" role="region" aria-label="Quem pode escrever o quê" tabindex="0">
+    <table class="t">
+      <thead><tr><th scope="col">O quê</th><th scope="col">Quem pode</th></tr></thead>
+      <tbody>
+        <tr><td>Um plano para o aluno</td><td>O treinador desse aluno.</td></tr>
+        <tr><td>Um plano para si próprio</td><td>Qualquer pessoa, mesmo tendo treinador.</td></tr>
+        <tr><td>Editar o auto-treino de um aluno</td><td>Só o próprio aluno. Tu vês, sem mexer.</td></tr>
+        <tr><td>Metas, ficha, limitações e notas</td><td>O treinador do aluno. O próprio só quando não tem treinador. É isto que impede um aluno de mudar as metas que lhe puseste.</td></tr>
+        <tr><td>Peso, passos, sono, medidas, séries e feedback</td><td>Sempre o próprio aluno.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════ ROTINA ═══════════════════════ -->
+<section class="wrap section" id="rotina">
+  <div class="section__head">
+    <span class="eyebrow">O que deves fazer</span>
+    <h2>A tua rotina com a app</h2>
+    <p>A app só funciona se as duas pontas a usarem. Do teu lado, isto chega.</p>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <span class="when">Todos os dias</span>
+      <ul class="checks">
+        <li>Abre o Início e toca em cada aluno de A precisar de ti.</li>
+        <li>Deixa uma nota a quem precisar de um empurrão. Aparece-lhe no Hoje.</li>
+        <li>Regista o teu dia. O cartão O teu treino diz-te o que falta.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="when">No fim de cada semana</span>
+      <ul class="checks">
+        <li>Lê e responde aos feedbacks por ler. Sem resposta, o aluno continua na lista.</li>
+        <li>Vê no Calendário o que ficou em falta.</li>
+        <li>Antes de mexer em cargas ou na dieta, olha para o peso e o bem-estar da semana na ficha.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="when">No fim de cada bloco</span>
+      <ul class="checks">
+        <li>Quando aparecer Planos a acabar, escreve o plano seguinte, publica-o e marca os dias.</li>
+        <li>Se o rumo mudar, cria uma nova revisão de metas em vez de apagar as anteriores.</li>
+        <li>Pede ao aluno um registo de perímetros.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="when">Quando entra um aluno novo</span>
+      <ul class="checks">
+        <li>Cria o convite no Perfil e envia-o. Confirma que ele entra com esse email.</li>
+        <li>Preenche Quem é, as Metas e as Limitações.</li>
+        <li>Escreve o plano e a dieta, publica os dois e marca os dias do plano.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ BOM SABER ═══════════════════════ -->
+<section class="wrap section" id="bom-saber">
+  <div class="section__head">
+    <span class="eyebrow">Perguntas que costumam aparecer</span>
+    <h2>Bom saber</h2>
+  </div>
+
+  <div class="cards cards--3">
+    <div class="card">
+      <h4>E sem rede no ginásio?</h4>
+      <p>A app guarda o que já abriu e continua a mostrá-lo sem rede. Os vídeos de demonstração são do YouTube, por isso esses precisam de rede.</p>
+    </div>
+    <div class="card">
+      <h4>Nada se perde</h4>
+      <p>As metas são revisões com data, as limitações passam a resolvidas em vez de se apagarem, e as notas ficam todas. Meses depois consegues ver o que estava em vigor em cada altura.</p>
+    </div>
+    <div class="card">
+      <h4>O convite não funcionou</h4>
+      <p>Quase sempre é o email. O aluno tem de entrar com o email exato do convite; quem entra com Google usa o email da conta Google. Se ele já tiver entrado com outro, cria um convite novo para esse email.</p>
+    </div>
+    <div class="card">
+      <h4>Os temas</h4>
+      <p>Perfil → Tema muda a cara da app inteira. A escolha fica em cada telemóvel. Cada treinador pode ter um tema da casa, que é o que ele e os seus alunos veem até escolherem outro.</p>
+      <div class="themes" aria-label="Os quatro temas">
+        <span class="theme-chip"><i><span style="background:#f4f1ec"></span><span style="background:#ffffff"></span><span style="background:#e3b04b"></span></i>Papel</span>
+        <span class="theme-chip"><i><span style="background:#fbfaf6"></span><span style="background:#141310"></span><span style="background:#e3b04b"></span></i>Caderno</span>
+        <span class="theme-chip"><i><span style="background:#0c0b09"></span><span style="background:#17150f"></span><span style="background:#e3b04b"></span></i>Arena</span>
+        <span class="theme-chip"><i><span style="background:#0a0a0a"></span><span style="background:#151515"></span><span style="background:#7ee04e"></span></i>Guerreiro</span>
+      </div>
+    </div>
+    <div class="card">
+      <h4>A app não envia mensagens</h4>
+      <p>Não há emails nem notificações automáticas. Os convites envias tu, e o aluno vê as tuas notas e respostas quando abre a app.</p>
+    </div>
+    <div class="card">
+      <h4>O que ainda não há</h4>
+      <p>Suplementos (a folha da planilha ainda não passou para a app), cálculo automático das calorias e macros a partir do peso, altura e idade, fotos de progresso e notificações. Por agora, as metas definem-se à mão.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="wrap foot">
+  <span>GFit · guia de utilização para o treinador</span>
+  <span>Setembro de 2026</span>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var page = document.getElementById('page');
+  var buttons = Array.prototype.slice.call(document.querySelectorAll('[data-skin-pick]'));
+  var skins = ['guerreiro', 'arena', 'papel', 'caderno'];
+
+  function apply(skin) {
+    page.setAttribute('data-skin', skin);
+    buttons.forEach(function (button) {
+      button.setAttribute('aria-pressed', String(button.getAttribute('data-skin-pick') === skin));
+    });
+  }
+
+  try {
+    var saved = window.localStorage.getItem('guia-gfit.tema');
+    if (saved && skins.indexOf(saved) !== -1) apply(saved);
+  } catch (error) { /* sem armazenamento: fica o Guerreiro */ }
+
+  buttons.forEach(function (button) {
+    button.addEventListener('click', function () {
+      var skin = button.getAttribute('data-skin-pick');
+      apply(skin);
+      try { window.localStorage.setItem('guia-gfit.tema', skin); } catch (error) { /* ignora */ }
+    });
+  });
+
+  var copy = document.getElementById('copy-url');
+  var url = document.getElementById('app-url');
+  copy.addEventListener('click', function () {
+    var text = url.textContent.trim();
+    function done(label) {
+      copy.textContent = label;
+      window.setTimeout(function () { copy.textContent = 'Copiar link'; }, 2000);
+    }
+    function selectIt() {
+      var range = document.createRange();
+      range.selectNodeContents(url);
+      var selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      done('Selecionado');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done('Copiado ✓'); }, selectIt);
+    } else {
+      selectIt();
+    }
+  });
+})();
+</script>
+</body>
+</html>
