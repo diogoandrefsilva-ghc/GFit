@@ -13,6 +13,7 @@ import { describeError, supabase } from '@/lib/supabase'
 import { copyInvite, shareInvite } from '@/lib/invite'
 import type { Invite, Role } from '@/lib/database.types'
 import { int, plural, relativeDate, shortDate } from '@/lib/format'
+import { THEMES, setTheme, useTheme } from '@/lib/theme'
 import { unwrap, useQuery } from '@/lib/useQuery'
 import { Welcome } from './Welcome'
 import './profile.css'
@@ -50,6 +51,8 @@ export function Profile() {
           </span>
         </div>
       </section>
+
+      <ThemeCard />
 
       {loading ? (
         <Loading label="A carregar" />
@@ -456,6 +459,57 @@ function AthleteSection({
         </section>
       )}
     </>
+  )
+}
+
+/**
+ * O tema da app. Muda no toque, sem gravar nada no servidor: fica neste
+ * telemóvel, como a apresentação.
+ */
+function ThemeCard() {
+  const theme = useTheme()
+
+  return (
+    <section className="card">
+      <span className="eyebrow">Tema</span>
+      <div className="themes" role="radiogroup" aria-label="Tema da app">
+        {THEMES.map((option) => {
+          const [ground, surface, brand] = option.swatches
+          return (
+            <button
+              key={option.id}
+              type="button"
+              role="radio"
+              aria-checked={option.id === theme.id}
+              className={`theme-pick ${option.id === theme.id ? 'is-on' : ''}`}
+              onClick={() => setTheme(option.id)}
+            >
+              <span
+                className="theme-pick__preview"
+                style={{ background: ground }}
+                aria-hidden="true"
+              >
+                {option.id === 'guerreiro' ? (
+                  <img
+                    className="theme-pick__logo"
+                    src={`${import.meta.env.BASE_URL}guerreiro-wordmark.png`}
+                    alt=""
+                  />
+                ) : (
+                  <span className="theme-pick__card" style={{ background: surface }} />
+                )}
+                <span className="theme-pick__bar" style={{ background: brand }} />
+              </span>
+              <span className="theme-pick__text">
+                <strong>{option.name}</strong>
+                <em>{option.hint}</em>
+              </span>
+            </button>
+          )
+        })}
+      </div>
+      <p className="profile__theme-note">Fica guardado neste telemóvel.</p>
+    </section>
   )
 }
 

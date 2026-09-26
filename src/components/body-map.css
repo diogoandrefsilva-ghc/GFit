@@ -2,7 +2,7 @@
  * Contrato de pintura do corpo (o mesmo que vem no `corpo-gfit.svg`, aqui
  * ligado aos tokens da app). Nenhuma região tem cor fixa: a cor vem de
  * `--accent` — o nome que o contrato do SVG dá à cor da intensidade, e que
- * a app preenche aqui com o dourado — e de `--i`, 0 a 1, por grupo muscular.
+ * a app preenche aqui com a cor da marca — e de `--i`, 0 a 1, por grupo muscular.
  *
  * A intensidade entra por variável no contentor — `--bm-<slug>` — para o
  * React não ter de tocar no DOM do SVG depois de o desenhar.
@@ -15,8 +15,8 @@
    * quem pinta o corpo é o dourado escuro. O `--accent` aqui não é o token da
    * app: é a variável que o SVG espera receber (docs/corpo-gfit/LEIAME.md).
    */
-  --accent: var(--gold-dark);
-  color: var(--gold-dark);
+  --accent: var(--brand-text);
+  color: var(--brand-text);
 }
 
 .body-map .gfit-shape {
@@ -174,7 +174,7 @@
 }
 
 .muscle-work__legend button.is-picked {
-  background: var(--gold-soft);
+  background: var(--brand-soft);
   color: var(--ink);
 }
 
@@ -184,7 +184,7 @@
   height: 12px;
   border-radius: 3px;
   border: 1px solid var(--line-2);
-  background: var(--gold-dark);
+  background: var(--brand-text);
 }
 
 .muscle-work__legend em {

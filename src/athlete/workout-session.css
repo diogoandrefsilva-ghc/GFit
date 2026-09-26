@@ -34,13 +34,13 @@
   font-weight: 700;
   font-size: 24px;
   line-height: 1;
-  color: var(--gold-dark);
+  color: var(--brand-text);
 }
 
 /* ── exercício ─────────────────────────────────────────── */
 
 .exercise {
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   padding: 16px;
@@ -76,8 +76,8 @@
   font-weight: 700;
   padding: 7px 12px;
   border-radius: var(--radius-sm);
-  background: var(--gold-soft);
-  color: var(--gold-dark);
+  background: var(--brand-soft);
+  color: var(--brand-text);
 }
 
 /* ── tabela de séries ──────────────────────────────────── */
@@ -127,11 +127,11 @@
 
 .sets tbody tr.is-active th,
 .sets tbody tr.is-active td {
-  background: var(--gold-soft);
+  background: var(--brand-soft);
 }
 
 .sets tbody tr.is-active th {
-  color: var(--gold-dark);
+  color: var(--brand-text);
 }
 
 .exercise__target {
@@ -232,11 +232,15 @@
   flex: 1;
 }
 
+/* É um `<ol>`, e a folha base só limpa os `<ul>`: sem isto cada ponto levava
+   o número da lista à frente. */
 .session__dots {
   display: flex;
   justify-content: center;
   gap: 8px;
+  margin: 0;
   padding: 4px 0 8px;
+  list-style: none;
 }
 
 .session__dot {

@@ -4,6 +4,7 @@ import { HashRouter } from 'react-router-dom'
 import { AuthProvider } from '@/auth/AuthProvider'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { watchSafeArea } from '@/lib/safe-area'
+import { applyTheme } from '@/lib/theme'
 import { App } from './App'
 import '@/styles/base.css'
 
@@ -26,6 +27,9 @@ window.addEventListener('vite:preloadError', () => {
 // Antes de desenhar seja o que for: é isto que diz aos ecrãs quanto espaço
 // deixar à barra de estado e ao indicador do fundo.
 watchSafeArea()
+
+// O `index.html` já pôs o tema na raiz; aqui junta-se a forma e as letras.
+applyTheme()
 
 const root = document.getElementById('root')!
 root.innerHTML = '' // tira o ecrã de arranque do index.html

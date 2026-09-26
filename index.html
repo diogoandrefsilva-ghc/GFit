@@ -16,6 +16,15 @@
       rel="stylesheet"
     />
     <title>GFit</title>
+    <script>
+      // O tema escolhido no Perfil (src/lib/theme.ts), antes de qualquer
+      // desenho: sem isto, quem usa um tema escuro via um clarão de papel a
+      // cada arranque.
+      try {
+        var tema = localStorage.getItem('gfit.tema')
+        if (tema) document.documentElement.setAttribute('data-theme', tema)
+      } catch (e) {}
+    </script>
     <style>
       /* Estado de arranque, desenhado sem depender do CSS da app: se o
          JavaScript rebentar antes de montar, é isto que fica no ecrã. */
@@ -40,6 +49,16 @@
         border: 2px solid #c9c4b8;
         border-top-color: #16150f;
         animation: boot-spin 0.7s linear infinite;
+      }
+      [data-theme='arena'] #boot,
+      [data-theme='guerreiro'] #boot {
+        background: #050504;
+        color: #f4f1ec;
+      }
+      [data-theme='arena'] #boot .ring,
+      [data-theme='guerreiro'] #boot .ring {
+        border-color: #3a362d;
+        border-top-color: #f4f1ec;
       }
       @keyframes boot-spin {
         to {

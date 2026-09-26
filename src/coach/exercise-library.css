@@ -5,7 +5,7 @@
 .library {
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -17,8 +17,8 @@
   font-weight: 700;
   padding: 6px 10px;
   border-radius: var(--radius-sm);
-  background: var(--gold-soft);
-  color: var(--gold-dark);
+  background: var(--brand-soft);
+  color: var(--brand-text);
 }
 
 .library__novideo {

@@ -32,7 +32,7 @@
   font-family: var(--font-narrow);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--gold-dark);
+  color: var(--brand-text);
 }
 
 .profile__name-edit {
@@ -164,4 +164,94 @@
 
 .profile__send {
   flex-wrap: wrap;
+}
+
+/* ── tema ──────────────────────────────────────────────── */
+
+.themes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.theme-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 8px 10px;
+  text-align: left;
+  color: var(--ink);
+  background: var(--paper-2);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  transition: border-color 0.15s ease;
+}
+
+/* O escolhido leva o contorno da marca — que muda com ele, e é esse o
+   sinal de que mudou. */
+.theme-pick.is-on {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 1px var(--brand);
+}
+
+/* A amostra desenha os três tons de cada tema com as cores dele, e não com
+   as do tema em uso: é para ver antes de escolher. */
+.theme-pick__preview {
+  position: relative;
+  display: block;
+  height: 58px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-soft);
+  overflow: hidden;
+}
+
+.theme-pick__card {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 10px;
+  height: 22px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.theme-pick__logo {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  width: 78%;
+  transform: translateX(-50%);
+}
+
+.theme-pick__bar {
+  position: absolute;
+  left: 10px;
+  bottom: 9px;
+  width: 38%;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.theme-pick__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0 2px;
+}
+
+.theme-pick__text strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.theme-pick__text em {
+  font-style: normal;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.profile__theme-note {
+  font-size: 12px;
+  color: var(--muted-soft);
 }

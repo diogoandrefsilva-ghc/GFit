@@ -34,7 +34,7 @@
 }
 
 .feedback-card.is-unread {
-  border-color: var(--gold-line);
+  border-color: var(--brand-line);
 }
 
 .feedback-card__head {
@@ -49,7 +49,7 @@
 }
 
 .feedback-card.is-unread .feedback-card__head {
-  background: var(--gold-soft);
+  background: var(--brand-soft);
 }
 
 .feedback-card__head span {

@@ -37,7 +37,7 @@
 }
 
 .login__google {
-  background: #fff;
+  background: var(--surface);
 }
 
 .login__divider {
