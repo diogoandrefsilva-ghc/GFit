@@ -204,10 +204,9 @@ src/
   assets/      o SVG do corpo
   styles/      tokens (as cores de cada tema), temas (a forma de cada um) e
                folha de estilo base
-brand/         o logótipo em tamanho grande, de onde saem os ícones, e o do
-               Guerreiro
-public/        ícones da app e do separador, gerados a partir do logótipo, e a
-               palavra do logótipo do Guerreiro para o tema dele
+brand/         o logótipo em tamanho grande, de onde saem os ícones
+public/        ícones da app e do separador, gerados a partir do logótipo, e o
+               logótipo do Guerreiro para o tema dele
 ```
 
 Os ícones não se editam à mão: saem todos de `brand/gfit-logo.png` com
@@ -250,10 +249,10 @@ No *Perfil*, o cartão *Tema* troca a cara da app inteira. Há quatro:
 
 | Tema | Como é |
 |---|---|
-| Papel | o de sempre, e o que se vê sem escolher nada |
+| Papel | o de sempre, e o que se vê sem escolher nada (a não ser que haja tema da casa) |
 | Caderno | claro e editorial: números e títulos com serifa (Instrument Serif), cartões planos como secções, o registo do dia como lista de verificação |
 | Arena | o preto e o dourado do logótipo: letra condensada de placar (Barlow Condensed), a letra do treino em grande no cartão de hoje, o que falta registar a tracejado |
-| Guerreiro | a Arena em preto neutro e verde, com o logótipo do Guerreiro Personal Trainer na barra de cima |
+| Guerreiro | a Arena em preto neutro e verde, com o logótipo do Guerreiro Personal Trainer — linhas verdes e *personal trainer* incluídos — na barra de cima, que cresce para ele se ler |
 
 O Caderno e a Arena trazem também a barra de separadores a flutuar, afastada
 do fundo do ecrã.
@@ -275,10 +274,35 @@ tema escuro não ver um clarão de papel a cada abertura. Quem usa a app em dois
 telemóveis escolhe nos dois. As letras de cada tema só se descarregam para
 quem o escolhe, e ficam no cache do service worker para o ginásio sem rede.
 
+#### O tema da casa
+
+Quem não escolheu nada não abre forçosamente no Papel: abre no **tema da casa**
+do seu treinador. O Filipe Guerreiro e os alunos dele entram no Guerreiro, e
+depois cada um muda se quiser.
+
+- O treinador tem o tema da casa em `app_config.house_themes`, por email — o
+  mesmo arranjo de `coach_emails` e `admin_emails`, para ficar atribuído antes
+  de a pessoa ter conta:
+
+  ```sql
+  update gfit.app_config
+     set value = '{"filipeguerreiro1988@gmail.com": "guerreiro"}'::jsonb
+   where key = 'house_themes';
+  ```
+
+- O `ensure_profile()` passa-o para `profiles.theme` a cada login, e o aluno
+  herda o do seu treinador — também a cada login, para acompanhar se o
+  treinador mudar. Quem entra por convite fica logo com ele.
+- A app recebe-o com o perfil e guarda-o no telemóvel (`gfit.tema.casa`), para
+  o arranque seguinte já abrir nele.
+
+A escolha no Perfil ganha sempre ao da casa, e o cartão *Tema* marca qual é o
+da casa. Escolher precisamente esse é voltar a segui-lo.
+
 O logótipo do Guerreiro, com fundo transparente, está inteiro em
-`brand/guerreiro-logo.png`. Na barra vai só a palavra
-(`public/guerreiro-wordmark.png`): à altura da barra o *personal trainer* do
-logótipo inteiro não se lê.
+`public/guerreiro-logo.png`, que é o da barra. A amostra do cartão *Tema* usa
+só a palavra (`public/guerreiro-wordmark.png`): naquele tamanho o *personal
+trainer* não se lê.
 
 Os protótipos do Claude Design (`FG Coach App.dc.html`,
 `FG Coach Protótipo.dc.html`) ficam no repositório como referência do desenho.

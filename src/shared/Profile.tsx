@@ -13,7 +13,7 @@ import { describeError, supabase } from '@/lib/supabase'
 import { copyInvite, shareInvite } from '@/lib/invite'
 import type { Invite, Role } from '@/lib/database.types'
 import { int, plural, relativeDate, shortDate } from '@/lib/format'
-import { THEMES, setTheme, useTheme } from '@/lib/theme'
+import { THEMES, setTheme, useThemeState } from '@/lib/theme'
 import { unwrap, useQuery } from '@/lib/useQuery'
 import { Welcome } from './Welcome'
 import './profile.css'
@@ -464,10 +464,13 @@ function AthleteSection({
 
 /**
  * O tema da app. Muda no toque, sem gravar nada no servidor: fica neste
- * telemóvel, como a apresentação.
+ * telemóvel, como a apresentação. O da casa — o do treinador — leva uma marca,
+ * que é o que se vê sem escolher nada.
  */
 function ThemeCard() {
-  const theme = useTheme()
+  const { isCoach } = useAuth()
+  const { theme, house } = useThemeState()
+  const houseLabel = isCoach ? 'da casa' : 'do treinador'
 
   return (
     <section className="card">
@@ -501,14 +504,23 @@ function ThemeCard() {
                 <span className="theme-pick__bar" style={{ background: brand }} />
               </span>
               <span className="theme-pick__text">
-                <strong>{option.name}</strong>
+                <span className="theme-pick__name">
+                  <strong>{option.name}</strong>
+                  {house?.id === option.id && (
+                    <span className="theme-pick__house">{houseLabel}</span>
+                  )}
+                </span>
                 <em>{option.hint}</em>
               </span>
             </button>
           )
         })}
       </div>
-      <p className="profile__theme-note">Fica guardado neste telemóvel.</p>
+      <p className="profile__theme-note">
+        {house
+          ? `Sem escolher nada, a app abre no ${house.name}, o tema ${houseLabel}. A escolha fica guardada neste telemóvel.`
+          : 'Fica guardado neste telemóvel.'}
+      </p>
     </section>
   )
 }

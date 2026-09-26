@@ -35,6 +35,12 @@ export type Profile = {
   phone: string | null
   /** Pode criar/editar/apagar na biblioteca partilhada (exercícios, …). */
   is_admin: boolean
+  /**
+   * O tema com que a app abre enquanto a pessoa não escolher outro no
+   * telemóvel: o da casa do treinador (`app_config.house_themes`), que os
+   * alunos herdam. Ver `src/lib/theme.ts`.
+   */
+  theme: 'papel' | 'caderno' | 'arena' | 'guerreiro' | null
   created_at: string
   updated_at: string
 }

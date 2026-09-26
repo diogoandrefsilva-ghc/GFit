@@ -17,11 +17,12 @@
     />
     <title>GFit</title>
     <script>
-      // O tema escolhido no Perfil (src/lib/theme.ts), antes de qualquer
-      // desenho: sem isto, quem usa um tema escuro via um clarão de papel a
-      // cada arranque.
+      // O tema escolhido no Perfil, ou o da casa que veio com o perfil
+      // (src/lib/theme.ts), antes de qualquer desenho: sem isto, quem usa um
+      // tema escuro via um clarão de papel a cada arranque.
       try {
-        var tema = localStorage.getItem('gfit.tema')
+        var tema =
+          localStorage.getItem('gfit.tema') || localStorage.getItem('gfit.tema.casa')
         if (tema) document.documentElement.setAttribute('data-theme', tema)
       } catch (e) {}
     </script>

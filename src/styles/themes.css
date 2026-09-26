@@ -53,7 +53,7 @@
 
 :root[data-look='caderno'] .appbar__word {
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 400;
   letter-spacing: 0;
   color: var(--ink);
@@ -94,7 +94,7 @@
 
 :root[data-look='caderno'] .title {
   font-family: var(--font-display);
-  font-size: 40px;
+  font-size: 32px;
   font-weight: 400;
   line-height: 1;
   letter-spacing: 0;
@@ -117,32 +117,34 @@
 }
 
 :root[data-look='caderno'] .reg-block__title {
-  font-size: 28px;
+  font-size: 22px;
 }
 
 :root[data-look='caderno'] .sheet__title {
-  font-size: 26px;
+  font-size: 22px;
 }
 
 :root[data-look='caderno'] .today__workout-title {
-  font-size: 32px;
+  font-size: 26px;
   line-height: 1.05;
 }
 
 :root[data-look='caderno'] .card.dash__self .dash__self-title {
-  font-size: 22px;
+  font-size: 19px;
 }
 
 :root[data-look='caderno'] .exercise .exercise__name {
   font-family: var(--font-display);
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 400;
   line-height: 1.02;
   letter-spacing: 0;
   text-transform: none;
 }
 
-/* Os números grandes em serifa: é o que mais distingue o Caderno. */
+/* Os números grandes em serifa: é o que mais distingue o Caderno. Os
+   tamanhos ficam só um pouco acima dos do Papel — a serifa estreita já pesa
+   o suficiente, e maior lia-se como cartaz. */
 :root[data-look='caderno'] .reg .reg__value:not(.reg__value--empty),
 :root[data-look='caderno'] .stat .stat__value,
 :root[data-look='caderno'] .dash__tile .dash__tile-value,
@@ -158,35 +160,35 @@
 }
 
 :root[data-look='caderno'] .stat .stat__value {
-  font-size: 26px;
+  font-size: 22px;
   line-height: 1.1;
 }
 
 :root[data-look='caderno'] .dash__tile .dash__tile-value {
-  font-size: 36px;
+  font-size: 30px;
   line-height: 1;
 }
 
 :root[data-look='caderno'] .measure__weight {
-  font-size: 30px;
+  font-size: 26px;
 }
 
 :root[data-look='caderno'] .stepper .stepper__value {
-  font-size: 24px;
+  font-size: 20px;
 }
 
 :root[data-look='caderno'] .stepper--lg .stepper__value {
-  font-size: 44px;
+  font-size: 36px;
 }
 
 :root[data-look='caderno'] .session__top .session__clock {
-  font-size: 30px;
+  font-size: 26px;
   color: var(--ink);
 }
 
 :root[data-look='caderno'] .sets tbody td {
   font-family: var(--font-display);
-  font-size: 19px;
+  font-size: 17px;
 }
 
 /* ── cartões ─────────────────────────────────────────────── */
@@ -231,13 +233,13 @@
   position: absolute;
   top: 16px;
   right: 16px;
-  width: 58px;
-  height: 58px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: var(--brand);
   color: var(--brand-ink);
   font-family: var(--font-display);
-  font-size: 36px;
+  font-size: 30px;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -246,7 +248,7 @@
 
 :root[data-look='caderno'] .today__workout[data-letter] .card__head,
 :root[data-look='caderno'] .today__workout[data-letter] .today__workout-title {
-  padding-right: 70px;
+  padding-right: 60px;
 }
 
 /* ── registo do dia: uma lista de verificação ────────────── */
@@ -332,7 +334,7 @@
   grid-area: value;
   justify-self: end;
   margin: 0;
-  font-size: 30px;
+  font-size: 24px;
   line-height: 1;
 }
 
@@ -390,6 +392,10 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ink);
+}
+
+:root[data-theme='guerreiro'] .appbar {
+  height: calc(64px + var(--safe-top));
 }
 
 :root[data-look='arena'] .tabbar__item.is-on {
@@ -503,6 +509,25 @@
 
 :root[data-look='arena'] .sets tbody td {
   font-size: 18px;
+}
+
+/* ── início do treinador ─────────────────────────────────── */
+
+/* No Papel o rótulo "Registaram hoje" parte em duas linhas e o cabeçalho de
+   cada cartão guarda espaço para elas, para os números ficarem alinhados. Na
+   letra condensada cabe tudo numa, e esse espaço era só um vazio entre o
+   rótulo e o número. */
+:root[data-look='arena'] .dash__tile {
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+:root[data-look='arena'] .dash__tile .dash__tile-head {
+  min-height: 0;
+}
+
+:root[data-look='arena'] .dash__tile .dash__tile-value {
+  margin-top: 6px;
 }
 
 /* ── botões ──────────────────────────────────────────────── */

@@ -7,9 +7,9 @@ import './appbar.css'
 
 /**
  * Barra da marca, no topo de todos os ecrãs com separadores. O avatar à
- * direita é o atalho para o perfil. No tema Guerreiro a marca é a do
- * Guerreiro Personal Trainer: só a palavra, porque o "personal trainer" do
- * logótipo inteiro fica ilegível à altura da barra.
+ * direita é o atalho para o perfil. No tema Guerreiro a marca é o logótipo
+ * inteiro do Guerreiro Personal Trainer, com as linhas verdes e o "personal
+ * trainer" — e a barra cresce para ele se ler.
  */
 export function AppBar() {
   const profile = useProfile()
@@ -27,7 +27,7 @@ export function AppBar() {
         {theme.id === 'guerreiro' ? (
           <img
             className="appbar__guerreiro"
-            src={`${import.meta.env.BASE_URL}guerreiro-wordmark.png`}
+            src={`${import.meta.env.BASE_URL}guerreiro-logo.png`}
             alt="Guerreiro Personal Trainer"
             decoding="async"
           />
