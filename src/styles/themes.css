@@ -395,7 +395,13 @@
 }
 
 :root[data-theme='guerreiro'] .appbar {
-  height: calc(64px + var(--safe-top));
+  height: calc(58px + var(--safe-top));
+}
+
+/* A barra de baixo leva o rebordo verde suave dos cartões da marca: a flutuar
+   sobre cartões escuros de contorno cinzento, confundia-se com eles. */
+:root[data-theme='guerreiro'] .tabbar {
+  border-color: var(--brand-line);
 }
 
 :root[data-look='arena'] .tabbar__item.is-on {

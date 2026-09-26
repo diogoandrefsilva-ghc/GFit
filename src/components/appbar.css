@@ -37,9 +37,10 @@
 
 /* O logótipo do Guerreiro: branco e verde sobre transparente, para o fundo
    escuro da barra. A largura é que manda, para caber ao lado do avatar em
-   qualquer telemóvel; a 292 px de largura o "personal trainer" ainda se lê. */
+   qualquer telemóvel. A 292 px enchia a barra de ponta a ponta; a 232 px o
+   "personal trainer" ainda se lê. */
 .appbar__guerreiro {
   display: block;
-  width: min(292px, calc(100vw - 104px));
+  width: min(232px, calc(100vw - 104px));
   height: auto;
 }
