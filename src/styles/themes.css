@@ -395,7 +395,7 @@
 }
 
 :root[data-theme='guerreiro'] .appbar {
-  height: calc(64px + var(--safe-top));
+  height: calc(58px + var(--safe-top));
 }
 
 :root[data-look='arena'] .tabbar__item.is-on {
