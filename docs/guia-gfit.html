@@ -206,18 +206,44 @@ h4 { font: 700 1rem/1.3 var(--body); margin: 0; }
   .loop__arrow { justify-self: center; transform: rotate(90deg); }
 }
 
-/* ── navegação ─────────────────────────────────────────── */
+/* ── navegação: resumo ou guia completo ────────────────── */
 .nav {
   position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
   background: color-mix(in srgb, var(--bg) 92%, transparent);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   border-block: 1px solid var(--line);
 }
+.nav__in { display: flex; align-items: center; gap: 8px 14px; padding-block: 8px; }
+.modes {
+  display: flex; flex: none;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+}
+.modes button {
+  font: 700 0.88rem/1 var(--body);
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.modes button[aria-selected="true"] { background: var(--ink); color: var(--bg); }
 .nav__list {
   display: flex; gap: 6px;
+  flex: 1 1 auto; min-width: 0;
   overflow-x: auto; scrollbar-width: none;
-  padding-block: 10px;
+  padding-block: 2px;
   list-style: none;
+}
+.page[data-mode="resumo"] .nav__list { display: none; }
+@media (max-width: 760px) {
+  html { scroll-padding-top: 118px; }
+  .nav__in { flex-wrap: wrap; }
+  .nav__list { flex-basis: 100%; }
 }
 .nav__list::-webkit-scrollbar { display: none; }
 .nav a {
@@ -393,6 +419,50 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
   color: var(--muted); font-size: 0.85rem;
 }
 
+/* ── o resumo ──────────────────────────────────────────── */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.gallery .shot { align-content: start; }
+.gallery .stage { padding: 20px 12px; }
+@media (max-width: 960px) {
+  .gallery {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 8px;
+  }
+  .gallery .shot { flex: 0 0 min(300px, 84%); scroll-snap-align: start; }
+}
+.map { list-style: none; display: grid; }
+.map li {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
+  gap: 4px 16px;
+  padding-block: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 0.93rem;
+}
+.map li:first-child { border-top: 0; padding-top: 2px; }
+.map b { color: var(--ink); }
+.map span { color: var(--ink-2); line-height: 1.75; }
+@media (max-width: 520px) { .map li { grid-template-columns: 1fr; } }
+.cards--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1000px) { .cards--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .cards--4 { grid-template-columns: 1fr; } }
+.cards--4 .card p { font-size: 0.92rem; }
+.more {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px;
+  padding: 20px 22px;
+  border-radius: 16px;
+  background: var(--brand-soft);
+  border: 1px solid var(--brand-line);
+}
+.more p { color: var(--ink); }
+.more .btn { cursor: pointer; }
+
 /* ── os telemóveis ─────────────────────────────────────────
    Cada tema da app dá valores próprios às mesmas variáveis. O Guerreiro é o
    que vem por omissão nas ilustrações. */
@@ -498,13 +568,30 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
 }
 .ph-batt { width: 20px; height: 9px; border: 1.3px solid currentColor; border-radius: 3px; position: relative; opacity: 0.8; }
 .ph-batt::after { content: ""; position: absolute; inset: 1.2px 5px 1.2px 1.2px; background: currentColor; border-radius: 1px; }
+/* A barra de cima, como em cada tema: no Guerreiro leva o logótipo do
+   Guerreiro Personal Trainer e cresce para ele se ler; no Papel é a cinta
+   preta; no Caderno e na Arena é o próprio ecrã, com uma linha por baixo. */
 .ph-bar {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 6px 12px 7px;
+  padding: 9px 12px 9px;
   border-bottom: 1px solid var(--p-line);
 }
-.ph-brand { display: flex; align-items: center; gap: 6px; font: 800 13px/1 var(--p-display); letter-spacing: 0.02em; text-transform: var(--p-upper); }
+.ph-brand { display: flex; align-items: center; gap: 6px; font: 800 14px/1 'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing: 0.04em; text-transform: uppercase; }
 .ph-brand .logo { width: 20px; height: 20px; border-radius: 5px; }
+.ph-guerreiro {
+  display: block;
+  width: 152px;
+  aspect-ratio: 990 / 156;
+  background: url("data:image/png;base64,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") left center / contain no-repeat;
+}
+.page[data-skin="guerreiro"] .ph-brand .logo,
+.page[data-skin="guerreiro"] .ph-word { display: none; }
+.page:not([data-skin="guerreiro"]) .ph-guerreiro { display: none; }
+.page:not([data-skin="guerreiro"]) .ph-bar { padding: 7px 12px 7px; }
+[data-skin="papel"] .ph-bar { background: var(--p-ink); color: var(--p-paper); border-bottom-color: var(--p-ink); }
+[data-skin="papel"] .ph-status:has(+ .ph-bar) { background: var(--p-ink); color: var(--p-paper); }
+[data-skin="papel"] .ph-brand { font: 800 15px/1 'Archivo', system-ui, sans-serif; letter-spacing: -0.02em; text-transform: none; }
+[data-skin="caderno"] .ph-brand { font: 400 17px/1 'Instrument Serif', Georgia, serif; letter-spacing: 0; text-transform: none; }
 .ph-av {
   width: 24px; height: 24px; flex: none;
   border-radius: 50%;
@@ -704,17 +791,40 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
 .ph-welcome p b { color: var(--p-ink); }
 .ph-welcome .ph-btn { width: 100%; }
 
+/* A barra de separadores. No Guerreiro e na Arena flutua, com uma pastilha
+   por trás do ícone de onde se está (e o rebordo verde no Guerreiro); no
+   Caderno é uma pílula de tinta com o separador a dourado; no Papel fica
+   presa ao fundo, com o traço dourado por cima do ícone. */
 .ph-tabs {
   display: grid; grid-template-columns: repeat(6, 1fr);
-  border-top: 1px solid var(--p-line);
-  background: var(--p-surface);
-  padding: 6px 3px 12px;
   column-gap: 2px;
-  margin-top: auto;
+  margin: auto 7px 9px;
+  padding: 6px 3px;
+  border-radius: 17px;
+  background: rgba(21, 21, 21, 0.94);
+  border: 1px solid var(--p-brand-line);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
 }
-.ph-tabs span { display: grid; justify-items: center; gap: 2px; font-size: 7.2px; font-weight: 600; letter-spacing: -0.01em; color: var(--p-muted); min-width: 0; overflow: hidden; }
-.ph-tabs svg { width: 15px; height: 15px; }
+.ph-tabs span { display: grid; justify-items: center; gap: 2px; font-size: 7.2px; font-weight: 600; letter-spacing: -0.03em; color: var(--p-muted); min-width: 0; overflow: hidden; }
+.ph-tabs svg { width: 15px; height: 15px; padding: 1px 6px; border-radius: 8px; box-sizing: content-box; }
 .ph-tabs .on { color: var(--p-brand-text); }
+.ph-tabs .on svg { background: var(--p-brand-soft); }
+[data-skin="arena"] .ph-tabs { background: rgba(26, 24, 19, 0.94); border-color: var(--p-line); }
+[data-skin="caderno"] .ph-tabs { background: #141310; border-color: #141310; }
+[data-skin="caderno"] .ph-tabs span { color: #bdb8ac; padding-block: 2px; border-radius: 11px; }
+[data-skin="caderno"] .ph-tabs .on { background: var(--p-brand); color: var(--p-brand-ink); }
+[data-skin="caderno"] .ph-tabs .on svg { background: none; }
+[data-skin="papel"] .ph-tabs {
+  margin: auto 0 0;
+  padding: 6px 3px 12px;
+  border-radius: 0;
+  border-width: 1px 0 0;
+  border-color: var(--p-line);
+  background: rgba(244, 241, 236, 0.94);
+  box-shadow: none;
+}
+[data-skin="papel"] .ph-tabs .on { color: var(--p-ink); }
+[data-skin="papel"] .ph-tabs .on svg { background: none; box-shadow: 0 -3px 0 -1px var(--p-brand); border-radius: 0; padding: 1px 0; }
 </style>
 </head>
 <body>
@@ -744,7 +854,7 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
   </defs>
 </svg>
 
-<div class="page" id="page" data-skin="guerreiro">
+<div class="page" id="page" data-skin="guerreiro" data-mode="resumo">
 
 <header class="wrap hero">
   <div class="hero__brand">
@@ -752,7 +862,7 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
     <span class="eyebrow">GFit · guia para o treinador</span>
   </div>
   <h1>Como funciona<br>a GFit</h1>
-  <p class="hero__lead">A GFit substitui a planilha de Excel. Tu escreves os planos de treino, as dietas e as metas. O aluno recebe-os no telemóvel e regista o que faz, e tudo o que ele regista volta para ti. Este guia mostra os ecrãs dos dois lados, o que podes fazer em cada um e por onde começar.</p>
+  <p class="hero__lead">A GFit substitui a planilha de Excel. Tu escreves os planos de treino, as dietas e as metas. O aluno recebe-os no telemóvel e regista o que faz, e tudo o que ele regista volta para ti. Este guia mostra os ecrãs dos dois lados, o que podes fazer em cada um e por onde começar. O <b>Resumo</b> lê-se em cinco minutos; o <b>Guia completo</b> vai ecrã a ecrã.</p>
 
   <div class="app-link">
     <span class="app-link__label">A app está em</span>
@@ -782,24 +892,30 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
   </div>
 </header>
 
-<nav class="nav" aria-label="Secções do guia">
-  <ul class="wrap nav__list">
-    <li><a href="#comecar">Começar</a></li>
-    <li><a href="#treinador">Os teus ecrãs</a></li>
-    <li><a href="#planos">Plano e dieta</a></li>
-    <li><a href="#aluno">O lado do aluno</a></li>
-    <li><a href="#ligacoes">O que chega a quem</a></li>
-    <li><a href="#auto-treino">Auto-treino</a></li>
-    <li><a href="#rotina">A tua rotina</a></li>
-    <li><a href="#bom-saber">Bom saber</a></li>
-  </ul>
+<nav class="nav" aria-label="Guia">
+  <div class="wrap nav__in">
+    <div class="modes" role="tablist" aria-label="Como ler o guia">
+      <button type="button" role="tab" id="tab-resumo" aria-controls="resumo" aria-selected="true" data-mode-pick="resumo">Resumo</button>
+      <button type="button" role="tab" id="tab-completo" aria-controls="completo" aria-selected="false" tabindex="-1" data-mode-pick="completo">Guia completo</button>
+    </div>
+    <ul class="nav__list" aria-label="Secções do guia completo">
+      <li><a href="#comecar">Começar</a></li>
+      <li><a href="#treinador">Os teus ecrãs</a></li>
+      <li><a href="#planos">Plano e dieta</a></li>
+      <li><a href="#aluno">O lado do aluno</a></li>
+      <li><a href="#ligacoes">O que chega a quem</a></li>
+      <li><a href="#auto-treino">Auto-treino</a></li>
+      <li><a href="#rotina">A tua rotina</a></li>
+      <li><a href="#bom-saber">Bom saber</a></li>
+    </ul>
+  </div>
 </nav>
 
 <main>
 
 <div class="wrap">
   <div class="skins">
-    <p>Os ecrãs deste guia são ilustrações, com nomes e números de exemplo. Estão no tema Guerreiro; podes vê-los nos outros temas da app.</p>
+    <p>Os ecrãs deste guia são ilustrações, com nomes e números de exemplo. Estão no tema Guerreiro, o que tu e os teus alunos veem ao abrir a app, com o teu logótipo na barra de cima. Podes vê-los nos outros temas.</p>
     <div class="skins__options" role="group" aria-label="Tema das ilustrações">
       <button type="button" data-skin-pick="guerreiro" aria-pressed="true"><i class="swatch" style="background:linear-gradient(135deg,#0a0a0a 55%,#7ee04e 55%)"></i>Guerreiro</button>
       <button type="button" data-skin-pick="arena" aria-pressed="false"><i class="swatch" style="background:linear-gradient(135deg,#0c0b09 55%,#e3b04b 55%)"></i>Arena</button>
@@ -808,6 +924,113 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
     </div>
   </div>
 </div>
+
+<!-- ═══════════════════════ RESUMO ═══════════════════════ -->
+<div id="resumo" role="tabpanel" aria-labelledby="tab-resumo">
+
+<section class="wrap section" id="resumo-ecras">
+  <div class="section__head">
+    <span class="eyebrow">Resumo · cinco minutos</span>
+    <h2>Os três ecrãs que mais vais ver</h2>
+    <p>O teu Início, o editor onde escreves o plano, e o Hoje do aluno, onde ele regista o dia e começa o treino que lhe marcaste.</p>
+  </div>
+  <div class="gallery">
+    <figure class="shot">
+      <div class="stage" data-clone="inicio"></div>
+      <figcaption><b>O teu Início.</b> Quem precisa de ti, os treinos da semana e quem registou hoje.</figcaption>
+    </figure>
+    <figure class="shot">
+      <div class="stage" data-clone="editor"></div>
+      <figcaption><b>O editor de planos.</b> Treinos A, B, C, exercícios da base, e Publicar ao aluno.</figcaption>
+    </figure>
+    <figure class="shot">
+      <div class="stage" data-clone="hoje"></div>
+      <figcaption><b>O Hoje do aluno.</b> O treino marcado, o registo do dia e a tua nota.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="wrap section" id="resumo-onde">
+  <div class="section__head">
+    <span class="eyebrow">Onde está cada coisa</span>
+    <h2>Queres fazer isto? Vai aqui</h2>
+    <p>Duas regras para ter sempre presentes: o aluno só vê o que publicas (os rascunhos são só teus), e o plano diz o que se faz, enquanto o calendário diz quando.</p>
+  </div>
+  <div class="cards">
+    <div class="card">
+      <span class="when">Tu</span>
+      <ul class="map">
+        <li><b>Convidar um aluno</b><span><span class="ui">Perfil</span> → <span class="ui">Convidar</span> → <span class="ui">Criar convite</span> → <span class="ui">Enviar convite</span></span></li>
+        <li><b>Preencher a ficha e as metas</b><span><span class="ui">Alunos</span> → o aluno → <span class="ui">Resumo</span> e <span class="ui">Metas</span></span></li>
+        <li><b>Escrever o plano de treino</b><span>Ficha → <span class="ui">Planos</span> → <span class="ui">+ Novo plano</span> → <span class="ui">Publicar ao aluno</span></span></li>
+        <li><b>Marcar os dias de treino</b><span>No plano já publicado: escolhe o treino e toca nos dias. <span class="ui">⟳</span> repete a semana.</span></li>
+        <li><b>Montar a dieta</b><span>Ficha → <span class="ui">Planos</span> → <span class="ui">+ Nova dieta</span> → <span class="ui">Publicar ao aluno</span></span></li>
+        <li><b>Ver quem precisa de ti</b><span><span class="ui">Início</span> → <span class="ui">A precisar de ti</span></span></li>
+        <li><b>Responder ao feedback</b><span>Ficha → <span class="ui">Feedback semanal</span> → <span class="ui">Responder</span></span></li>
+        <li><b>Deixar uma nota ao aluno</b><span>Ficha → <span class="ui">Notas e conselhos</span>. Aparece no Hoje dele.</span></li>
+        <li><b>Ver a semana de todos</b><span><span class="ui">Calendário</span></span></li>
+        <li><b>Treinar tu</b><span><span class="ui">Eu</span>: o teu Hoje, Treino, Medidas e Ficha e metas</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="when">O aluno</span>
+      <ul class="map">
+        <li><b>Registar o dia</b><span><span class="ui">Hoje</span>: peso, passos, sono e como se sente (energia, fome, stress)</span></li>
+        <li><b>Fazer o treino marcado</b><span><span class="ui">Hoje</span> → <span class="ui">Começar treino</span></span></li>
+        <li><b>Registar cada série</b><span>Dentro do treino: carga, repetições e reps em reserva, com a última vez ao lado</span></li>
+        <li><b>Treinos por tempo</b><span>A app conduz, com temporizador e sinal sonoro</span></li>
+        <li><b>Ver a semana de treinos</b><span><span class="ui">Treino</span></span></li>
+        <li><b>Seguir a dieta</b><span><span class="ui">Dieta</span>, e <span class="ui">Cumpri o plano</span> no fim do dia</span></li>
+        <li><b>Registar perímetros</b><span><span class="ui">Medidas</span> → <span class="ui">+ Novo registo</span></span></li>
+        <li><b>Enviar o feedback da semana</b><span><span class="ui">Semana</span> → <span class="ui">Enviar ao treinador</span></span></li>
+        <li><b>Escrever um treino seu</b><span><span class="ui">Treino</span> → <span class="ui">Escritos por mim</span></span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="wrap section" id="resumo-auto">
+  <div class="section__head">
+    <span class="eyebrow">Auto-treino</span>
+    <h2>Quem escreve o seu próprio treino</h2>
+  </div>
+  <div class="cards cards--3">
+    <div class="card">
+      <h4>Quem entra sem convite</h4>
+      <p>Pode esperar pelo teu convite ou carregar em <span class="ui">Treinar por minha conta</span>. Escreve o plano, marca os dias e define as metas. Se o convidares depois, fica ligado a ti com tudo o que já registou.</p>
+    </div>
+    <div class="card">
+      <h4>Um aluno teu</h4>
+      <p>Pode escrever treinos seus, além do teu plano. Vês-os na ficha com a marca <span class="ui">auto-treino</span>, só para leitura, e no Calendário com a marca <b>auto</b>. As metas continuam a ser tuas.</p>
+    </div>
+    <div class="card">
+      <h4>Tu</h4>
+      <p>O separador <b>Eu</b> é o teu lado de aluno, com os mesmos ecrãs que os alunos usam. O cartão <span class="ui">O teu treino</span>, no fim do Início, lembra-te o que te falta registar.</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap section" id="resumo-rotina">
+  <div class="section__head">
+    <span class="eyebrow">O que deves fazer</span>
+    <h2>A tua rotina</h2>
+  </div>
+  <div class="cards cards--4">
+    <div class="card"><span class="when">Todos os dias</span><p>Abre o Início e toca em quem está em A precisar de ti. Regista o teu dia.</p></div>
+    <div class="card"><span class="when">Ao fim da semana</span><p>Responde aos feedbacks por ler e vê no Calendário o que ficou em falta.</p></div>
+    <div class="card"><span class="when">No fim do bloco</span><p>Quando aparecer Planos a acabar, escreve o seguinte, publica-o e marca os dias.</p></div>
+    <div class="card"><span class="when">Aluno novo</span><p>Convite, ficha e metas, plano e dieta publicados, dias marcados.</p></div>
+  </div>
+  <div class="more" style="margin-top:28px">
+    <p><b>Queres ver cada ecrã em pormenor?</b> O guia completo explica tudo, passo a passo.</p>
+    <button type="button" class="btn btn--accent" data-mode-pick="completo">Abrir o guia completo →</button>
+  </div>
+</section>
+
+</div>
+
+<!-- ═══════════════════════ GUIA COMPLETO ═══════════════════════ -->
+<div id="completo" role="tabpanel" aria-labelledby="tab-completo" hidden>
 
 <!-- ═══════════════════════ COMEÇAR ═══════════════════════ -->
 <section class="wrap section" id="comecar">
@@ -823,7 +1046,7 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
         <div class="phone" role="img" aria-label="Ilustração do cartão Convidar, no Perfil">
           <div class="phone-in">
             <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
-            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i>GFit</span><span class="ph-av">T</span></div>
+            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i><span class="ph-word">GFit</span><i class="ph-guerreiro" role="img" aria-label="Guerreiro Personal Trainer"></i></span><span class="ph-av">FG</span></div>
             <div class="ph-body">
               <div class="ph-head"><span class="ph-back">←</span><strong class="ph-title">Perfil</strong></div>
               <div class="ph-card">
@@ -898,12 +1121,12 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
   <div class="screen-row" style="margin-top:28px">
     <figure class="shot">
       <div class="stage">
-        <div class="phone" role="img" aria-label="Ilustração do ecrã Início do treinador">
+        <div class="phone" role="img" aria-label="Ilustração do ecrã Início do treinador" data-phone="inicio">
           <div class="phone-in">
             <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
-            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i>GFit</span><span class="ph-av">T</span></div>
+            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i><span class="ph-word">GFit</span><i class="ph-guerreiro" role="img" aria-label="Guerreiro Personal Trainer"></i></span><span class="ph-av">FG</span></div>
             <div class="ph-body">
-              <div class="ph-head"><span class="ph-eyebrow">Sábado, 26 set</span><strong class="ph-title">Olá, Treinador</strong></div>
+              <div class="ph-head"><span class="ph-eyebrow">Sábado, 26 set</span><strong class="ph-title">Olá, Filipe</strong></div>
               <div class="ph-tiles">
                 <span class="ph-tile"><em>Alunos<i>›</i></em><b>12</b><small>activos</small></span>
                 <span class="ph-tile warn"><em>A precisar<i>›</i></em><b>3</b><small>de ti</small></span>
@@ -979,7 +1202,7 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
         <div class="phone" role="img" aria-label="Ilustração da lista de alunos">
           <div class="phone-in">
             <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
-            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i>GFit</span><span class="ph-av">T</span></div>
+            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i><span class="ph-word">GFit</span><i class="ph-guerreiro" role="img" aria-label="Guerreiro Personal Trainer"></i></span><span class="ph-av">FG</span></div>
             <div class="ph-body">
               <div class="ph-head"><strong class="ph-title">Alunos</strong><span class="ph-sub">12 alunos activos · 3 precisam de ti</span></div>
               <div class="ph-row"><span class="ph-chip">A precisar (3)</span><span class="ph-chip on">Todos (12)</span><span class="ph-chip">Em pausa</span><span class="ph-chip brand">+ Aluno</span></div>
@@ -1029,7 +1252,7 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
         <div class="phone" role="img" aria-label="Ilustração da ficha de uma aluna, separador Resumo">
           <div class="phone-in">
             <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
-            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i>GFit</span><span class="ph-av">T</span></div>
+            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i><span class="ph-word">GFit</span><i class="ph-guerreiro" role="img" aria-label="Guerreiro Personal Trainer"></i></span><span class="ph-av">FG</span></div>
             <div class="ph-body">
               <div class="ph-cardhead">
                 <div class="ph-head"><span class="ph-back">←</span><span class="ph-eyebrow">ana.ribeiro@exemplo.pt</span><strong class="ph-title">Ana Ribeiro</strong></div>
@@ -1100,7 +1323,7 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
         <div class="phone" role="img" aria-label="Ilustração do calendário do treinador">
           <div class="phone-in">
             <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
-            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i>GFit</span><span class="ph-av">T</span></div>
+            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i><span class="ph-word">GFit</span><i class="ph-guerreiro" role="img" aria-label="Guerreiro Personal Trainer"></i></span><span class="ph-av">FG</span></div>
             <div class="ph-body">
               <div class="ph-head"><strong class="ph-title">Calendário</strong><span class="ph-sub">5 de 9 treinos marcados feitos</span></div>
               <div class="ph-weeknav"><i>‹</i><span>21 set – 27 set</span><i>›</i></div>
@@ -1110,7 +1333,7 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
                 <li><span class="ph-date"><em>ter</em><strong>22</strong></span><div><span class="ph-slot"><span class="ph-av">TC</span><span><b>Tiago Costa</b><em>B · Puxar · 6 exercícios</em></span><span class="ph-chip">em falta</span></span></div></li>
                 <li><span class="ph-date"><em>qua</em><strong>23</strong></span><div><span class="ph-slot"><span class="ph-av">IS</span><span><b>Inês Santos · auto</b><em>A · Full body · 5 exercícios</em></span><span class="ph-chip good">feito</span></span></div></li>
                 <li><span class="ph-date"><em>qui</em><strong>24</strong></span><div><span class="ph-rest">sem treinos</span></div></li>
-                <li class="today"><span class="ph-date"><em>sáb</em><strong>26</strong></span><div><span class="ph-slot"><span class="ph-av">AR</span><span><b>Ana Ribeiro</b><em>C · Pernas · 6 exercícios</em></span><span class="ph-chip brand">a meio</span></span><span class="ph-slot"><span class="ph-av">T</span><span><b>Eu</b><em>B · Costas · 5 exercícios</em></span></span></div></li>
+                <li class="today"><span class="ph-date"><em>sáb</em><strong>26</strong></span><div><span class="ph-slot"><span class="ph-av">AR</span><span><b>Ana Ribeiro</b><em>C · Pernas · 6 exercícios</em></span><span class="ph-chip brand">a meio</span></span><span class="ph-slot"><span class="ph-av">FG</span><span><b>Eu</b><em>B · Costas · 5 exercícios</em></span></span></div></li>
               </ul>
             </div>
             <div class="ph-tabs">
@@ -1175,7 +1398,7 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
   <div class="screen-row">
     <figure class="shot">
       <div class="stage">
-        <div class="phone" role="img" aria-label="Ilustração do editor de planos">
+        <div class="phone" role="img" aria-label="Ilustração do editor de planos" data-phone="editor">
           <div class="phone-in">
             <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
             <div class="ph-body">
@@ -1284,10 +1507,10 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
   <div class="screen-row" style="margin-top:28px">
     <figure class="shot">
       <div class="stage">
-        <div class="phone" role="img" aria-label="Ilustração do ecrã Hoje do aluno">
+        <div class="phone" role="img" aria-label="Ilustração do ecrã Hoje do aluno" data-phone="hoje">
           <div class="phone-in">
             <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
-            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i>GFit</span><span class="ph-av">AR</span></div>
+            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i><span class="ph-word">GFit</span><i class="ph-guerreiro" role="img" aria-label="Guerreiro Personal Trainer"></i></span><span class="ph-av">AR</span></div>
             <div class="ph-body">
               <div class="ph-head"><span class="ph-eyebrow">Semana 3 de 4 · Hipertrofia</span><strong class="ph-title">Sábado, 26 set</strong></div>
               <div class="ph-card brand">
@@ -1305,7 +1528,7 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
                 <span class="ph-regcard wide"><em>Registar medidas <i>›</i></em><small class="hint">perímetros · há 2 semanas</small></span>
               </div>
               <div class="ph-card brand">
-                <div class="ph-cardhead" style="justify-content:flex-start;gap:7px"><span class="ph-av">T</span><span class="ph-eyebrow brand">Nota do treinador</span></div>
+                <div class="ph-cardhead" style="justify-content:flex-start;gap:7px"><span class="ph-av">FG</span><span class="ph-eyebrow brand">Nota do treinador</span></div>
                 <p class="ph-small">Hoje sobe 2,5 kg no agachamento. Se o joelho incomodar, avisa-me.</p>
               </div>
             </div>
@@ -1438,7 +1661,7 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
         <div class="phone" role="img" aria-label="Ilustração do feedback semanal">
           <div class="phone-in">
             <div class="ph-status"><span>9:41</span><i class="ph-batt"></i></div>
-            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i>GFit</span><span class="ph-av">AR</span></div>
+            <div class="ph-bar"><span class="ph-brand"><i class="logo"></i><span class="ph-word">GFit</span><i class="ph-guerreiro" role="img" aria-label="Guerreiro Personal Trainer"></i></span><span class="ph-av">AR</span></div>
             <div class="ph-body">
               <div class="ph-head"><span class="ph-eyebrow">Semana 3</span><strong class="ph-title">Feedback da semana</strong><span class="ph-sub">21 set a 27 set</span></div>
               <div class="ph-card">
@@ -1668,7 +1891,7 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
     </div>
     <div class="card">
       <h4>Os temas</h4>
-      <p>Perfil → Tema muda a cara da app inteira. A escolha fica em cada telemóvel. Cada treinador pode ter um tema da casa, que é o que ele e os seus alunos veem até escolherem outro.</p>
+      <p>Perfil → Tema muda a cara da app inteira, e a escolha fica em cada telemóvel. O teu tema da casa é o Guerreiro, com o teu logótipo: é o que tu e os teus alunos veem até alguém escolher outro.</p>
       <div class="themes" aria-label="Os quatro temas">
         <span class="theme-chip"><i><span style="background:#f4f1ec"></span><span style="background:#ffffff"></span><span style="background:#e3b04b"></span></i>Papel</span>
         <span class="theme-chip"><i><span style="background:#fbfaf6"></span><span style="background:#141310"></span><span style="background:#e3b04b"></span></i>Caderno</span>
@@ -1687,6 +1910,8 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
   </div>
 </section>
 
+</div>
+
 </main>
 
 <footer class="wrap foot">
@@ -1699,6 +1924,88 @@ table.t { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
 <script>
 (function () {
   var page = document.getElementById('page');
+
+  // O resumo mostra três dos telemóveis do guia completo. Copiam-se daqui,
+  // para cada ilustração só estar escrita uma vez no ficheiro.
+  Array.prototype.forEach.call(document.querySelectorAll('[data-clone]'), function (slot) {
+    var source = document.querySelector('.phone[data-phone="' + slot.getAttribute('data-clone') + '"]');
+    if (source) {
+      var copy = source.cloneNode(true);
+      copy.removeAttribute('data-phone');
+      slot.appendChild(copy);
+    }
+  });
+
+  // Resumo ou guia completo. O modo fica no endereço (#resumo, #completo),
+  // e um link para uma secção do guia completo abre-o antes de lá chegar.
+  var panels = { resumo: document.getElementById('resumo'), completo: document.getElementById('completo') };
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  var nav = document.querySelector('.nav');
+  var main = document.querySelector('main');
+
+  function showMode(mode) {
+    page.setAttribute('data-mode', mode);
+    Object.keys(panels).forEach(function (key) { panels[key].hidden = key !== mode; });
+    tabs.forEach(function (tab) {
+      var on = tab.getAttribute('data-mode-pick') === mode;
+      tab.setAttribute('aria-selected', String(on));
+      tab.tabIndex = on ? 0 : -1;
+    });
+  }
+
+  function backToStart() {
+    var y = main.getBoundingClientRect().top + window.scrollY - nav.offsetHeight - 8;
+    if (window.scrollY > y) window.scrollTo(0, y);
+  }
+
+  function pick(mode) {
+    showMode(mode);
+    backToStart();
+    try { history.replaceState(null, '', '#' + mode); } catch (error) { /* ignora */ }
+  }
+
+  function modeFor(hash) {
+    var id = (hash || '').replace(/^#/, '');
+    if (!id) return null;
+    if (panels[id]) return id;
+    var target = document.getElementById(id);
+    if (target && panels.completo.contains(target)) return 'completo';
+    if (target && panels.resumo.contains(target)) return 'resumo';
+    return null;
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-mode-pick]'), function (button) {
+    button.addEventListener('click', function () { pick(button.getAttribute('data-mode-pick')); });
+  });
+
+  tabs.forEach(function (tab, index) {
+    tab.addEventListener('keydown', function (event) {
+      if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+      var next = tabs[(index + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+      next.focus();
+      pick(next.getAttribute('data-mode-pick'));
+    });
+  });
+
+  // Um link interno para o outro modo muda de modo antes de o browser saltar.
+  document.addEventListener('click', function (event) {
+    var link = event.target.closest && event.target.closest('a[href^="#"]');
+    if (!link) return;
+    var mode = modeFor(link.getAttribute('href'));
+    if (mode && page.getAttribute('data-mode') !== mode) showMode(mode);
+  }, true);
+
+  var initial = modeFor(window.location.hash);
+  if (initial) {
+    showMode(initial);
+    var start = document.getElementById(window.location.hash.slice(1));
+    if (start && !panels[start.id]) start.scrollIntoView();
+  }
+  window.addEventListener('hashchange', function () {
+    var mode = modeFor(window.location.hash);
+    if (mode) showMode(mode);
+  });
+
   var buttons = Array.prototype.slice.call(document.querySelectorAll('[data-skin-pick]'));
   var skins = ['guerreiro', 'arena', 'papel', 'caderno'];
 
