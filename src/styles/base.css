@@ -258,6 +258,12 @@ ul {
   border-radius: var(--radius-sm);
 }
 
+/* O que apaga: discreto, mas na cor de quem avisa. */
+.btn--danger {
+  color: var(--warn);
+}
+
+
 /* ── formulários ───────────────────────────────────────── */
 
 .field {
@@ -365,6 +371,12 @@ ul {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
 }
 
 /* ── etiquetas ─────────────────────────────────────────── */
@@ -542,4 +554,10 @@ ul {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* "Apagar plano", no fim dos editores: longe do "Publicar", ao centro. */
+.plan__delete {
+  align-self: center;
+  margin-top: 4px;
 }

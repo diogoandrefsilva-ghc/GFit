@@ -6,7 +6,9 @@ import { Loading, ScreenHeader } from '@/components/Screen'
 import { Stepper } from '@/components/Stepper'
 import { TimedSession } from '@/athlete/TimedSession'
 import { VideoModal } from '@/components/VideoModal'
+import { WorkoutList } from '@/athlete/WorkoutList'
 import {
+  deleteSet,
   fetchActivePlan,
   fetchAthleteProfile,
   fetchMuscles,
@@ -20,7 +22,7 @@ import {
 import { weeklyVolume } from '@/lib/calc'
 import { hasPlayableVideo } from '@/lib/video'
 import { workoutsPath } from '@/lib/routes'
-import { isTimedWorkout } from '@/lib/workout'
+import { exerciseName, isTimedWorkout } from '@/lib/workout'
 import { supabase } from '@/lib/supabase'
 import { unwrap, useQuery } from '@/lib/useQuery'
 import { clock, num, plural, repRange, restLabel, signed, titleCase } from '@/lib/format'
@@ -87,7 +89,8 @@ export function WorkoutSession() {
     return { session, plan, day, exercises, sets, muscles, ficha }
   })
 
-  const [index, setIndex] = useState(0)
+  /** O exercício aberto, ou `null` para o resumo — que é por onde se entra. */
+  const [view, setView] = useState<number | null>(null)
   const [logged, setLogged] = useState<SetLog[]>([])
   const [elapsed, setElapsed] = useState(0)
   /** O treino acabado: fica no ecrã em vez de saltar logo para a lista. */
@@ -199,9 +202,7 @@ export function WorkoutSession() {
     )
   }
 
-  const current = exercises[index]
-
-  if (!current || !day) {
+  if (exercises.length === 0 || !day) {
     return (
       <div className="screen screen--plain">
         <ScreenHeader title="Treino sem exercícios" back />
@@ -209,8 +210,110 @@ export function WorkoutSession() {
     )
   }
 
+  const library = plan?.library ?? new Map<string, Exercise>()
+  const circuit = day.flow === 'circuit'
+  const done = countByExercise(logged)
   const totalSets = exercises.reduce((sum, item) => sum + item.sets, 0)
   const doneSets = logged.length
+  const upNext = nextExercise(exercises, done, circuit)
+  const title = `Treino ${day.label}${day.title ? ` · ${day.title}` : ''}`
+
+  async function finish() {
+    const missing = totalSets - doneSets
+    if (
+      missing > 0 &&
+      !window.confirm(
+        `Ainda ${missing === 1 ? 'falta 1 série' : `faltam ${missing} séries`}. Terminar o treino assim?`,
+      )
+    )
+      return
+    await finishSession(session.id, session.started_at)
+    setFinished({
+      volume: volumeDone(exercises, library, done),
+      sets: logged.length,
+      seconds: elapsed,
+    })
+  }
+
+  // ── o resumo: a lista do treino, com o que já está feito ─────────────
+  if (view === null) {
+    const round = circuit ? circuitRound(exercises, done) : null
+    return (
+      <div className="app">
+        <div className="screen screen--plain session">
+          <header className="session__top">
+            <button
+              type="button"
+              className="screen-head__back"
+              onClick={() => navigate(workouts)}
+              aria-label="Sair do treino"
+            >
+              ←
+            </button>
+            <div className="session__top-text">
+              <strong>{title}</strong>
+              <span className="muted">
+                {doneSets}/{totalSets} séries
+                {round ? ` · volta ${round.current} de ${round.total}` : ''}
+              </span>
+            </div>
+            <span className="session__clock">{clock(elapsed)}</span>
+          </header>
+
+          {circuit && (
+            <p className="session__mode">
+              Em circuito: uma série de cada exercício e volta ao primeiro. Ao
+              guardar uma série a app passa ao exercício seguinte.
+            </p>
+          )}
+
+          <WorkoutList
+            day={day}
+            exercises={exercises}
+            library={library}
+            done={done}
+            current={upNext}
+            onOpen={setView}
+          />
+
+          {upNext !== null && (
+            <button
+              type="button"
+              className="btn btn--primary btn--block"
+              onClick={() => setView(upNext)}
+            >
+              {doneSets === 0 ? 'Começar' : 'Continuar'}:{' '}
+              {exerciseName(exercises[upNext], library)}
+            </button>
+          )}
+
+          {/* Um treino já terminado reabre-se para corrigir uma série; terminá-lo
+              outra vez contava a duração desde o início, dias depois. */}
+          {session.status === 'done' ? (
+            <button
+              type="button"
+              className="btn btn--quiet btn--block"
+              onClick={() => navigate(workouts)}
+            >
+              Voltar aos treinos
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={`btn btn--block ${upNext === null ? 'btn--accent' : 'btn--quiet'}`}
+              onClick={finish}
+            >
+              Terminar treino
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // ── um exercício ─────────────────────────────────────────────────────
+  const index = Math.min(view, exercises.length - 1)
+  const current = exercises[index]
 
   return (
     <div className="app">
@@ -219,16 +322,13 @@ export function WorkoutSession() {
           <button
             type="button"
             className="screen-head__back"
-            onClick={() => navigate(workouts)}
-            aria-label="Sair do treino"
+            onClick={() => setView(null)}
+            aria-label="Voltar ao resumo do treino"
           >
             ←
           </button>
           <div className="session__top-text">
-            <strong>
-              Treino {day.label}
-              {day.title ? ` · ${day.title}` : ''}
-            </strong>
+            <strong>{title}</strong>
             <span className="muted">
               Exercício {index + 1} de {exercises.length} · {doneSets}/{totalSets} séries
             </span>
@@ -241,25 +341,20 @@ export function WorkoutSession() {
           athleteId={profile.id}
           sessionId={session.id}
           planExercise={current}
-          name={titleCase(
-            current.name_override ??
-              (current.exercise_id ? plan?.library.get(current.exercise_id)?.name : null) ??
-              'Exercício',
-          )}
+          name={exerciseName(current, library)}
           videoUrl={
-            current.exercise_id
-              ? plan?.library.get(current.exercise_id)?.video_url ?? null
-              : null
+            current.exercise_id ? library.get(current.exercise_id)?.video_url ?? null : null
           }
           muscleLabel={
             current.exercise_id
-              ? titleCase(plan?.library.get(current.exercise_id)?.category) || null
+              ? titleCase(library.get(current.exercise_id)?.category) || null
               : null
           }
+          round={circuit ? circuitRound(exercises, done)?.current ?? null : null}
           sets={logged.filter((set) => set.plan_exercise_id === current.id)}
-          onSaved={(set) =>
-            setLogged((previous) => [
-              ...previous.filter(
+          onSaved={(set, isNew) => {
+            const next = [
+              ...logged.filter(
                 (item) =>
                   !(
                     item.plan_exercise_id === set.plan_exercise_id &&
@@ -267,7 +362,17 @@ export function WorkoutSession() {
                   ),
               ),
               set,
-            ])
+            ]
+            setLogged(next)
+            // Em circuito, guardar uma série é passar ao exercício seguinte
+            // da volta; acabadas as voltas, volta-se ao resumo.
+            if (circuit && isNew) {
+              const following = nextInCircuit(exercises, countByExercise(next), index, set.set_number)
+              setView(following)
+            }
+          }}
+          onDeleted={(set) =>
+            setLogged((previous) => previous.filter((item) => item.id !== set.id))
           }
         />
 
@@ -276,7 +381,7 @@ export function WorkoutSession() {
             type="button"
             className="btn btn--quiet"
             disabled={index === 0}
-            onClick={() => setIndex(index - 1)}
+            onClick={() => setView(index - 1)}
           >
             Anterior
           </button>
@@ -285,59 +390,99 @@ export function WorkoutSession() {
             <button
               type="button"
               className="btn btn--primary"
-              onClick={() => setIndex(index + 1)}
+              onClick={() => setView(index + 1)}
             >
               Próximo exercício
             </button>
           ) : (
-            <button
-              type="button"
-              className="btn btn--accent"
-              onClick={async () => {
-                await finishSession(session.id, session.started_at)
-
-                const counts = new Map<string, number>()
-                for (const set of logged) {
-                  if (!set.plan_exercise_id) continue
-                  counts.set(
-                    set.plan_exercise_id,
-                    (counts.get(set.plan_exercise_id) ?? 0) + 1,
-                  )
-                }
-                setFinished({
-                  volume: volumeDone(exercises, plan?.library ?? new Map(), counts),
-                  sets: logged.length,
-                  seconds: elapsed,
-                })
-              }}
-            >
-              Terminar treino
+            <button type="button" className="btn btn--primary" onClick={() => setView(null)}>
+              Resumo do treino
             </button>
           )}
         </nav>
 
+        <button type="button" className="session__summary" onClick={() => setView(null)}>
+          ☰ Ver o resumo do treino
+        </button>
+
         <ol className="session__dots" aria-label="Exercícios do treino">
-          {exercises.map((item, position) => {
-            const filled = logged.filter(
-              (set) => set.plan_exercise_id === item.id,
-            ).length
-            return (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  className={`session__dot ${position === index ? 'is-on' : ''} ${
-                    filled >= item.sets ? 'is-done' : ''
-                  }`}
-                  onClick={() => setIndex(position)}
-                  aria-label={`Exercício ${position + 1}`}
-                />
-              </li>
-            )
-          })}
+          {exercises.map((item, position) => (
+            <li key={item.id}>
+              <button
+                type="button"
+                className={`session__dot ${position === index ? 'is-on' : ''} ${
+                  (done.get(item.id) ?? 0) >= item.sets ? 'is-done' : ''
+                }`}
+                onClick={() => setView(position)}
+                aria-label={`Exercício ${position + 1}`}
+              />
+            </li>
+          ))}
         </ol>
       </div>
     </div>
   )
+}
+
+/** Séries registadas por exercício do plano. */
+function countByExercise(sets: SetLog[]): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const set of sets) {
+    if (!set.plan_exercise_id) continue
+    counts.set(set.plan_exercise_id, (counts.get(set.plan_exercise_id) ?? 0) + 1)
+  }
+  return counts
+}
+
+/**
+ * O exercício que vem a seguir. Série a série, é o primeiro por acabar. Em
+ * circuito, é o que vai mais atrasado — que é como se dá a volta.
+ */
+function nextExercise(
+  exercises: PlanExercise[],
+  done: Map<string, number>,
+  circuit: boolean,
+): number | null {
+  let best: number | null = null
+  exercises.forEach((item, index) => {
+    const count = done.get(item.id) ?? 0
+    if (count >= item.sets) return
+    if (best === null) best = index
+    else if (circuit && count < (done.get(exercises[best].id) ?? 0)) best = index
+  })
+  return best
+}
+
+/** Em que volta vai o circuito: a do exercício mais atrasado, de quantas. */
+function circuitRound(
+  exercises: PlanExercise[],
+  done: Map<string, number>,
+): { current: number; total: number } | null {
+  const total = Math.max(0, ...exercises.map((item) => item.sets))
+  const pending = exercises.filter((item) => (done.get(item.id) ?? 0) < item.sets)
+  if (pending.length === 0 || total === 0) return null
+  const current = Math.min(...pending.map((item) => done.get(item.id) ?? 0)) + 1
+  return { current, total }
+}
+
+/**
+ * Depois de guardar a série `round` do exercício `from`: o seguinte da lista
+ * que ainda não fez esta volta; se já todos a fizeram, o primeiro da volta
+ * seguinte; e o resumo (`null`) quando não há mais nada.
+ */
+function nextInCircuit(
+  exercises: PlanExercise[],
+  done: Map<string, number>,
+  from: number,
+  round: number,
+): number | null {
+  for (let step = 1; step <= exercises.length; step++) {
+    const index = (from + step) % exercises.length
+    const item = exercises[index]
+    const count = done.get(item.id) ?? 0
+    if (count < round && count < item.sets) return index
+  }
+  return nextExercise(exercises, done, true)
 }
 
 interface CardProps {
@@ -347,8 +492,19 @@ interface CardProps {
   name: string
   videoUrl: string | null
   muscleLabel: string | null
+  /** Em circuito, a volta em que se vai. */
+  round: number | null
   sets: SetLog[]
-  onSaved: (set: SetLog) => void
+  /** `isNew` diz se a série é nova ou se foi uma correcção. */
+  onSaved: (set: SetLog, isNew: boolean) => void
+  onDeleted: (set: SetLog) => void
+}
+
+/** "60 kg", ou "22,5 kg" quando vem de antes de a carga ser só inteiros. */
+function kg(value: number | null | undefined): string {
+  if (value === null || value === undefined) return '—'
+  const number = Number(value)
+  return `${num(number, Number.isInteger(number) ? 0 : 1)} kg`
 }
 
 function ExerciseCard({
@@ -358,12 +514,16 @@ function ExerciseCard({
   name,
   videoUrl,
   muscleLabel,
+  round,
   sets,
   onSaved,
+  onDeleted,
 }: CardProps) {
   const [previous, setPrevious] = useState<SetLog[] | null>(null)
   const [saving, setSaving] = useState(false)
   const [showVideo, setShowVideo] = useState(false)
+  /** A série já guardada que se está a corrigir, se houver. */
+  const [editing, setEditing] = useState<number | null>(null)
 
   useEffect(() => {
     let active = true
@@ -387,15 +547,22 @@ function ExerciseCard({
     return planExercise.sets
   }, [byNumber, planExercise.sets])
 
-  // Arranca com a carga da série anterior, ou com a da semana passada.
-  const suggestedWeight =
-    byNumber.get(nextSetNumber - 1)?.weight_kg ??
-    previous?.find((set) => set.set_number === nextSetNumber)?.weight_kg ??
-    previous?.[0]?.weight_kg ??
-    20
+  const target = editing ?? nextSetNumber
+  const editingSet = editing !== null ? byNumber.get(editing) ?? null : null
+
+  // Arranca com a carga da série anterior, ou com a da semana passada. A carga
+  // anda de quilo em quilo: o que vier com casas de antes arredonda-se.
+  const suggestedWeight = Math.round(
+    Number(
+      byNumber.get(target - 1)?.weight_kg ??
+        previous?.find((set) => set.set_number === target)?.weight_kg ??
+        previous?.[0]?.weight_kg ??
+        20,
+    ),
+  )
 
   const suggestedReps =
-    previous?.find((set) => set.set_number === nextSetNumber)?.reps ??
+    previous?.find((set) => set.set_number === target)?.reps ??
     planExercise.rep_max ??
     planExercise.rep_min ??
     10
@@ -410,13 +577,11 @@ function ExerciseCard({
     setReps(null)
   }, [nextSetNumber])
 
-  const effectiveWeight = weight ?? Number(suggestedWeight)
+  const effectiveWeight = weight ?? suggestedWeight
   const effectiveReps = reps ?? Number(suggestedReps)
 
   const previousLabel = previous?.length
-    ? previous
-        .map((set) => `${num(set.weight_kg, 1)} kg × ${set.reps ?? '—'}`)
-        .join(', ')
+    ? previous.map((set) => `${kg(set.weight_kg)} × ${set.reps ?? '—'}`).join(', ')
     : null
 
   const progress =
@@ -426,6 +591,19 @@ function ExerciseCard({
 
   const allDone = sets.length >= planExercise.sets
 
+  function startEditing(set: SetLog) {
+    setEditing(set.set_number)
+    setWeight(set.weight_kg !== null ? Number(set.weight_kg) : null)
+    setReps(set.reps)
+    if (set.rir !== null) setRir(set.rir)
+  }
+
+  function stopEditing() {
+    setEditing(null)
+    setWeight(null)
+    setReps(null)
+  }
+
   const save = useCallback(async () => {
     setSaving(true)
     try {
@@ -433,10 +611,14 @@ function ExerciseCard({
         sessionId,
         planExercise.id,
         planExercise.exercise_id,
-        nextSetNumber,
+        target,
         { weight_kg: effectiveWeight, reps: effectiveReps, rir },
       )
-      onSaved(saved)
+      const isNew = editing === null
+      setEditing(null)
+      setWeight(null)
+      setReps(null)
+      onSaved(saved, isNew)
     } finally {
       setSaving(false)
     }
@@ -444,16 +626,30 @@ function ExerciseCard({
     sessionId,
     planExercise.id,
     planExercise.exercise_id,
-    nextSetNumber,
+    target,
+    editing,
     effectiveWeight,
     effectiveReps,
     rir,
     onSaved,
   ])
 
+  async function remove(set: SetLog) {
+    if (!window.confirm(`Apagar a série ${set.set_number}?`)) return
+    setSaving(true)
+    try {
+      await deleteSet(set.id)
+      stopEditing()
+      onDeleted(set)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <section className="exercise">
       <div className="exercise__head">
+        {round !== null && <span className="eyebrow">Circuito · volta {round}</span>}
         <h2 className="exercise__name">{name}</h2>
         <p className="exercise__meta">
           {[muscleLabel, `descanso ${restLabel(planExercise.rest_seconds)}`]
@@ -478,22 +674,35 @@ function ExerciseCard({
             <th scope="col">Carga</th>
             <th scope="col">Reps</th>
             <th scope="col">Falha</th>
+            <th scope="col" aria-label="Corrigir" />
           </tr>
         </thead>
         <tbody>
           {Array.from({ length: planExercise.sets }, (_, position) => {
             const number = position + 1
             const set = byNumber.get(number)
-            const active = number === nextSetNumber && !allDone
+            const active = editing !== null ? number === editing : number === nextSetNumber && !allDone
             return (
               <tr
                 key={number}
                 className={`${set ? 'is-done' : ''} ${active ? 'is-active' : ''}`}
+                onClick={set && editing !== number ? () => startEditing(set) : undefined}
               >
                 <th scope="row">{number}</th>
-                <td>{set ? `${num(set.weight_kg, 1)} kg` : '—'}</td>
+                <td>{set ? kg(set.weight_kg) : '—'}</td>
                 <td>{set?.reps ?? '—'}</td>
                 <td>{set?.rir !== null && set?.rir !== undefined ? `RIR ${set.rir}` : '—'}</td>
+                <td className="sets__edit">
+                  {set && editing !== number && (
+                    <button
+                      type="button"
+                      className="sets__edit-btn"
+                      aria-label={`Corrigir a série ${number}`}
+                    >
+                      ✎
+                    </button>
+                  )}
+                </td>
               </tr>
             )
           })}
@@ -502,6 +711,7 @@ function ExerciseCard({
 
       <p className="exercise__target">
         Objetivo: {planExercise.sets} × {repRange(planExercise.rep_min, planExercise.rep_max)} reps
+        {planExercise.rpe !== null && ` · RPE ${num(Number(planExercise.rpe), Number.isInteger(Number(planExercise.rpe)) ? 0 : 1)}`}
       </p>
 
       {previousLabel && (
@@ -512,7 +722,7 @@ function ExerciseCard({
             {progress !== null && Math.abs(progress) >= 0.05 && (
               <em className={progress > 0 ? 'is-up' : 'is-down'}>
                 {' '}
-                {signed(progress, 1)} kg
+                {signed(progress, Number.isInteger(progress) ? 0 : 1)} kg
               </em>
             )}
           </p>
@@ -525,24 +735,30 @@ function ExerciseCard({
         <VideoModal url={videoUrl} title={name} onClose={() => setShowVideo(false)} />
       )}
 
-      {allDone ? (
-        <p className="exercise__done">Séries todas registadas ✓</p>
+      {allDone && editing === null ? (
+        <p className="exercise__done">
+          Séries todas registadas ✓
+          <span>Toca numa série para a corrigir ou apagar.</span>
+        </p>
       ) : (
-        <div className="exercise__entry">
-          <span className="eyebrow">Série {nextSetNumber}</span>
+        <div className={`exercise__entry ${editing !== null ? 'is-editing' : ''}`}>
+          <span className="eyebrow">
+            {editing !== null ? `A corrigir a série ${editing}` : `Série ${target}`}
+          </span>
 
           <div className="exercise__field">
             <span className="field__label">Carga</span>
             <Stepper
               value={effectiveWeight}
               onChange={setWeight}
-              step={1.25}
+              step={1}
               min={0}
               max={500}
-              decimals={2}
+              decimals={0}
               unit="kg"
               size="lg"
               label="carga"
+              typeable
             />
           </div>
 
@@ -556,6 +772,7 @@ function ExerciseCard({
               max={60}
               decimals={0}
               label="repetições"
+              typeable
             />
           </div>
 
@@ -582,8 +799,28 @@ function ExerciseCard({
             onClick={save}
             disabled={saving}
           >
-            {saving ? 'A guardar…' : `Guardar série ${nextSetNumber}`}
+            {saving
+              ? 'A guardar…'
+              : editing !== null
+                ? `Guardar a série ${editing}`
+                : `Guardar série ${target}`}
           </button>
+
+          {editingSet && (
+            <div className="row">
+              <button type="button" className="btn btn--quiet" onClick={stopEditing}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn btn--quiet btn--danger"
+                disabled={saving}
+                onClick={() => remove(editingSet)}
+              >
+                Apagar série
+              </button>
+            </div>
+          )}
         </div>
       )}
     </section>

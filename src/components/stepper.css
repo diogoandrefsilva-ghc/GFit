@@ -63,3 +63,25 @@
   font-size: 34px;
   line-height: 1;
 }
+
+/* O número que se pode escrever: parece o mesmo, com um sublinhado discreto
+   a dizer que se lhe toca. */
+.stepper__value--typeable {
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline dotted var(--line-2);
+  text-underline-offset: 6px;
+}
+
+.stepper__input {
+  width: 3.2em;
+  font: inherit;
+  color: inherit;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-sm);
+  padding: 2px 0;
+}

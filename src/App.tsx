@@ -17,6 +17,9 @@ import { WelcomeGate } from '@/shared/Welcome'
 const WorkoutSession = lazy(() =>
   import('@/athlete/WorkoutSession').then((m) => ({ default: m.WorkoutSession })),
 )
+const WorkoutPreview = lazy(() =>
+  import('@/athlete/WorkoutPreview').then((m) => ({ default: m.WorkoutPreview })),
+)
 const CoachShell = lazy(() =>
   import('@/coach/CoachShell').then((m) => ({ default: m.CoachShell })),
 )
@@ -109,6 +112,7 @@ export function App() {
           </Route>
           <Route path="/planos/:planId" element={<PlanEditor />} />
           <Route path="/dietas/:dietPlanId" element={<DietEditor />} />
+          <Route path="/treino/ver/:planId/:dayId" element={<WorkoutPreview />} />
           <Route path="/treino/:sessionId" element={<WorkoutSession />} />
           <Route path="*" element={<Navigate to="/inicio" replace />} />
         </Routes>
@@ -122,6 +126,8 @@ export function App() {
             <Route path="/semana" element={<WeeklyFeedbackScreen />} />
             <Route path="/perfil" element={<Profile />} />
           </Route>
+          {/* Ver o treino antes de o começar: olhar não abre sessão. */}
+          <Route path="/treino/ver/:planId/:dayId" element={<WorkoutPreview />} />
           <Route path="/treino/:sessionId" element={<WorkoutSession />} />
           {/* Auto-treino: o aluno escreve o seu plano no mesmo editor. */}
           <Route path="/planos/:planId" element={<PlanEditor />} />

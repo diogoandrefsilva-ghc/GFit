@@ -10,6 +10,7 @@ import { Segmented } from "@/components/Segmented";
 import { MuscleWork } from "@/components/MuscleWork";
 import {
   addExerciseToDay,
+  deletePlan,
   fetchAthleteProfile,
   fetchLimitations,
   fetchMuscles,
@@ -47,6 +48,7 @@ export function PlanEditor() {
   const [activeDay, setActiveDay] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
   const [scope, setScope] = useState<"day" | "plan">("day");
+  const [deleting, setDeleting] = useState(false);
 
   const { data, loading, error, reload, mutate } = useQuery(
     ["plano", planId],
@@ -348,6 +350,31 @@ export function PlanEditor() {
             </button>
           )}
         </div>
+
+        {canEdit && (
+          <button
+            type="button"
+            className="btn btn--sm btn--quiet btn--danger plan__delete"
+            disabled={deleting}
+            onClick={async () => {
+              if (
+                !window.confirm(
+                  `Apagar o plano "${plan.name}"? Os treinos já feitos com ele ficam no histórico.`,
+                )
+              )
+                return;
+              setDeleting(true);
+              try {
+                await deletePlan(plan.id);
+                goBack();
+              } finally {
+                setDeleting(false);
+              }
+            }}
+          >
+            {deleting ? "A apagar…" : "Apagar plano"}
+          </button>
+        )}
       </div>
 
       {picking && day && (
@@ -380,11 +407,16 @@ const REP_RANGES: Range[] = [
 ];
 const WORK_SECONDS = [15, 20, 30, 40, 45, 60, 75, 90, 120, 180];
 const REST_SECONDS = [0, 15, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300];
+const RPE_VALUES = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
 const DEFAULT_WORK_SECONDS = 45;
 const DEFAULT_REPS: Range = { min: 8, max: 12 };
+const DEFAULT_RPE = 8;
+
+/** "8" ou "7,5": o RPE vai aos meios pontos. */
+const rpeLabel = (value: number) => String(value).replace(".", ",");
 
 /** Qual dos números do exercício está aberto para ser mudado. */
-type Editing = "sets" | "reps" | "time" | "rest";
+type Editing = "sets" | "reps" | "time" | "rest" | "rpe";
 
 /**
  * Um dos três números do exercício. Lê-se de relance na lista e abre-se ao
@@ -526,6 +558,16 @@ function PlanExerciseRow({
               readOnly={readOnly}
               onOpen={() => setEditing("rest")}
             />
+            {/* O RPE é opcional: sem ele a célula fica por preencher, e quem
+                lê o plano nem a vê. */}
+            {(!readOnly || item.rpe !== null) && (
+              <NumberCell
+                label="RPE"
+                value={item.rpe !== null ? rpeLabel(Number(item.rpe)) : "—"}
+                readOnly={readOnly}
+                onOpen={() => setEditing("rpe")}
+              />
+            )}
           </div>
 
           {readOnly && item.notes && (
@@ -600,6 +642,22 @@ function PlanExerciseRow({
         />
       )}
 
+      {editing === "rpe" && (
+        <NumberSheet
+          title="RPE"
+          caption={name}
+          value={item.rpe !== null ? Number(item.rpe) : DEFAULT_RPE}
+          presets={RPE_VALUES}
+          min={1}
+          max={10}
+          step={0.5}
+          format={rpeLabel}
+          hint="O esforço de cada série, de 1 a 10. RPE 8 é acabar com 2 repetições na reserva; 10 é a falha."
+          onChange={(value) => patch({ rpe: value })}
+          onClose={() => setEditing(null)}
+        />
+      )}
+
       {open && (
         <div className="plan-ex__edit">
           <div className="field">
@@ -619,6 +677,16 @@ function PlanExerciseRow({
               que vai a relógio — ou ao contrário.
             </span>
           </div>
+
+          {item.rpe !== null && (
+            <button
+              type="button"
+              className="btn btn--sm btn--quiet"
+              onClick={() => patch({ rpe: null })}
+            >
+              Tirar o RPE ({rpeLabel(Number(item.rpe))})
+            </button>
+          )}
 
           <label className="field">
             <span className="field__label">Nota para o aluno</span>
@@ -677,7 +745,9 @@ function DayCard({ day }: { day: PlanDay }) {
           ? day.flow === "circuit"
             ? `Por tempo, em circuito de ${day.rounds ?? 3} voltas.`
             : "Por tempo, série a série."
-          : "Por repetições, com carga e reps em reserva."}
+          : day.flow === "circuit"
+            ? "Por repetições, em circuito: uma série de cada exercício, volta a volta."
+            : "Por repetições, com carga e reps em reserva."}
       </p>
       {day.notes && <p className="subtitle">{day.notes}</p>}
     </section>
@@ -733,26 +803,28 @@ function DaySettings({
         </span>
       </div>
 
+      <div className="field">
+        <span className="field__label">Ordem</span>
+        <Segmented
+          value={day.flow}
+          options={[
+            ["sets", "Série a série"],
+            ["circuit", "Circuito"],
+          ]}
+          onChange={(value) => patch({ flow: value })}
+          label="Ordem do treino"
+        />
+        <span className="field__hint">
+          {day.flow === "circuit"
+            ? day.mode === "time"
+              ? "Percorre a lista toda e repete a volta."
+              : "Uma série de cada exercício e volta ao primeiro: o aluno regista volta a volta, com a lista à frente."
+            : "Faz as séries todas de um exercício antes de passar ao seguinte."}
+        </span>
+      </div>
+
       {day.mode === "time" && (
         <>
-          <div className="field">
-            <span className="field__label">Ordem</span>
-            <Segmented
-              value={day.flow}
-              options={[
-                ["sets", "Série a série"],
-                ["circuit", "Circuito"],
-              ]}
-              onChange={(value) => patch({ flow: value })}
-              label="Ordem do treino"
-            />
-            <span className="field__hint">
-              {day.flow === "circuit"
-                ? "Percorre a lista toda e repete a volta."
-                : "Faz as séries todas de um exercício antes de passar ao seguinte."}
-            </span>
-          </div>
-
           {day.flow === "circuit" && (
             <div className="grid-2">
               <label className="field">

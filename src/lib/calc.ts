@@ -1,4 +1,6 @@
+import { ageOn } from './format'
 import type {
+  AthleteProfile,
   DietItem,
   Exercise,
   MuscleShare,
@@ -188,4 +190,76 @@ export function weekOfPlan(startDate: string, on: string): number {
   const day = new Date(on).getTime()
   const weeks = Math.floor((day - start) / (7 * 86_400_000))
   return Math.max(1, weeks + 1)
+}
+
+/**
+ * Os níveis de actividade da folha "Base", com o factor por que se multiplica
+ * a taxa metabólica basal para dar o gasto do dia.
+ */
+export const ACTIVITY_LEVELS: { value: number; label: string; hint: string }[] = [
+  { value: 1.2, label: 'Sedentário', hint: 'pouco ou nenhum exercício' },
+  { value: 1.375, label: 'Levemente ativo', hint: 'exercício leve 1 a 3 dias por semana' },
+  { value: 1.55, label: 'Moderadamente ativo', hint: 'exercício moderado 3 a 5 dias por semana' },
+  { value: 1.725, label: 'Altamente ativo', hint: 'exercício pesado 5 a 6 dias por semana' },
+  { value: 1.9, label: 'Extremamente ativo', hint: 'exercício pesado todos os dias, até 2 vezes' },
+]
+
+/**
+ * Taxa metabólica basal pela fórmula de Mifflin-St Jeor, a mesma da folha
+ * "Base": 10 × peso + 6,25 × altura − 5 × idade, mais 5 no homem e menos 161
+ * na mulher. Sem um dos quatro dados não há número — um palpite aqui ia
+ * parar às kcal de alguém.
+ */
+export function basalMetabolicRate(input: {
+  weightKg: number | null | undefined
+  heightCm: number | null | undefined
+  age: number | null | undefined
+  sex: 'M' | 'F' | null | undefined
+}): number | null {
+  const { weightKg, heightCm, age, sex } = input
+  if (!weightKg || !heightCm || !age || !sex) return null
+  const base = 10 * Number(weightKg) + 6.25 * Number(heightCm) - 5 * age
+  return Math.round(base + (sex === 'M' ? 5 : -161))
+}
+
+/** O gasto do dia: a basal vezes o nível de actividade. É o "Kcal" da planilha antes do ajuste. */
+export function dailyEnergy(bmr: number | null, activity: number | null | undefined): number | null {
+  if (!bmr || !activity) return null
+  return Math.round(bmr * Number(activity))
+}
+
+/** Gramas de um macro a partir da percentagem das kcal (4 kcal/g, ou 9 na gordura). */
+export function gramsFromPercent(kcal: number, percent: number, kcalPerGram: number): number {
+  return Math.round((kcal * percent) / 100 / kcalPerGram)
+}
+
+/** O contrário: que percentagem das kcal é que estas gramas são. */
+export function percentFromGrams(kcal: number, grams: number, kcalPerGram: number): number {
+  return kcal > 0 ? Math.round(((grams * kcalPerGram) / kcal) * 100) : 0
+}
+
+/**
+ * A energia de quem está na ficha: a taxa metabólica basal e o gasto do dia,
+ * como na folha "Base". O peso é o da ficha; sem ele, o último que o aluno
+ * registou.
+ */
+export function energyOf(
+  ficha: AthleteProfile | null,
+  lastWeight?: number | null,
+): { bmr: number | null; daily: number | null; weight: number | null; missing: string[] } {
+  const weight = ficha?.start_weight_kg ?? lastWeight ?? null
+  const age = ficha?.birth_date ? ageOn(ficha.birth_date) : null
+  const bmr = basalMetabolicRate({
+    weightKg: weight,
+    heightCm: ficha?.height_cm,
+    age,
+    sex: ficha?.sex,
+  })
+  const missing = [
+    !weight && 'peso',
+    !ficha?.height_cm && 'altura',
+    !age && 'data de nascimento',
+    !ficha?.sex && 'sexo',
+  ].filter((item): item is string => Boolean(item))
+  return { bmr, daily: dailyEnergy(bmr, ficha?.activity_level), weight, missing }
 }

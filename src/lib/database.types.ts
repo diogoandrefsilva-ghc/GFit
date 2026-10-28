@@ -68,7 +68,12 @@ export type AthleteProfile = {
   occupation: string | null
   start_weight_kg: number | null
   activity_level: number | null
+  /**
+   * Com `pack_renews_monthly`, a data em que o pack renova (e que se repete
+   * todos os meses); sem, o dia em que acaba. Ver `packRenewal()`.
+   */
   pack_end_date: string | null
+  pack_renews_monthly: boolean
   next_update_date: string | null
   updated_at: string
 }
@@ -190,6 +195,8 @@ export type PlanExercise = {
   mode: WorkMode | null
   /** Duração de cada série quando corre por tempo. */
   work_seconds: number | null
+  /** Esforço pedido, de 1 a 10 aos meios pontos. Nulo: sem RPE. */
+  rpe: number | null
 }
 
 /** Um treino do plano marcado numa data do calendário. */

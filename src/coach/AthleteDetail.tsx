@@ -27,6 +27,7 @@ import { supabase } from '@/lib/supabase'
 import {
   WEIGHT_DIRECTION_LABEL,
   average,
+  energyOf,
   rollingAverage,
   weightTone,
 } from '@/lib/calc'
@@ -112,6 +113,11 @@ export function AthleteDetail() {
     notes,
   } = data
 
+  // O último peso que o aluno registou: é o que a TMB usa se a ficha não tiver.
+  const lastWeight =
+    [...logs].reverse().find((log) => log.weight_kg !== null)?.weight_kg ?? null
+  const energy = energyOf(ficha, lastWeight)
+
   return (
     <div className="screen">
       <ScreenHeader
@@ -142,7 +148,12 @@ export function AthleteDetail() {
 
       {tab === 'resumo' && (
         <>
-          <IdentityCard athleteId={athlete.id} ficha={ficha} onSaved={reload} />
+          <IdentityCard
+            athleteId={athlete.id}
+            ficha={ficha}
+            lastWeight={lastWeight}
+            onSaved={reload}
+          />
 
           <WeightCard logs={logs} measurements={measurements} targets={targets} />
 
@@ -236,6 +247,8 @@ export function AthleteDetail() {
           coachId={coach.id}
           current={targets}
           history={targetsHistory}
+          dailyEnergy={energy.daily}
+          weightKg={energy.weight}
           onChanged={reload}
         />
       )}

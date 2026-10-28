@@ -195,6 +195,20 @@ export function Today() {
                 ? 'Continuar treino'
                 : 'Começar treino'}
           </button>
+          {/* Espreitar o treino sem o dar por começado. */}
+          {!marked.session && marked.exerciseCount > 0 && marked.plan && marked.day && (
+            <button
+              type="button"
+              className="btn btn--quiet btn--block today__peek"
+              onClick={() =>
+                navigate(
+                  `/treino/ver/${marked.plan!.id}/${marked.day!.id}?marcacao=${marked.schedule.id}`,
+                )
+              }
+            >
+              Ver os exercícios
+            </button>
+          )}
         </section>
       ) : todayMarks.length > 0 ? (
         <section className="card card--good today__workout">
@@ -256,6 +270,15 @@ export function Today() {
               ? 'Treino ainda sem exercícios'
               : 'Começar treino'}
           </button>
+          {nextDayExercises.length > 0 && (
+            <button
+              type="button"
+              className="btn btn--quiet btn--block today__peek"
+              onClick={() => navigate(`/treino/ver/${plan!.plan.id}/${nextDay.id}`)}
+            >
+              Ver os exercícios
+            </button>
+          )}
         </section>
       ) : (
         <section className="card card--flat">

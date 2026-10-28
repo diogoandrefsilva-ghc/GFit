@@ -186,3 +186,104 @@
   text-underline-offset: 3px;
   padding: 4px 0;
 }
+
+/* A taxa metabólica basal e o gasto do dia, por baixo dos dados de onde
+   saem. */
+.identity__energy {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 11px;
+  border: 1px solid var(--brand-line);
+  background: var(--brand-soft);
+  border-radius: var(--radius-sm);
+}
+
+.identity__energy div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.identity__energy span {
+  font-family: var(--font-narrow);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brand-text);
+  font-weight: 700;
+}
+
+.identity__energy strong {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.identity__energy-note {
+  grid-column: 1 / -1;
+  font-size: 12px;
+}
+
+.activity-levels {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.activity-level {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  text-align: left;
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.activity-level strong {
+  font-size: 14px;
+}
+
+.activity-level em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.activity-level span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.activity-level.is-on {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.activity-level.is-on em {
+  color: var(--brand-text);
+}
+
+/* ── metas: macros em gramas ou percentagem ─────────────── */
+
+.targets__macro-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.targets__suggest {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand-text);
+  background: var(--brand-soft);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+}

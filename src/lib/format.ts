@@ -120,6 +120,17 @@ export function num(value: number | null | undefined, decimals = 1): string {
   return value.toFixed(decimals).replace('.', ',')
 }
 
+/**
+ * O contrário de `num`: lê o que se escreveu num campo, com vírgula ou com
+ * ponto. Vazio dá nulo; o que não for número também.
+ */
+export function parseDecimal(value: string): number | null {
+  const clean = value.trim().replace(/\s/g, '').replace(',', '.')
+  if (clean === '' || clean === '.' || clean === '-') return null
+  const parsed = Number(clean)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
 /** Inteiro com espaço a separar milhares: "7 240". */
 export function int(value: number | null | undefined): string {
   if (value === null || value === undefined || Number.isNaN(value)) return '—'
@@ -215,4 +226,32 @@ export function titleCase(value: string | null | undefined): string {
     if (!isFirst && MINUSCULAS.has(word)) return word
     return word[0].toLocaleUpperCase('pt-PT') + word.slice(1)
   })
+}
+
+/**
+ * A próxima renovação de um pack mensal: o mesmo dia do mês da data guardada,
+ * no primeiro mês em que ainda não passou. Um pack de 31 renova no último dia
+ * dos meses mais curtos.
+ */
+export function nextMonthlyDate(anchor: string, today: string = isoDate()): string {
+  const start = parseIso(anchor)
+  const day = start.getDate()
+  for (let months = 0; ; months++) {
+    const lastDay = new Date(start.getFullYear(), start.getMonth() + months + 1, 0).getDate()
+    const candidate = isoDate(
+      new Date(start.getFullYear(), start.getMonth() + months, Math.min(day, lastDay)),
+    )
+    if (candidate >= today) return candidate
+  }
+}
+
+/** Anos feitos numa data, contando se já se fez anos este ano. */
+export function ageOn(birthDate: string, on: Date = new Date()): number {
+  const born = parseIso(birthDate)
+  let age = on.getFullYear() - born.getFullYear()
+  const beforeBirthday =
+    on.getMonth() < born.getMonth() ||
+    (on.getMonth() === born.getMonth() && on.getDate() < born.getDate())
+  if (beforeBirthday) age -= 1
+  return age
 }
