@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { NumberInput } from '@/components/NumberInput'
 import { Stat } from '@/components/Screen'
+import { Segmented } from '@/components/Segmented'
 import { deleteTargets, saveTargets } from '@/lib/api'
 import { describeError } from '@/lib/supabase'
 import { int, isoDate, num, shortDate } from '@/lib/format'
-import { WEIGHT_DIRECTION_LABEL } from '@/lib/calc'
+import { WEIGHT_DIRECTION_LABEL, gramsFromPercent, percentFromGrams } from '@/lib/calc'
 import type { AthleteTargets, WeightDirection } from '@/lib/database.types'
 import './ficha.css'
 
@@ -21,6 +23,8 @@ export function TargetsTab({
   current,
   history,
   self = false,
+  dailyEnergy = null,
+  weightKg = null,
   onChanged,
 }: {
   athleteId: string
@@ -29,6 +33,10 @@ export function TargetsTab({
   history: AthleteTargets[]
   /** As metas são de quem está a olhar para elas. */
   self?: boolean
+  /** O gasto do dia que sai da ficha (TMB × actividade), para propor as kcal. */
+  dailyEnergy?: number | null
+  /** O peso da ficha, para ler os macros também em g/kg. */
+  weightKg?: number | null
   onChanged: () => void
 }) {
   const [editing, setEditing] = useState<AthleteTargets | 'new' | null>(
@@ -73,18 +81,17 @@ export function TargetsTab({
             />
           </div>
           <div className="row">
-            <Stat
-              label="Proteína"
-              value={current.protein_target_g ? `${current.protein_target_g} g` : '—'}
-            />
-            <Stat
-              label="Gordura"
-              value={current.fat_target_g ? `${current.fat_target_g} g` : '—'}
-            />
-            <Stat
-              label="Hidratos"
-              value={current.carb_target_g ? `${current.carb_target_g} g` : '—'}
-            />
+            {MACROS.map((macro) => {
+              const grams = current[macro.key]
+              return (
+                <Stat
+                  key={macro.key}
+                  label={macro.label}
+                  value={grams ? `${grams} g` : '—'}
+                  hint={macroHint(grams, current.kcal_target, macro.kcalPerGram, weightKg)}
+                />
+              )
+            })}
           </div>
           <div className="row">
             <Stat label="Passos" value={current.steps_goal ? int(current.steps_goal) : '—'} />
@@ -112,6 +119,7 @@ export function TargetsTab({
           coachId={coachId}
           initial={editing === 'new' ? null : editing}
           previous={current}
+          dailyEnergy={dailyEnergy}
           onDone={() => {
             setEditing(null)
             onChanged()
@@ -175,11 +183,36 @@ export function TargetsTab({
   )
 }
 
+type MacroKey = 'protein_target_g' | 'fat_target_g' | 'carb_target_g'
+
+/** Os três macros, com as kcal que cada grama traz. */
+const MACROS: { key: MacroKey; label: string; kcalPerGram: number }[] = [
+  { key: 'protein_target_g', label: 'Proteína', kcalPerGram: 4 },
+  { key: 'fat_target_g', label: 'Gordura', kcalPerGram: 9 },
+  { key: 'carb_target_g', label: 'Hidratos', kcalPerGram: 4 },
+]
+
+/** "30% · 2,0 g/kg" — o mesmo macro lido como a planilha o lê. */
+function macroHint(
+  grams: number | null,
+  kcal: number | null,
+  kcalPerGram: number,
+  weightKg: number | null,
+): string | undefined {
+  if (!grams) return undefined
+  const parts = [
+    kcal ? `${percentFromGrams(kcal, grams, kcalPerGram)}%` : null,
+    weightKg ? `${num(grams / Number(weightKg), 1)} g/kg` : null,
+  ].filter(Boolean)
+  return parts.length ? parts.join(' · ') : undefined
+}
+
 function TargetsForm({
   athleteId,
   coachId,
   initial,
   previous,
+  dailyEnergy,
   onDone,
   onCancel,
 }: {
@@ -187,6 +220,7 @@ function TargetsForm({
   coachId: string
   initial: AthleteTargets | null
   previous: AthleteTargets | null
+  dailyEnergy: number | null
   onDone: () => void
   onCancel: () => void
 }) {
@@ -211,21 +245,52 @@ function TargetsForm({
 
   const set = (patch: Partial<AthleteTargets>) =>
     setForm((current) => ({ ...current, ...patch }))
-  const numberOrNull = (value: string) => (value === '' ? null : Number(value))
 
-  const numberField = (
-    label: string,
-    key: 'kcal_target' | 'protein_target_g' | 'fat_target_g' | 'carb_target_g' | 'steps_goal',
-  ) => (
+  // Os macros escrevem-se em gramas ou em percentagem das kcal, como na folha
+  // "Base". Grava-se sempre em gramas: as percentagens são uma maneira de lá
+  // chegar, e mudar as kcal com elas postas leva as gramas atrás.
+  const [macroUnit, setMacroUnit] = useState<'g' | '%'>('g')
+  const [percents, setPercents] = useState<Record<MacroKey, number | null>>({
+    protein_target_g: null,
+    fat_target_g: null,
+    carb_target_g: null,
+  })
+  const kcal = form.kcal_target ?? null
+
+  function gramsFor(next: Record<MacroKey, number | null>, kcalValue: number | null) {
+    const patch: Partial<AthleteTargets> = {}
+    for (const macro of MACROS) {
+      const percent = next[macro.key]
+      patch[macro.key] =
+        percent === null || !kcalValue
+          ? null
+          : gramsFromPercent(kcalValue, percent, macro.kcalPerGram)
+    }
+    return patch
+  }
+
+  function switchUnit(unit: 'g' | '%') {
+    if (unit === '%') {
+      const next = { ...percents }
+      for (const macro of MACROS) {
+        const grams = form[macro.key]
+        next[macro.key] = grams && kcal ? percentFromGrams(kcal, grams, macro.kcalPerGram) : null
+      }
+      setPercents(next)
+    }
+    setMacroUnit(unit)
+  }
+
+  function setKcal(value: number | null) {
+    set(macroUnit === '%' ? { kcal_target: value, ...gramsFor(percents, value) } : { kcal_target: value })
+  }
+
+  const percentTotal = MACROS.reduce((sum, macro) => sum + (percents[macro.key] ?? 0), 0)
+
+  const numberField = (label: string, key: 'steps_goal') => (
     <label className="field">
       <span className="field__label">{label}</span>
-      <input
-        className="input"
-        type="number"
-        inputMode="numeric"
-        value={form[key] ?? ''}
-        onChange={(event) => set({ [key]: numberOrNull(event.target.value) })}
-      />
+      <NumberInput value={form[key]} decimals={0} onChange={(value) => set({ [key]: value })} />
     </label>
   )
 
@@ -282,35 +347,97 @@ function TargetsForm({
       </div>
 
       <div className="grid-2">
-        {numberField('Kcal', 'kcal_target')}
+        <label className="field">
+          <span className="field__label">Kcal</span>
+          <NumberInput value={form.kcal_target} decimals={0} onChange={setKcal} />
+          {dailyEnergy && (
+            <button
+              type="button"
+              className="targets__suggest"
+              onClick={() => setKcal(dailyEnergy)}
+            >
+              gasto do dia: {int(dailyEnergy)} kcal · usar
+            </button>
+          )}
+        </label>
         <label className="field">
           <span className="field__label">Peso alvo (kg)</span>
-          <input
-            className="input"
-            type="number"
-            inputMode="decimal"
-            step="0.1"
-            value={form.weight_target_kg ?? ''}
-            onChange={(event) => set({ weight_target_kg: numberOrNull(event.target.value) })}
+          <NumberInput
+            value={form.weight_target_kg}
+            decimals={1}
+            onChange={(value) => set({ weight_target_kg: value })}
           />
         </label>
-        {numberField('Proteína (g)', 'protein_target_g')}
-        {numberField('Gordura (g)', 'fat_target_g')}
-        {numberField('Hidratos (g)', 'carb_target_g')}
-        {numberField('Passos', 'steps_goal')}
       </div>
 
-      <label className="field">
-        <span className="field__label">Sono (horas)</span>
-        <input
-          className="input"
-          type="number"
-          inputMode="decimal"
-          step="0.5"
-          value={form.sleep_goal_hours ?? ''}
-          onChange={(event) => set({ sleep_goal_hours: numberOrNull(event.target.value) })}
-        />
-      </label>
+      <div className="field">
+        <div className="targets__macro-head">
+          <span className="field__label">Macros</span>
+          <Segmented<'g' | '%'>
+            value={macroUnit}
+            options={[
+              ['g', 'Gramas'],
+              ['%', '% das kcal'],
+            ]}
+            onChange={switchUnit}
+            label="Macros em gramas ou percentagem"
+          />
+        </div>
+        <div className="grid-3">
+          {MACROS.map((macro) => (
+            <label key={macro.key} className="field">
+              <span className="field__label">
+                {macro.label} ({macroUnit === 'g' ? 'g' : '%'})
+              </span>
+              {macroUnit === 'g' ? (
+                <NumberInput
+                  value={form[macro.key]}
+                  decimals={0}
+                  onChange={(value) => set({ [macro.key]: value })}
+                />
+              ) : (
+                <NumberInput
+                  value={percents[macro.key]}
+                  decimals={0}
+                  onChange={(value) => {
+                    const next = { ...percents, [macro.key]: value }
+                    setPercents(next)
+                    set(gramsFor(next, kcal))
+                  }}
+                />
+              )}
+              <span className="field__hint">
+                {macroUnit === '%'
+                  ? form[macro.key]
+                    ? `${form[macro.key]} g`
+                    : ' '
+                  : kcal && form[macro.key]
+                    ? `${percentFromGrams(kcal, form[macro.key]!, macro.kcalPerGram)}%`
+                    : ' '}
+              </span>
+            </label>
+          ))}
+        </div>
+        <span className="field__hint">
+          {macroUnit === '%'
+            ? kcal
+              ? `somam ${percentTotal}%${percentTotal === 100 ? '' : ' — devia dar 100%'}; grava-se em gramas`
+              : 'põe as kcal primeiro: as percentagens são delas'
+            : 'em gramas por dia'}
+        </span>
+      </div>
+
+      <div className="grid-2">
+        {numberField('Passos', 'steps_goal')}
+        <label className="field">
+          <span className="field__label">Sono (horas)</span>
+          <NumberInput
+            value={form.sleep_goal_hours}
+            decimals={1}
+            onChange={(value) => set({ sleep_goal_hours: value })}
+          />
+        </label>
+      </div>
 
       <label className="field">
         <span className="field__label">Porquê esta mudança</span>

@@ -12,7 +12,6 @@ import {
   fetchMuscles,
   fetchSelfPlans,
   fetchWeekSessions,
-  startSession,
   type CalendarEntry,
 } from '@/lib/api'
 import { WEEKLY_FULL_SETS, weekOfPlan, weeklyVolume } from '@/lib/calc'
@@ -102,15 +101,17 @@ export function WorkoutHome() {
     }
   }, [data?.plan, data?.calendar])
 
-  async function open(entry: CalendarEntry) {
+  /**
+   * Uma marcação já começada abre a sessão; as outras abrem o treino para ver,
+   * e é lá que se começa. Espreitar não pode contar como "a meio".
+   */
+  function open(entry: CalendarEntry) {
     if (!entry.plan || !entry.day) return
-    const session = await startSession(
-      profile.id,
-      entry.plan,
-      entry.day.id,
-      entry.schedule,
-    )
-    navigate(`/treino/${session.id}`)
+    if (entry.session) {
+      navigate(`/treino/${entry.session.id}`)
+      return
+    }
+    navigate(`/treino/ver/${entry.plan.id}/${entry.day.id}?marcacao=${entry.schedule.id}`)
   }
 
   if (loading) return <Loading label="A carregar o plano" />
@@ -235,9 +236,16 @@ export function WorkoutHome() {
                     type="button"
                     className={`workout-day ${done ? 'is-done' : ''}`}
                     disabled={exercises.length === 0}
-                    onClick={async () => {
-                      const started = await startSession(profile.id, plan.plan, day.id)
-                      navigate(`/treino/${started.id}`)
+                    onClick={() => {
+                      // O treino de hoje já começado continua; o resto vê-se
+                      // primeiro e começa-se lá dentro.
+                      const ongoing =
+                        session && session.session_date === today ? session : null
+                      navigate(
+                        ongoing
+                          ? `/treino/${ongoing.id}`
+                          : `/treino/ver/${plan.plan.id}/${day.id}`,
+                      )
                     }}
                   >
                     <span className="workout-day__label">{day.label}</span>
@@ -339,8 +347,9 @@ export function WorkoutHome() {
 }
 
 /**
- * Um treino marcado. Só se começa a partir do próprio dia: o calendário diz o
- * que está programado, e adiantar trabalho faz-se pela lista do plano.
+ * Um treino marcado. Vê-se a qualquer altura; começa-se só a partir do próprio
+ * dia — o calendário diz o que está programado, e adiantar trabalho faz-se
+ * pela lista do plano.
  */
 function ScheduledCard({
   entry,
@@ -378,12 +387,14 @@ function ScheduledCard({
           <span className="chip">em falta</span>
         ) : date === today ? (
           <span className="workout-day__go">→</span>
-        ) : null}
+        ) : (
+          <span className="chip">ver</span>
+        )}
       </span>
     </>
   )
 
-  if (date > today || entry.exerciseCount === 0) {
+  if (entry.exerciseCount === 0) {
     return <div className="week-day__card is-locked">{body}</div>
   }
 

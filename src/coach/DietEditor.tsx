@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Loading, ScreenHeader, Stat } from '@/components/Screen'
-import { fetchDietContents, searchFoods } from '@/lib/api'
+import { deleteDietPlan, fetchDietContents, searchFoods } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { EMPTY_MACROS, addMacros, macrosOf, scaleFood, type Macros } from '@/lib/calc'
 import { int, num } from '@/lib/format'
@@ -208,6 +208,18 @@ export function DietEditor() {
             {plan.status === 'published' ? 'Publicado ✓' : 'Publicar ao aluno'}
           </button>
         </div>
+
+        <button
+          type="button"
+          className="btn btn--sm btn--quiet btn--danger plan__delete"
+          onClick={async () => {
+            if (!window.confirm(`Apagar o plano alimentar "${plan.name}"?`)) return
+            await deleteDietPlan(plan.id)
+            navigate(`/alunos/${plan.athlete_id}`, { replace: true })
+          }}
+        >
+          Apagar plano alimentar
+        </button>
       </div>
 
       {addingTo && (

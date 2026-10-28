@@ -258,3 +258,56 @@
 .session__dot.is-on {
   background: var(--ink);
 }
+
+/* ── resumo e correcções ───────────────────────────────── */
+
+.session__mode {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted-strong);
+  background: var(--brand-soft);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+
+.session__summary {
+  align-self: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted-strong);
+  padding: 6px 10px;
+}
+
+/* As séries guardadas tocam-se para corrigir. */
+.sets tbody tr.is-done {
+  cursor: pointer;
+}
+
+.sets .sets__edit {
+  width: 32px;
+  padding: 0;
+  text-align: right;
+}
+
+.sets__edit-btn {
+  width: 32px;
+  height: 32px;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.exercise__done span {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.exercise__entry.is-editing {
+  border-top-color: var(--brand-line);
+}
+
+.exercise__entry .row .btn {
+  flex: 1;
+}

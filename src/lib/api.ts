@@ -707,6 +707,11 @@ export async function saveSet(
   return rows[0]
 }
 
+/** Uma série que não devia lá estar: carregou-se em guardar duas vezes, ou na série errada. */
+export async function deleteSet(setId: string): Promise<void> {
+  unwrap(await supabase.from('set_logs').delete().eq('id', setId).select())
+}
+
 /** Grava de uma vez as séries cronometradas de um treino guiado. */
 export async function saveTimedSets(
   sessionId: string,
@@ -1045,8 +1050,59 @@ export async function fetchPlansFor(athleteId: string): Promise<Plan[]> {
       .from('plans')
       .select('*')
       .eq('athlete_id', athleteId)
+      .neq('status', 'archived')
       .order('start_date', { ascending: false }),
   )
+}
+
+/**
+ * Apagar um plano. Se ainda ninguém treinou com ele, vai-se de vez. Se já há
+ * treinos registados, arquiva-se: as séries feitas apontam para os exercícios
+ * do plano, e apagá-lo deixava-as sem nome e sem o "da última vez" ao lado.
+ * Para quem o apagou é igual — sai das listas e do calendário daqui para a
+ * frente —, e o histórico fica inteiro.
+ *
+ * Devolve o que aconteceu, para o ecrã o poder dizer.
+ */
+export async function deletePlan(planId: string): Promise<'deleted' | 'archived'> {
+  const sessions = unwrap(
+    await supabase.from('workout_sessions').select('id').eq('plan_id', planId).limit(1),
+  )
+
+  if (sessions.length === 0) {
+    unwrap(await supabase.from('plans').delete().eq('id', planId).select())
+    return 'deleted'
+  }
+
+  unwrap(
+    await supabase.from('plans').update({ status: 'archived' }).eq('id', planId).select(),
+  )
+  // As marcações que ainda estão por fazer deixam de fazer sentido; as que já
+  // têm treino ficam, que são o histórico do calendário.
+  const pending = unwrap(
+    await supabase
+      .from('scheduled_workouts')
+      .select('id')
+      .eq('plan_id', planId)
+      .gte('scheduled_on', isoDate()),
+  )
+  if (pending.length > 0) {
+    const ids = pending.map((row) => row.id)
+    const used = unwrap(
+      await supabase.from('workout_sessions').select('scheduled_id').in('scheduled_id', ids),
+    )
+    const keep = new Set(used.map((row) => row.scheduled_id))
+    const drop = ids.filter((id) => !keep.has(id))
+    if (drop.length > 0) {
+      unwrap(await supabase.from('scheduled_workouts').delete().in('id', drop).select())
+    }
+  }
+  return 'archived'
+}
+
+/** Um plano alimentar não guarda histórico de ninguém: apaga-se mesmo. */
+export async function deleteDietPlan(dietPlanId: string): Promise<void> {
+  unwrap(await supabase.from('diet_plans').delete().eq('id', dietPlanId).select())
 }
 
 export async function fetchDietPlansFor(athleteId: string): Promise<DietPlan[]> {

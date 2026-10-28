@@ -31,3 +31,16 @@
   font-size: 13px;
   text-align: center;
 }
+
+/* "Ver os exercícios", por baixo do "Começar": no cartão escuro é só texto,
+   para não competir com o botão que inicia. */
+.btn.today__peek {
+  min-height: 36px;
+  background: transparent;
+  border-color: transparent;
+}
+
+.card--ink .btn.today__peek {
+  color: var(--paper);
+  opacity: 0.85;
+}

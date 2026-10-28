@@ -1,0 +1,99 @@
+/* A lista de um treino: antes de começar e como resumo a meio. É um `<ol>`,
+   e a folha base só limpa os `<ul>`. */
+.wlist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wlist__row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  text-align: left;
+  color: var(--ink);
+}
+
+.wlist__row.is-next {
+  border-color: var(--brand);
+  box-shadow: inset 3px 0 0 var(--brand);
+}
+
+.wlist__row.is-done {
+  background: var(--paper-2);
+}
+
+.wlist__n {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--muted-strong);
+}
+
+.wlist__row.is-done .wlist__n {
+  background: var(--good);
+  border-color: var(--good);
+  color: var(--good-ink);
+}
+
+.wlist__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wlist__text strong {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.wlist__text em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.wlist__note {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted-strong);
+  margin-top: 2px;
+}
+
+.wlist__count {
+  flex-shrink: 0;
+  font-family: var(--font-narrow);
+  font-weight: 700;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.wlist__count.is-done {
+  color: var(--good);
+}
+
+.wlist__go {
+  flex-shrink: 0;
+  color: var(--muted-soft);
+}

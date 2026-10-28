@@ -1,3 +1,4 @@
+import { repRange, restLabel, titleCase } from './format'
 import type { Exercise, PlanDay, PlanExercise, WorkMode } from './database.types'
 
 /** O modo de um exercício: o seu, ou o do treino onde está. */
@@ -131,4 +132,27 @@ export function durationLabel(seconds: number): string {
   const hours = Math.floor(minutes / 60)
   const rest = minutes % 60
   return rest === 0 ? `~${hours}h` : `~${hours}h ${rest}`
+}
+
+/** O que se pede num exercício, numa linha: "3 × 8-12 · RPE 8 · 90s". */
+export function prescription(day: PlanDay, item: PlanExercise): string {
+  const timed = modeOf(day, item) === 'time'
+  const work = timed
+    ? `${day.flow === 'circuit' && day.mode === 'time' ? '' : `${item.sets} × `}${restLabel(item.work_seconds ?? 45)}`
+    : `${item.sets} × ${repRange(item.rep_min, item.rep_max)}`
+  return [
+    work,
+    item.rpe !== null ? `RPE ${String(Number(item.rpe)).replace('.', ',')}` : null,
+    `descanso ${restLabel(item.rest_seconds)}`,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+}
+
+export function exerciseName(item: PlanExercise, library: Map<string, Exercise>): string {
+  return titleCase(
+    item.name_override ??
+      (item.exercise_id ? library.get(item.exercise_id)?.name : null) ??
+      'Exercício',
+  )
 }

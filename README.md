@@ -406,7 +406,7 @@ Daí saem as duas vistas de semana:
 
 - **Aluno** (separador *Treino*) — os sete dias com o que está marcado, e o
   treino do dia começa-se ali. Adiantar trabalho faz-se pela lista do plano, que
-  fica por baixo; treinos de dias futuros mostram-se mas não se abrem.
+  fica por baixo; treinos de dias futuros vêem-se mas não se começam.
 - **Treinador** (separador *Calendário*) — a semana dos alunos todos, com filtro
   por aluno e o estado de cada treino: feito, a meio ou em falta.
 
@@ -477,7 +477,47 @@ números:
 
 - `sets` — cada exercício esgota as suas séries antes de se passar ao seguinte.
 - `circuit` — percorre-se a lista toda, descansa-se mais, e repete-se a volta.
-  As voltas são do treino (`rounds`), não do exercício.
+  Por tempo, as voltas são do treino (`rounds`), não do exercício. Por
+  repetições, cada exercício faz as suas séries, uma por volta: ao guardar uma
+  série a sessão passa ao exercício seguinte que ainda não fez essa volta.
+
+## A sessão de treino
+
+- **Ver antes de começar.** Tocar num treino (na semana, na lista do plano ou
+  em *Ver os exercícios* no *Hoje*) abre `/treino/ver/:plano/:treino`: a lista
+  dos exercícios com séries, repetições, RPE e notas. A sessão só nasce no
+  *Começar treino* — espreitar não deixa o treino "a meio".
+- **Entra-se pelo resumo.** A sessão abre na lista dos exercícios, com as séries
+  feitas de cada um, e o toque leva ao exercício. A seta de cima e o *Ver o
+  resumo do treino* voltam à lista, que é onde se termina o treino.
+- **A carga anda ao quilo**, sem casas decimais, e escreve-se: um toque no
+  número abre o teclado. As repetições também.
+- **Uma série guardada corrige-se ou apaga-se**: toca-se na linha da tabela.
+- **RPE na prescrição.** `plan_exercises.rpe` (1 a 10, aos meios pontos) é a
+  quarta célula do exercício no editor; é opcional, e no treino aparece no
+  objetivo. O aluno continua a registar reps em reserva.
+
+## A ficha e as metas
+
+- **Peso e nível de atividade** entram na ficha (*Quem é*), com os cinco níveis
+  da folha "Base". Daí sai a **taxa metabólica basal** (Mifflin-St Jeor, a
+  fórmula da planilha) e o **gasto do dia** (TMB × atividade). Sem peso na ficha
+  conta o último registado; sem os dados todos, o cartão diz o que falta.
+- **O pack é mensal e renova sozinho** (`pack_renews_monthly`): a data guardada
+  é a âncora e a ficha mostra a próxima renovação. Um pack que acaba mesmo
+  desliga a renovação.
+- **As metas aceitam vírgula** — os campos são de texto com teclado decimal, e
+  não `type="number"`, que a recusa em metade dos telemóveis.
+- **Macros em gramas ou em % das kcal.** Gravam-se sempre em gramas; a vista
+  mostra a percentagem e os g/kg ao lado. O gasto do dia da ficha propõe-se
+  como kcal com um toque.
+
+## Apagar planos
+
+Um plano sem treinos registados apaga-se de vez. Com treinos registados
+arquiva-se (`status = 'archived'`): sai das listas e as marcações que faltam
+fazer apagam-se, mas as séries feitas continuam a ter a que exercício
+pertencem. Os planos alimentares apagam-se sempre.
 
 ## O corpo dos músculos
 
@@ -581,7 +621,5 @@ interessava. Fica com a marca do YouTube e precisa de rede.
 ## O que falta
 
 - Suplementos (a folha existe na planilha, os ecrãs ainda não).
-- Cálculo automático de TMB e macros a partir de peso, altura, idade e
-  atividade. Por agora é o treinador que define as metas à mão.
 - Fotos de progresso e notas de voz no feedback semanal.
 - Notificações push.
