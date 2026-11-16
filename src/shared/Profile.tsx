@@ -492,9 +492,11 @@ function ThemeCard() {
                 style={{ background: ground }}
                 aria-hidden="true"
               >
-                {option.id === 'guerreiro' ? (
+                {option.mark === 'guerreiro' ? (
                   <img
-                    className="theme-pick__logo"
+                    className={`theme-pick__logo ${
+                      option.id === 'guerreiro-claro' ? 'theme-pick__logo--band' : ''
+                    }`}
                     src={`${import.meta.env.BASE_URL}guerreiro-wordmark.png`}
                     alt=""
                   />
