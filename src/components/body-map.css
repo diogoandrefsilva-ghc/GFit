@@ -41,11 +41,17 @@
   stroke-linecap: round;
 }
 
+/* A cabeça e as orelhas são contorno com enchimento: tapam o pescoço. */
+.body-map .gfit-shape.gfit-line {
+  fill: var(--paper);
+}
+
 .body-map .gfit-detail {
   fill: none;
   stroke: var(--line-2);
   stroke-width: 1;
   stroke-linecap: round;
+  stroke-linejoin: round;
   opacity: 0.7;
 }
 
@@ -74,7 +80,7 @@
 
 /* ── miniatura ──────────────────────────────────────────────────── */
 /* As linhas de detalhe não são escondidas aqui: `markup()` nem sequer as
-   entrega em miniatura, que é mais de metade dos paths poupados. */
+   entrega em miniatura. */
 .body-map--sm .gfit-muscle {
   stroke-width: 1.4;
 }

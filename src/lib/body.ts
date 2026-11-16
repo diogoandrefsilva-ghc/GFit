@@ -30,8 +30,9 @@ export const BODY_MUSCLES = [
 export const VIEW_BOX = '-10 0 220 460'
 
 type Cut = 'full' | 'plain'
+type Shape = 'm' | 'f'
 
-const views: Partial<Record<`${BodyView}:${Cut}`, string>> = {}
+const views: Partial<Record<`${BodyView}:${Cut}:${Shape}`, string>> = {}
 let inView: Record<BodyView, Set<string>> | null = null
 
 /**
@@ -39,19 +40,25 @@ let inView: Record<BodyView, Set<string>> | null = null
  * DOM — com `<img src>` o CSS da app não lhe chegava e não havia como pintar
  * nada.
  *
- * Em `plain` saem as linhas anatómicas. São 46 dos 81 paths de uma vista, mais
- * de metade do desenho, e em miniatura já não se viam: escondê-las por CSS
- * deixava-as na mesma a custar a criar. Numa lista de 120 exercícios é a
- * diferença entre a lista aparecer e a lista demorar.
+ * Só vai para o DOM a silhueta que se vai ver. O ficheiro traz as duas, e cada
+ * músculo desenhado para uma e para outra; escondida por CSS, a que não se vê
+ * custava na mesma a criar. Em `plain` saem também as linhas anatómicas, que
+ * em miniatura já não se viam. Numa lista de 120 exercícios é a diferença
+ * entre a lista aparecer e a lista demorar.
  */
-export function markup(view: BodyView, cut: Cut = 'full'): string {
-  const key = `${view}:${cut}` as const
+export function markup(view: BodyView, cut: Cut = 'full', sex?: BodySex): string {
+  const shape: Shape = sex === 'F' ? 'f' : 'm'
+  const other: Shape = shape === 'f' ? 'm' : 'f'
+  const key = `${view}:${cut}:${shape}` as const
   const cached = views[key]
   if (cached !== undefined) return cached
 
   const doc = new DOMParser().parseFromString(raw, 'image/svg+xml')
   const group = doc.querySelector(`[id="${view === 'front' ? 'body-front' : 'body-back'}"]`)
   if (!group) return ''
+  group
+    .querySelectorAll(`.gfit-v-${other}, .gfit-hair--${other}`)
+    .forEach((node) => node.remove())
   if (cut === 'plain') {
     group.querySelectorAll('.gfit-detail').forEach((node) => node.remove())
   }
