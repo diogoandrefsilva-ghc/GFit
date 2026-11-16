@@ -421,6 +421,25 @@ const FRONT = {
         [1.5, 222],
       ],
     },
+    {
+      // Oblíquos. Acendem com os abdominais porque a app ainda não os tem como
+      // grupo; no dia em que tiver, esta forma passa para um `obliquos: [...]`
+      // aqui ao lado e junta-se o slug em BODY_MUSCLES e no body-map.css.
+      part: B,
+      pts: [
+        [18.2, 160],
+        [26, 160.5],
+        [35.6, 163.5],
+        [34.8, 170],
+        [32.6, 182],
+        [32.8, 195],
+        [34, 206],
+        [27.5, 212],
+        [20.5, 209.5],
+        [18.2, 200],
+        [17.8, 180],
+      ],
+    },
   ],
   adutores: [
     {
@@ -674,7 +693,6 @@ const FRONT_DETAIL = [
   { part: B, pts: [[32.6, 139.6], [37.6, 136.4], [40.6, 137.6]] }, // serrátil
   { part: B, pts: [[31.6, 148], [36.6, 144.6], [39.6, 146]] },
   { part: B, pts: [[30.4, 156.4], [35, 153], [38, 154.6]] },
-  { part: B, pts: [[19.4, 141], [21.4, 160], [21, 182], [19.4, 200]] }, // oblíquo
   { part: B, pts: [[35.4, 209], [26, 218.5], [14, 229], [5, 237.6]] }, // prega inguinal
   {
     part: B,
