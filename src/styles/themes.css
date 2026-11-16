@@ -2,11 +2,11 @@
  * A forma de cada tema: letra, barra, cartões. As cores estão em `tokens.css`;
  * aqui fica o que um tema faz de diferente além de pintar.
  *
- * Três formas para quatro temas, escolhidas por `data-look` na raiz:
+ * Três formas para cinco temas, escolhidas por `data-look` na raiz:
  * - papel — a app como sempre foi. Não tem regras aqui.
  * - caderno — claro e editorial: serifa (Instrument Serif) nos números e nos
  *   títulos, menos caixas, o registo do dia como lista de verificação.
- * - arena — Arena e Guerreiro: letra condensada de placar (Barlow Condensed),
+ * - arena — Arena e os dois Guerreiro: letra condensada de placar (Barlow Condensed),
  *   a letra do treino em grande no cartão de hoje, o registo em mosaico com o
  *   que falta a tracejado.
  *
@@ -367,7 +367,7 @@
 }
 
 /* ════════════════════════════════════════════════════════════
-   Arena (e Guerreiro)
+   Arena (e os dois Guerreiro)
    ════════════════════════════════════════════════════════════ */
 
 :root[data-look='arena'] {
@@ -394,13 +394,21 @@
   color: var(--ink);
 }
 
-:root[data-theme='guerreiro'] .appbar {
+:root:is([data-theme='guerreiro'], [data-theme='guerreiro-claro']) .appbar {
   height: calc(58px + var(--safe-top));
+}
+
+/* No Guerreiro Claro a barra não acompanha o ecrã: fica no preto do
+   logótipo, que é branco e verde e não se leria sobre papel. É a cinta preta
+   do Papel, com outra marca. */
+:root[data-theme='guerreiro-claro'] .appbar {
+  background: #0a0a0a;
+  border-bottom-color: #0a0a0a;
 }
 
 /* A barra de baixo leva o rebordo verde suave dos cartões da marca: a flutuar
    sobre cartões escuros de contorno cinzento, confundia-se com eles. */
-:root[data-theme='guerreiro'] .tabbar {
+:root:is([data-theme='guerreiro'], [data-theme='guerreiro-claro']) .tabbar {
   border-color: var(--brand-line);
 }
 
@@ -740,6 +748,10 @@
 
 :root[data-look='arena'] .sheet__scrim {
   background: rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme='guerreiro-claro'] .sheet__scrim {
+  background: rgba(0, 0, 0, 0.4);
 }
 
 /* ── o corpo ─────────────────────────────────────────────── */

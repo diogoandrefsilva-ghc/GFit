@@ -248,7 +248,7 @@ uma ilha no meio do ecrã.
 
 ### Os temas
 
-No *Perfil*, o cartão *Tema* troca a cara da app inteira. Há quatro:
+No *Perfil*, o cartão *Tema* troca a cara da app inteira. Há cinco:
 
 | Tema | Como é |
 |---|---|
@@ -256,6 +256,7 @@ No *Perfil*, o cartão *Tema* troca a cara da app inteira. Há quatro:
 | Caderno | claro e editorial: números e títulos com serifa (Instrument Serif), cartões planos como secções, o registo do dia como lista de verificação |
 | Arena | o preto e o dourado do logótipo: letra condensada de placar (Barlow Condensed), a letra do treino em grande no cartão de hoje, o que falta registar a tracejado |
 | Guerreiro | a Arena em preto neutro e verde, com o logótipo do Guerreiro Personal Trainer — linhas verdes e *personal trainer* incluídos — na barra de cima, que cresce para ele se ler |
+| Guerreiro Claro | o Guerreiro de dia: papel branco neutro e verde, com o preto do logótipo só na barra de cima e no cartão do treino de hoje |
 
 O Caderno e a Arena trazem também a barra de separadores a flutuar, afastada
 do fundo do ecrã.

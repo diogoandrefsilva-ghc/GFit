@@ -15,10 +15,11 @@ import { useSyncExternalStore } from 'react'
  *
  * Um tema é duas coisas. O `look` é a forma — Papel, Caderno ou Arena — e vive
  * em `themes.css`. As cores vivem em `tokens.css`, por `id`. O Guerreiro é a
- * forma da Arena com as cores e o logótipo do Guerreiro Personal Trainer.
+ * forma da Arena com as cores e o logótipo do Guerreiro Personal Trainer, e o
+ * Guerreiro Claro é o mesmo de dia.
  */
 
-export type ThemeId = 'papel' | 'caderno' | 'arena' | 'guerreiro'
+export type ThemeId = 'papel' | 'caderno' | 'arena' | 'guerreiro' | 'guerreiro-claro'
 export type Look = 'papel' | 'caderno' | 'arena'
 
 export interface Theme {
@@ -26,6 +27,8 @@ export interface Theme {
   name: string
   hint: string
   look: Look
+  /** A marca na barra de cima: a da app, ou o logótipo do Guerreiro. */
+  mark: 'gfit' | 'guerreiro'
   /** A cor da barra do browser e do sistema (`theme-color`). */
   chrome: string
   /** Fundo, cartão e marca: o que o cartão de escolha mostra. */
@@ -38,6 +41,7 @@ export const THEMES: Theme[] = [
     name: 'Papel',
     hint: 'O de sempre: papel, tinta e dourado.',
     look: 'papel',
+    mark: 'gfit',
     chrome: '#16150F',
     swatches: ['#f4f1ec', '#ffffff', '#e3b04b'],
   },
@@ -46,6 +50,7 @@ export const THEMES: Theme[] = [
     name: 'Caderno',
     hint: 'Claro e editorial, números com serifa.',
     look: 'caderno',
+    mark: 'gfit',
     chrome: '#FBFAF6',
     swatches: ['#fbfaf6', '#141310', '#e3b04b'],
   },
@@ -54,6 +59,7 @@ export const THEMES: Theme[] = [
     name: 'Arena',
     hint: 'Preto e dourado, letra de placar.',
     look: 'arena',
+    mark: 'gfit',
     chrome: '#0C0B09',
     swatches: ['#0c0b09', '#17150f', '#e3b04b'],
   },
@@ -62,8 +68,19 @@ export const THEMES: Theme[] = [
     name: 'Guerreiro',
     hint: 'Preto e verde, com o logótipo do Guerreiro.',
     look: 'arena',
+    mark: 'guerreiro',
     chrome: '#0A0A0A',
     swatches: ['#0a0a0a', '#151515', '#7ee04e'],
+  },
+  {
+    id: 'guerreiro-claro',
+    name: 'Guerreiro Claro',
+    hint: 'O Guerreiro de dia: branco e verde, barra preta.',
+    look: 'arena',
+    mark: 'guerreiro',
+    // A barra de cima fica preta, e a do sistema acompanha-a.
+    chrome: '#0A0A0A',
+    swatches: ['#f5f5f3', '#ffffff', '#7ee04e'],
   },
 ]
 
