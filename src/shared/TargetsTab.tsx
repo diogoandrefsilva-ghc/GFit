@@ -183,6 +183,9 @@ export function TargetsTab({
   )
 }
 
+/** Os degraus do défice ou do excedente, em kcal por dia. */
+const KCAL_STEPS = [100, 200, 300, 400]
+
 type MacroKey = 'protein_target_g' | 'fat_target_g' | 'carb_target_g'
 
 /** Os três macros, com as kcal que cada grama traz. */
@@ -285,6 +288,27 @@ function TargetsForm({
     set(macroUnit === '%' ? { kcal_target: value, ...gramsFor(percents, value) } : { kcal_target: value })
   }
 
+  // Perder ou ganhar peso é comer abaixo ou acima do que se gasta. O ajuste
+  // parte sempre do gasto do dia da ficha, e não das kcal que lá estão: tocar
+  // duas vezes no −200 não pode dar −400.
+  const direction = form.weight_direction ?? null
+  const sign = direction === 'lose' ? -1 : direction === 'gain' ? 1 : 0
+  const adjustment = dailyEnergy && kcal !== null ? kcal - dailyEnergy : null
+
+  function setDirection(next: WeightDirection | null) {
+    const patch: Partial<AthleteTargets> = { weight_direction: next }
+    // Com um ajuste escolhido, mudar de rumo leva as kcal atrás: −300 passa
+    // a +300 ao trocar "perder" por "ganhar", e a zero ao escolher "manter".
+    const hadStep =
+      dailyEnergy && adjustment !== null && sign !== 0 && KCAL_STEPS.includes(adjustment * sign)
+    if (hadStep) {
+      const nextSign = next === 'lose' ? -1 : next === 'gain' ? 1 : 0
+      const value = dailyEnergy + Math.abs(adjustment) * nextSign
+      Object.assign(patch, { kcal_target: value }, macroUnit === '%' ? gramsFor(percents, value) : {})
+    }
+    set(patch)
+  }
+
   const percentTotal = MACROS.reduce((sum, macro) => sum + (percents[macro.key] ?? 0), 0)
 
   const numberField = (label: string, key: 'steps_goal') => (
@@ -331,11 +355,7 @@ function TargetsForm({
               key={value}
               type="button"
               className={`chip ${form.weight_direction === value ? 'chip--on' : ''}`}
-              onClick={() =>
-                set({
-                  weight_direction: form.weight_direction === value ? null : value,
-                })
-              }
+              onClick={() => setDirection(form.weight_direction === value ? null : value)}
             >
               {WEIGHT_DIRECTION_LABEL[value]}
             </button>
@@ -345,6 +365,41 @@ function TargetsForm({
           é isto que decide se uma variação de peso aparece como boa notícia
         </span>
       </div>
+
+      {sign !== 0 && (
+        <div className="field">
+          <span className="field__label">
+            Ajuste às kcal para {direction === 'lose' ? 'perder' : 'ganhar'} peso
+          </span>
+          <div className="row row--wrap">
+            {KCAL_STEPS.map((step) => {
+              const value = step * sign
+              return (
+                <button
+                  key={step}
+                  type="button"
+                  className={`chip ${adjustment === value ? 'chip--on' : ''}`}
+                  disabled={!dailyEnergy}
+                  aria-pressed={adjustment === value}
+                  onClick={() => dailyEnergy && setKcal(dailyEnergy + value)}
+                >
+                  {sign < 0 ? '−' : '+'}
+                  {step}
+                </button>
+              )
+            })}
+          </div>
+          <span className="field__hint">
+            {dailyEnergy
+              ? `sobre o gasto do dia (${int(dailyEnergy)} kcal)${
+                  adjustment !== null && adjustment !== 0
+                    ? ` · fica em ${int(kcal)} kcal`
+                    : ' · escolhe um e as kcal acertam-se sozinhas'
+                }`
+              : 'falta o gasto do dia: preenche peso, altura, nascimento, sexo e atividade em Quem é'}
+          </span>
+        </div>
+      )}
 
       <div className="grid-2">
         <label className="field">

@@ -32,6 +32,9 @@ const Athletes = lazy(() =>
 const CoachCalendar = lazy(() =>
   import('@/coach/Calendar').then((m) => ({ default: m.CoachCalendar })),
 )
+const SessionLogScreen = lazy(() =>
+  import('@/coach/SessionLogs').then((m) => ({ default: m.SessionLogScreen })),
+)
 const AthleteDetail = lazy(() =>
   import('@/coach/AthleteDetail').then((m) => ({ default: m.AthleteDetail })),
 )
@@ -104,6 +107,8 @@ export function App() {
             <Route path="/alunos" element={<Athletes />} />
             <Route path="/alunos/:athleteId" element={<AthleteDetail />} />
             <Route path="/calendario" element={<CoachCalendar />} />
+            {/* O que os alunos fizeram: os treinos que ficaram registados. */}
+            <Route path="/treinos" element={<SessionLogScreen />} />
             <Route path="/exercicios" element={<ExerciseLibrary />} />
             {/* O treinador como aluno de si próprio: o seu dia, o seu treino,
                 as suas medidas e as suas metas. */}

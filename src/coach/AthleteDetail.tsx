@@ -1,9 +1,12 @@
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useProfile } from '@/auth/useAuth'
 import { Avatar } from '@/components/Avatar'
 import { Loading, ScreenHeader, Stat } from '@/components/Screen'
 import { Sparkline } from '@/components/Sparkline'
+import { AssessmentsTab } from '@/coach/Assessments'
+import { CoachingCard } from '@/coach/CoachingCard'
+import { SessionLogList } from '@/coach/SessionLogs'
 import { IdentityCard } from '@/shared/IdentityCard'
 import { LimitationsCard } from '@/shared/LimitationsCard'
 import { NotesCard } from '@/shared/NotesCard'
@@ -20,6 +23,7 @@ import {
   fetchMeasurements,
   fetchPlansFor,
   fetchRecentLogs,
+  fetchSessionLog,
   fetchTargetsHistory,
   replyToFeedback,
 } from '@/lib/api'
@@ -31,18 +35,25 @@ import {
   rollingAverage,
   weightTone,
 } from '@/lib/calc'
-import { hoursLabel, isoDate, num, relativeDate, shortDate, signed } from '@/lib/format'
+import { addDays, hoursLabel, isoDate, num, relativeDate, shortDate, signed } from '@/lib/format'
 import { unwrap, useQuery } from '@/lib/useQuery'
 import type { AthleteTargets, WeeklyFeedback } from '@/lib/database.types'
 import './athlete-detail.css'
 
-type Tab = 'resumo' | 'metas' | 'planos'
+type Tab = 'resumo' | 'treinos' | 'avaliacoes' | 'metas' | 'planos'
+
+const TABS: Tab[] = ['resumo', 'treinos', 'avaliacoes', 'metas', 'planos']
 
 export function AthleteDetail() {
   const coach = useProfile()
   const navigate = useNavigate()
   const { athleteId } = useParams<{ athleteId: string }>()
-  const [tab, setTab] = useState<Tab>('resumo')
+  // O separador vive na barra de endereço: voltar de um plano ou de um treino
+  // devolve a ficha onde ela estava.
+  const [params, setParams] = useSearchParams()
+  const asked = params.get('ver') as Tab | null
+  const tab: Tab = asked && TABS.includes(asked) ? asked : 'resumo'
+  const setTab = (next: Tab) => setParams({ ver: next }, { replace: true })
 
   const { data, loading, error, reload } = useQuery(['aluno', athleteId], async () => {
     const profiles = unwrap(
@@ -127,10 +138,12 @@ export function AthleteDetail() {
         action={<Avatar name={athlete.full_name} url={athlete.avatar_url} size={40} />}
       />
 
-      <div className="row detail__tabs">
+      <div className="row row--wrap detail__tabs">
         {(
           [
             ['resumo', 'Resumo'],
+            ['treinos', 'Treinos'],
+            ['avaliacoes', 'Avaliações'],
             ['metas', 'Metas'],
             ['planos', 'Planos'],
           ] as const
@@ -153,6 +166,13 @@ export function AthleteDetail() {
             ficha={ficha}
             lastWeight={lastWeight}
             onSaved={reload}
+          />
+
+          <CoachingCard
+            athleteId={athlete.id}
+            coachId={coach.id}
+            ficha={ficha}
+            onFichaSaved={reload}
           />
 
           <WeightCard logs={logs} measurements={measurements} targets={targets} />
@@ -239,6 +259,18 @@ export function AthleteDetail() {
             </section>
           )}
         </>
+      )}
+
+      {tab === 'treinos' && <TrainingLog athleteId={athlete.id} />}
+
+      {tab === 'avaliacoes' && (
+        <AssessmentsTab
+          athleteId={athlete.id}
+          authorId={coach.id}
+          ficha={ficha}
+          lastWeight={lastWeight}
+          onFichaChanged={reload}
+        />
       )}
 
       {tab === 'metas' && (
@@ -363,6 +395,18 @@ export function AthleteDetail() {
       )}
     </div>
   )
+}
+
+/** Os treinos que o aluno registou nos últimos três meses. */
+function TrainingLog({ athleteId }: { athleteId: string }) {
+  const since = addDays(isoDate(), -90)
+  const { data, loading, error } = useQuery(['aluno-treinos', athleteId, since], () =>
+    fetchSessionLog(since, athleteId),
+  )
+
+  if (loading) return <Loading label="A carregar os treinos" />
+  if (error) return <p className="error-banner">{error}</p>
+  return <SessionLogList entries={data ?? []} from={`/alunos/${athleteId}?ver=treinos`} />
 }
 
 function scale(value: number | null): string {

@@ -256,3 +256,98 @@
   line-height: 1;
   opacity: 0.8;
 }
+
+/* ── as duas acções do Início ──────────────────────────── */
+
+.dash__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.dash__action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 14px;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--radius-lg);
+  text-align: left;
+  transition: transform 0.06s ease;
+}
+
+.dash__action:active {
+  transform: scale(0.985);
+}
+
+/* A segunda é de consulta: fica em papel, para a primeira ser a que chama. */
+.dash__action + .dash__action {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.dash__action-icon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.dash__action strong {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.dash__action em {
+  font-style: normal;
+  font-size: 12px;
+  opacity: 0.72;
+}
+
+/* ── agenda ────────────────────────────────────────────── */
+
+.dash__days {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dash__day {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dash__day-label {
+  font-family: var(--font-narrow);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.dash__day-label.is-today {
+  color: var(--ink);
+}
+
+.dash__day-empty,
+.dash__agenda-hint {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.dash__row .btn {
+  flex-shrink: 0;
+}

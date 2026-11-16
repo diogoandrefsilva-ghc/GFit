@@ -1,0 +1,80 @@
+/* O que o aluno combina com o treinador: o próximo treino presencial e a mensalidade. */
+
+.presence__when {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+}
+
+.presence__meta {
+  font-size: 14px;
+  margin-top: -6px;
+}
+
+.presence__ask {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.presence__ask .segmented {
+  min-width: 150px;
+}
+
+.card.presence--out {
+  background: var(--warn-soft);
+  border-color: var(--warn-line);
+}
+
+.presence__propose {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.presence__state {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* ── mensalidade ────────────────────────────────────────── */
+
+.card.fee {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.fee__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.fee__amount {
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.fee__state {
+  font-style: normal;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.fee__error {
+  flex-basis: 100%;
+}
+
+.fee__settled {
+  font-size: 13px;
+  text-align: center;
+}

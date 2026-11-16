@@ -1,66 +1,97 @@
-import { useMemo, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { useMemo, useState, type ReactNode } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useProfile } from '@/auth/useAuth'
-import { Avatar } from '@/components/Avatar'
+import { AgendaRow, AgendaSheet } from '@/coach/Agenda'
+import { ScheduleSheet } from '@/coach/ScheduleSheet'
 import { Loading, ScreenHeader } from '@/components/Screen'
 import {
-  attentionReason,
+  confirmPayment,
   fetchAthleteCalendar,
   fetchAthleteSummaries,
+  fetchAttendance,
+  fetchCoachCalendar,
   fetchDailyLog,
-  type AthleteSummary,
+  fetchPendingPayments,
+  fetchTrainingSlots,
+  soft,
   type CalendarEntry,
 } from '@/lib/api'
-import { weightTone } from '@/lib/calc'
-import { isoDate, longDate, num, plural, relativeDate, shortDate, signed } from '@/lib/format'
+import { buildAgenda, presences, type AgendaItem } from '@/lib/agenda'
+import { addDays, euros, isoDate, longDate, monthName, weekStart } from '@/lib/format'
 import { athletesPath } from '@/lib/routes'
 import { useQuery } from '@/lib/useQuery'
 import type { DailyLog } from '@/lib/database.types'
 import './dashboard.css'
 
 /**
- * O que o treinador precisa de saber ao abrir a app: quem está a precisar
- * dele, como vai a semana, e o que tem por responder.
+ * O Início do treinador responde a três perguntas, por esta ordem: o que
+ * tenho hoje e nos próximos dias, o que está à minha espera, e como vai a
+ * semana. Tudo o resto — a lista dos alunos, os pesos, quem registou o quê —
+ * vive nos ecrãs que são disso.
  */
 export function Dashboard() {
   const profile = useProfile()
+  const navigate = useNavigate()
   const today = isoDate()
+  const monday = weekStart(today)
+  const sunday = addDays(monday, 6)
+  /** A agenda mostra hoje e os seis dias seguintes. */
+  const until = addDays(today, 6)
+
+  const [scheduling, setScheduling] = useState(false)
+  const [open, setOpen] = useState<AgendaItem | null>(null)
+  const [busy, setBusy] = useState<string | null>(null)
 
   // O dia entra na chave: o que o treinador registou de si é de hoje, e a
   // cache não pode servir amanhã o dia de ontem.
-  const { data, loading, error } = useQuery(
+  const { data, loading, error, reload } = useQuery(
     ['inicio-treinador', profile.id, today],
     async () => {
-      const [summaries, myLog, myCalendar] = await Promise.all([
-        fetchAthleteSummaries(profile.id),
-        // O treinador também é aluno de si próprio: isto é o dia dele.
-        fetchDailyLog(profile.id, today),
-        fetchAthleteCalendar(profile.id, today, today),
-      ])
-      return { summaries, myLog, myCalendar }
+      const [summaries, calendar, slots, attendance, payments, myLog, myCalendar] =
+        await Promise.all([
+          fetchAthleteSummaries(profile.id),
+          fetchCoachCalendar(monday, until > sunday ? until : sunday),
+          soft(fetchTrainingSlots(), []),
+          soft(fetchAttendance(today, until), []),
+          soft(fetchPendingPayments(), []),
+          // O treinador também é aluno de si próprio: isto é o dia dele.
+          fetchDailyLog(profile.id, today),
+          fetchAthleteCalendar(profile.id, today, today),
+        ])
+      return { summaries, calendar, slots, attendance, payments, myLog, myCalendar }
     },
   )
 
   const view = useMemo(() => {
     const summaries = data?.summaries ?? []
-    const flagged: { summary: AthleteSummary; reason: string }[] = []
-
-    for (const summary of summaries) {
-      const reason = attentionReason(summary)
-      if (reason) flagged.push({ summary, reason })
-    }
-
+    const athletes = summaries.map((summary) => summary.profile)
     const active = summaries.filter((s) => s.profile.status === 'active')
-    const done = summaries.reduce((sum, s) => sum + s.sessionsDone, 0)
-    const planned = summaries.reduce((sum, s) => sum + s.sessionsPlanned, 0)
     const unread = summaries.filter((s) => s.unreadFeedback)
-    const ending = summaries.filter(
-      (s) => s.plan && s.plan.num_weeks - s.week <= 1,
-    )
-    const loggedToday = summaries.filter((s) => s.lastSeen === isoDate())
+    const ending = summaries.filter((s) => s.plan && s.plan.num_weeks - s.week <= 1)
 
-    return { summaries, flagged, active, done, planned, unread, ending, loggedToday }
-  }, [data])
+    const calendar = data?.calendar ?? []
+    const agenda = buildAgenda(
+      calendar.filter(
+        (entry) =>
+          entry.schedule.scheduled_on >= today && entry.schedule.scheduled_on <= until,
+      ),
+      presences(data?.slots ?? [], data?.attendance ?? [], today, until),
+      athletes,
+    )
+    const days = [...new Set([today, ...agenda.map((item) => item.date)])]
+
+    // A semana conta-se pelo que está marcado no calendário — é para lá que o
+    // número leva —, e só os treinos dos alunos.
+    const week = calendar.filter(
+      (entry) =>
+        entry.schedule.scheduled_on <= sunday && entry.schedule.athlete_id !== profile.id,
+    )
+    const weekDone = week.filter((entry) => entry.session?.status === 'done').length
+
+    const payments = (data?.payments ?? []).filter((payment) => payment.paid_at)
+
+    return { summaries, athletes, active, unread, ending, agenda, days, week, weekDone, payments }
+  }, [data, today, until, sunday, profile.id])
 
   if (loading) return <Loading label="A carregar" />
   if (error) {
@@ -72,6 +103,9 @@ export function Dashboard() {
   }
 
   const firstName = (profile.full_name ?? '').split(' ')[0] || 'Treinador'
+  const nameOf = (id: string) =>
+    view.athletes.find((athlete) => athlete.id === id)?.full_name ?? 'Aluno'
+  const pending = view.payments.length + view.unread.length + view.ending.length
 
   return (
     <div className="screen">
@@ -90,8 +124,139 @@ export function Dashboard() {
         </section>
       ) : (
         <>
-          {/* Os quatro números do costume, agora com sítio para onde levar:
-              cada um abre a lista ou o calendário que o explica. */}
+          {/* ── as duas coisas que se vêm cá fazer ─────── */}
+          <div className="dash__actions">
+            <button type="button" className="dash__action" onClick={() => setScheduling(true)}>
+              <span className="dash__action-icon" aria-hidden="true">
+                +
+              </span>
+              <strong>Marcar treino</strong>
+              <em>para um aluno, num dia</em>
+            </button>
+            <Link className="dash__action" to="/treinos">
+              <span className="dash__action-icon" aria-hidden="true">
+                ✓
+              </span>
+              <strong>Treinos registados</strong>
+              <em>o que os alunos fizeram</em>
+            </Link>
+          </div>
+
+          {/* ── agenda ─────────────────────────────────── */}
+          <section className="card">
+            <div className="card__head">
+              <span className="eyebrow">Próximos treinos</span>
+              <Link className="dash__more" to="/calendario">
+                calendário
+              </Link>
+            </div>
+            <ul className="dash__days">
+              {view.days.map((date) => {
+                const items = view.agenda.filter((item) => item.date === date)
+                return (
+                  <li key={date} className="dash__day">
+                    <span className={`dash__day-label ${date === today ? 'is-today' : ''}`}>
+                      {date === today ? 'Hoje' : longDate(date)}
+                    </span>
+                    {items.length === 0 ? (
+                      <p className="dash__day-empty muted">Sem treinos marcados para hoje.</p>
+                    ) : (
+                      items.map((item) => (
+                        <AgendaRow
+                          key={item.key}
+                          item={item}
+                          coachId={profile.id}
+                          onOpen={() =>
+                            item.kind === 'workout' &&
+                            item.entry.schedule.athlete_id === profile.id
+                              ? navigate('/eu?zona=treino')
+                              : setOpen(item)
+                          }
+                        />
+                      ))
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+            {view.agenda.length === 0 && (
+              <p className="dash__agenda-hint muted">
+                Nada marcado nos próximos sete dias. Usa o <strong>Marcar treino</strong>,
+                ou define o dia de treino presencial na ficha de cada aluno.
+              </p>
+            )}
+          </section>
+
+          {/* ── o que está à espera do treinador ───────── */}
+          {pending > 0 && (
+            <section className="card card--accent">
+              <span className="eyebrow">Por tratar · {pending}</span>
+              <ul className="dash__list">
+                {view.payments.map((payment) => (
+                  <li key={payment.id}>
+                    <div className="dash__row">
+                      <span className="dash__row-text">
+                        <strong>{nameOf(payment.athlete_id)}</strong>
+                        <em>
+                          diz que pagou {monthName(payment.period)} · {euros(payment.amount)}
+                        </em>
+                      </span>
+                      <button
+                        type="button"
+                        className="btn btn--sm btn--primary"
+                        disabled={busy === payment.id}
+                        onClick={async () => {
+                          setBusy(payment.id)
+                          try {
+                            await confirmPayment(
+                              profile.id,
+                              payment.athlete_id,
+                              payment.period,
+                              Number(payment.amount),
+                            )
+                            reload()
+                          } finally {
+                            setBusy(null)
+                          }
+                        }}
+                      >
+                        Validar
+                      </button>
+                    </div>
+                  </li>
+                ))}
+                {view.unread.map((summary) => (
+                  <li key={`f-${summary.profile.id}`}>
+                    <Link className="dash__row" to={`/alunos/${summary.profile.id}`}>
+                      <span className="dash__row-text">
+                        <strong>{summary.profile.full_name}</strong>
+                        <em>
+                          feedback da semana {summary.unreadFeedback?.week_number} por ler
+                        </em>
+                      </span>
+                      <span className="dash__go">→</span>
+                    </Link>
+                  </li>
+                ))}
+                {view.ending.map((summary) => (
+                  <li key={`p-${summary.profile.id}`}>
+                    <Link className="dash__row" to={`/alunos/${summary.profile.id}`}>
+                      <span className="dash__row-text">
+                        <strong>{summary.profile.full_name}</strong>
+                        <em>
+                          {summary.plan?.name} a acabar · semana {summary.week} de{' '}
+                          {summary.plan?.num_weeks}
+                        </em>
+                      </span>
+                      <span className="dash__go">→</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* ── a semana em dois números ───────────────── */}
           <div className="dash__tiles">
             <Tile
               label="Alunos"
@@ -104,168 +269,42 @@ export function Dashboard() {
               to={athletesPath('todos')}
             />
             <Tile
-              label="A precisar"
-              value={view.flagged.length}
-              tone={view.flagged.length > 0 ? 'warn' : 'good'}
-              hint={view.flagged.length === 0 ? 'tudo em dia' : 'de ti'}
-              to={athletesPath('atencao')}
-            />
-            <Tile
-              label="Treinos"
-              value={`${view.done}/${view.planned || '—'}`}
-              hint="esta semana"
-              tone={view.planned > 0 && view.done >= view.planned ? 'good' : 'default'}
-              to="/calendario"
-            />
-            <Tile
-              label="Registaram hoje"
-              value={`${view.loggedToday.length}/${view.active.length}`}
-              hint="peso, sono, passos"
-              to={athletesPath('todos')}
+              label="Treinos feitos"
+              value={view.week.length > 0 ? `${view.weekDone}/${view.week.length}` : view.weekDone}
+              hint={
+                view.week.length > 0
+                  ? 'dos marcados esta semana'
+                  : 'nada marcado esta semana'
+              }
+              tone={
+                view.week.length > 0 && view.weekDone >= view.week.length ? 'good' : 'default'
+              }
+              to="/treinos"
             />
           </div>
-
-          {/* ── quem precisa de ti ─────────────────────── */}
-          {view.flagged.length > 0 && (
-            <section className="card">
-              <div className="card__head">
-                <span className="eyebrow">A precisar de ti</span>
-                <Link className="dash__more" to="/alunos">
-                  ver todos
-                </Link>
-              </div>
-              <ul className="dash__list">
-                {view.flagged.slice(0, 5).map(({ summary, reason }) => (
-                  <li key={summary.profile.id}>
-                    <Link className="dash__row" to={`/alunos/${summary.profile.id}`}>
-                      <Avatar
-                        name={summary.profile.full_name}
-                        url={summary.profile.avatar_url}
-                        size={38}
-                      />
-                      <span className="dash__row-text">
-                        <strong>{summary.profile.full_name ?? summary.profile.email}</strong>
-                        <em className="dash__reason">{reason}</em>
-                      </span>
-                      <span className="dash__when">
-                        {summary.lastSeen ? relativeDate(summary.lastSeen) : '—'}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {/* ── feedback por responder ─────────────────── */}
-          {view.unread.length > 0 && (
-            <section className="card card--accent">
-              <span className="eyebrow">
-                {plural(view.unread.length, 'feedback por ler', 'feedbacks por ler')}
-              </span>
-              <ul className="dash__list">
-                {view.unread.map((summary) => (
-                  <li key={summary.profile.id}>
-                    <Link className="dash__row" to={`/alunos/${summary.profile.id}`}>
-                      <Avatar
-                        name={summary.profile.full_name}
-                        url={summary.profile.avatar_url}
-                        size={34}
-                      />
-                      <span className="dash__row-text">
-                        <strong>{summary.profile.full_name}</strong>
-                        <em>
-                          semana {summary.unreadFeedback?.week_number}
-                          {summary.unreadFeedback?.motivation
-                            ? ` · motivação ${summary.unreadFeedback.motivation}/10`
-                            : ''}
-                        </em>
-                      </span>
-                      <span className="dash__go">→</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {/* ── planos a acabar ────────────────────────── */}
-          {view.ending.length > 0 && (
-            <section className="card">
-              <span className="eyebrow">Planos a acabar</span>
-              <ul className="dash__list">
-                {view.ending.map((summary) => (
-                  <li key={summary.profile.id}>
-                    <Link className="dash__row" to={`/alunos/${summary.profile.id}`}>
-                      <span className="dash__row-text">
-                        <strong>{summary.profile.full_name}</strong>
-                        <em>
-                          {summary.plan?.name} · semana {summary.week} de{' '}
-                          {summary.plan?.num_weeks}
-                        </em>
-                      </span>
-                      <span className="chip chip--warn">renovar</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {/* ── movimento de peso ──────────────────────── */}
-          <section className="card card--flat">
-            <div className="card__head">
-              <span className="eyebrow">Peso, últimos 60 dias</span>
-              <Link className="dash__more" to="/alunos">
-                alunos
-              </Link>
-            </div>
-            <ul className="dash__weights">
-              {view.summaries
-                .filter((summary) => summary.weightChange !== null)
-                .sort(
-                  (a, b) =>
-                    Math.abs(b.weightChange ?? 0) - Math.abs(a.weightChange ?? 0),
-                )
-                .slice(0, 6)
-                .map((summary) => (
-                  <li key={summary.profile.id}>
-                    <span className="dash__weight-name">
-                      {summary.profile.full_name}
-                    </span>
-                    <span className="dash__weight-now">
-                      {summary.lastLog?.weight_kg
-                        ? `${num(summary.lastLog.weight_kg, 1)} kg`
-                        : '—'}
-                    </span>
-                    <span
-                      className={`dash__weight-diff ${
-                        weightTone(summary.weightChange, summary.weightDirection) ===
-                        'good'
-                          ? 'is-good'
-                          : ''
-                      }`}
-                    >
-                      {signed(summary.weightChange)}
-                    </span>
-                  </li>
-                ))}
-              {view.summaries.every((summary) => summary.weightChange === null) && (
-                <li className="muted dash__empty">
-                  Ainda sem pesagens que cheguem para comparar.
-                </li>
-              )}
-            </ul>
-          </section>
         </>
       )}
 
       {/* ── e o treino dele ────────────────────────── */}
       <SelfBanner log={data!.myLog} calendar={data!.myCalendar} />
 
-      <p className="dash__foot muted">
-        Semana de {shortDate(today)} · toca num aluno para abrir a ficha
-      </p>
+      {scheduling && (
+        <ScheduleSheet
+          coachId={profile.id}
+          athletes={view.athletes}
+          onClose={() => setScheduling(false)}
+          onDone={reload}
+        />
+      )}
+      {open && (
+        <AgendaSheet
+          item={open}
+          coachId={profile.id}
+          from="/inicio"
+          onClose={() => setOpen(null)}
+          onChanged={reload}
+        />
+      )}
     </div>
   )
 }

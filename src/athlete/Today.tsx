@@ -3,10 +3,16 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth, useProfile, useTrainsAlone } from '@/auth/useAuth'
 import { Avatar } from '@/components/Avatar'
 import { Loading, ScreenHeader } from '@/components/Screen'
+import { FeeCard, NextPresenceCard } from '@/athlete/CoachCards'
 import { RegisterCards } from '@/athlete/RegisterCards'
 import {
   fetchActivePlan,
   fetchAthleteCalendar,
+  fetchAthleteProfile,
+  fetchAttendance,
+  fetchPayments,
+  fetchTrainingSlots,
+  soft,
   fetchCurrentTargets,
   fetchCoach,
   fetchDailyLog,
@@ -17,6 +23,7 @@ import {
   saveDailyLog,
   startSession,
 } from '@/lib/api'
+import { nextPresence, periodOf } from '@/lib/agenda'
 import { average, weekOfPlan } from '@/lib/calc'
 import {
   addDays,
@@ -65,7 +72,23 @@ export function Today() {
       ? await fetchWeekSessions(profile.id, plan.plan.id, week)
       : []
 
+    // O que se combina com o treinador — o treino presencial e a mensalidade.
+    // Só faz sentido para quem tem treinador; e nenhuma destas leituras pode
+    // deitar abaixo o ecrã que se abre todos os dias.
+    const [slots, attendance, ficha, payments] = profile.coach_id
+      ? await Promise.all([
+          soft(fetchTrainingSlots(profile.id), []),
+          soft(fetchAttendance(today, addDays(today, 21), profile.id), []),
+          soft(fetchAthleteProfile(profile.id), null),
+          soft(fetchPayments(profile.id, 3), []),
+        ])
+      : [[], [], null, []]
+
     return {
+      slots,
+      attendance,
+      fee: ficha?.monthly_fee ?? null,
+      payments,
       plan,
       log,
       recent,
@@ -140,6 +163,11 @@ export function Today() {
   const lastWeight = log.weight_kg ?? weights[weights.length - 1] ?? null
 
   const stepsGoal = targets?.steps_goal ?? 9000
+
+  const presence = nextPresence(data!.slots ?? [], data!.attendance ?? [], today)
+  const period = periodOf(today)
+  const fee = data!.fee ?? null
+  const payment = (data!.payments ?? []).find((item) => item.period === period) ?? null
 
   return (
     <div className="screen">
@@ -297,6 +325,17 @@ export function Today() {
         </section>
       )}
 
+      {/* ── treino presencial ──────────────────────────── */}
+      {presence && (
+        <NextPresenceCard
+          // A chave leva a resposta: uma proposta nova reabre o formulário com ela.
+          key={`${presence.slot.id}|${presence.originalDate}|${presence.attendance?.updated_at ?? ''}`}
+          presence={presence}
+          coachName={coach?.full_name ?? null}
+          onChanged={reload}
+        />
+      )}
+
       {/* ── registo diário ─────────────────────────────── */}
       <RegisterCards
         log={log}
@@ -327,6 +366,17 @@ export function Today() {
             </div>
           </div>
         </section>
+      )}
+
+      {/* ── mensalidade ────────────────────────────────── */}
+      {fee !== null && fee > 0 && (
+        <FeeCard
+          athleteId={profile.id}
+          fee={Number(fee)}
+          period={period}
+          payment={payment}
+          onChanged={reload}
+        />
       )}
 
       {weights.length > 1 && (

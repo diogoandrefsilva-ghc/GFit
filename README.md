@@ -145,6 +145,9 @@ workout_sessions ─── set_logs           o que o aluno fez (C / R / F)
 daily_logs                              peso, passos, sono, energia, fome, stress
 measurements                            perímetros
 diet_plans ─── diet_meals ─── diet_items  plano alimentar
+training_slots ─── slot_attendance      treino presencial: a regra e as respostas
+payments                                mensalidades: o aluno paga, o treinador valida
+assessments                             avaliações físicas
 weekly_feedback                         feedback semanal e resposta do treinador
 coach_notes                             notas que aparecem no "Hoje" do aluno
 
@@ -335,27 +338,65 @@ para o primeiro toque em cada separador não esperar por um download.
 
 ## O início do treinador
 
-Os quatro números do topo — alunos, quem precisa de ti, treinos da semana, quem
-registou hoje — deixaram de ser só números: cada um é um cartão que leva ao
-ecrã que o explica.
+O Início responde a três perguntas, por esta ordem, e a mais nada:
 
-| Cartão | Onde vai dar |
+| Bloco | O que é |
 | --- | --- |
-| Alunos | a lista toda (`/alunos?ver=todos`) |
-| A precisar | a lista já filtrada por quem precisa (`/alunos?ver=atencao`) |
-| Treinos, esta semana | o calendário |
-| Registaram hoje | a lista toda, onde cada linha diz quando foi a última vez |
+| **Marcar treino** / **Treinos registados** | as duas coisas que se vêm cá fazer. A primeira abre um painel — aluno, plano, treino, dia e hora — e põe o treino no calendário sem passar pelo editor do plano. A segunda leva a `/treinos`: o que os alunos fizeram, dia a dia, com as cargas e repetições de cada série ao toque |
+| **Próximos treinos** | hoje e os seis dias seguintes: os treinos marcados e os presenciais. Tocar num abre o que se pode fazer com ele |
+| **Por tratar** | só aparece se houver: pagamentos por validar, feedback por ler, planos a acabar |
 
-A vista da lista de alunos passou a viver na barra de endereço (`?ver=atencao`,
-`todos`, `pausa`) em vez de em estado local. É o que permite ao cartão apontar
-à vista certa — e, de caminho, voltar de uma ficha devolve a lista onde ela
-estava.
+Em baixo ficam dois números — alunos activos e treinos feitos dos marcados
+nesta semana (contados pelo calendário, que é para onde o número leva) — e o
+banner com o dia do próprio treinador, que abre o separador *Eu*.
 
-No fim do ecrã há um banner com o dia do próprio treinador, que abre o separador
-*Eu*. Não é um "vai ali" solto: diz o que lhe falta — `por registar: peso, sono`
-—, e quando tem treino marcado para hoje é isso que anuncia. Com tudo feito
-veste o verde e limita-se a dizê-lo. O treinador passa o dia a olhar para os
-números dos alunos; este é o lembrete de que também tem os seus.
+Saíram daqui o "A precisar de ti", o "Registaram hoje" e os pesos dos últimos
+60 dias: o primeiro continua a ser uma vista da lista de alunos
+(`/alunos?ver=atencao`), os outros lêem-se na ficha de cada um.
+
+## Treino presencial
+
+"O David treina sempre às sextas às 12h30" é uma regra, não uma lista de
+datas. Guarda-se assim (`training_slots`: dia da semana e hora, na ficha do
+aluno) e as sessões desenham-se na altura de as mostrar (`src/lib/agenda.ts`)
+— no Calendário e no Início do treinador, e no *Hoje* do aluno, como
+**Próximo treino presencial**.
+
+- **Vais ao treino?** Vem respondido *Sim*: sem resposta, vai. Quem diz *Não*
+  pode propor outro dia e hora (`slot_attendance`).
+- O treinador vê a resposta na agenda e **aceita ou recusa** a proposta. Aceite,
+  a sessão passa a aparecer na data nova.
+- **É o treinador que regista.** Tocar num treino da agenda dá *Registar eu o
+  treino*: abre a sessão do aluno e o treinador escreve as cargas e as
+  repetições. Numa sessão presencial escolhe-se primeiro o treino, dos planos
+  publicados do aluno. O RLS de `workout_sessions` e `set_logs` passou a
+  aceitar o treinador do aluno, além do próprio.
+
+## Mensalidade
+
+O valor fica na ficha (`athlete_profiles.monthly_fee`). Com ele definido, o
+aluno tem no *Hoje* o cartão do mês com **Já paguei**; o pedido aparece ao
+treinador em *Por tratar* e na ficha, onde **valida** — ou marca ele o mês como
+pago. O aluno pode anular enquanto não estiver validado, e nunca valida ele
+(`payments`, com as duas políticas de RLS a dizer isso mesmo).
+
+## Avaliações
+
+Separador *Avaliações* da ficha do aluno. Mede-se e escreve-se — peso, altura,
+perímetros, pregas, tensão, frequência cardíaca, mobilidade do tornozelo,
+dinamometria, push-ups, curl-ups, squat test e o teste do banco — e o que é
+conta faz-se sozinho (`src/lib/assessment.ts`), sem se guardar:
+
+| Resultado | Como |
+| --- | --- |
+| IMC e classificação | peso / altura², escalões da OMS |
+| Densidade corporal | três pregas de Jackson & Pollock: peito, abdómen e coxa no homem; tricípite, supra-ilíaca e coxa na mulher |
+| % de massa gorda | Siri: 495 / densidade − 450; com o peso, kg de massa gorda e magra |
+| Tensão arterial | escalões ESC/ESH; manda o mais alto dos dois valores |
+| VO2máx | Queen's College step test: 111,33 − 0,42 × FC no homem, 65,81 − 0,1847 × FC na mulher |
+
+O sexo e a idade vêm da ficha (a idade, à data da avaliação). Cada avaliação
+mostra a diferença para a anterior, e a data da próxima passa para a ficha.
 
 ## O registo do dia
 
@@ -511,6 +552,17 @@ números:
 - **Macros em gramas ou em % das kcal.** Gravam-se sempre em gramas; a vista
   mostra a percentagem e os g/kg ao lado. O gasto do dia da ficha propõe-se
   como kcal com um toque.
+- **Ajuste às kcal.** Com *Perder peso* ou *Ganhar peso* escolhido aparecem os
+  degraus −100 a −400 (ou +100 a +400): contam sempre sobre o gasto do dia e
+  acertam as kcal sozinhos.
+
+## O plano alimentar
+
+- **O objectivo vem das metas.** Um plano sem kcal assume as das metas em
+  vigor do aluno; se as metas mudarem depois, o cartão oferece acertá-lo.
+- **Os alimentos de sempre primeiro.** A pesquisa põe à frente os que já
+  entraram em planos anteriores, por número de vezes, e só depois o resto da
+  base.
 
 ## Apagar planos
 

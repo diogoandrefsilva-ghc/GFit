@@ -367,6 +367,14 @@ ul {
   flex-wrap: wrap;
 }
 
+/* Dois campos de data ou de hora lado a lado não encolhem sozinhos, e saíam do cartão. */
+.grid-2 > .field,
+.grid-3 > .field,
+.grid-2 .input,
+.grid-3 .input {
+  min-width: 0;
+}
+
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;

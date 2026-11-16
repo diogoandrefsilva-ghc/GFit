@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth, useProfile } from '@/auth/useAuth'
 import { WorkoutList } from '@/athlete/WorkoutList'
 import { Loading, ScreenHeader } from '@/components/Screen'
@@ -27,6 +27,8 @@ export function WorkoutPreview() {
   const [params] = useSearchParams()
   const scheduleId = params.get('marcacao')
   const [starting, setStarting] = useState(false)
+  const location = useLocation()
+  const cameFrom = (location.state as { from?: string } | null)?.from
 
   const { data, loading, error } = useQuery(['treino-ver', planId, dayId, scheduleId], async () => {
     const [plan, schedules] = await Promise.all([
@@ -40,7 +42,8 @@ export function WorkoutPreview() {
     return { plan, schedule }
   })
 
-  const back = () => navigate(workoutsPath(isCoach))
+  // Quem chegou pela agenda do treinador volta à agenda; os outros, aos treinos.
+  const back = () => navigate(cameFrom ?? workoutsPath(isCoach))
 
   if (loading) return <Loading label="A carregar o treino" />
   if (error || !data) {
@@ -61,14 +64,18 @@ export function WorkoutPreview() {
   const exercises = day ? plan.exercisesByDay.get(day.id) ?? [] : []
   const sets = exercises.reduce((sum, item) => sum + item.sets, 0)
   const today = isoDate()
-  const notYet = schedule !== null && schedule.scheduled_on > today
+  // O plano é de quem o vai treinar. Quando é o treinador a abrir o treino de
+  // um aluno, a sessão que nasce aqui é do aluno.
+  const athleteId = plan.plan.athlete_id
+  const forAthlete = athleteId !== profile.id
+  const notYet = schedule !== null && schedule.scheduled_on > today && !forAthlete
 
   async function start() {
     if (!day || starting) return
     setStarting(true)
     try {
-      const session = await startSession(profile.id, plan.plan, day.id, schedule)
-      navigate(`/treino/${session.id}`, { replace: true })
+      const session = await startSession(athleteId, plan.plan, day.id, schedule)
+      navigate(`/treino/${session.id}`, { replace: true, state: { from: cameFrom } })
     } finally {
       setStarting(false)
     }
@@ -115,7 +122,7 @@ export function WorkoutPreview() {
             disabled={!day || exercises.length === 0 || starting}
             onClick={start}
           >
-            {starting ? 'A começar…' : 'Começar treino'}
+            {starting ? 'A começar…' : forAthlete ? 'Registar eu o treino' : 'Começar treino'}
           </button>
         )}
 

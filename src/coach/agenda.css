@@ -1,0 +1,146 @@
+/*
+ * A agenda do treinador: as linhas de treino do Início e do Calendário, e os
+ * painéis que abrem ao toque (o que fazer com um treino, marcar um novo).
+ */
+
+.agenda-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  background: var(--paper-2);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  text-align: left;
+}
+
+.agenda-row:active {
+  transform: scale(0.99);
+}
+
+.agenda-row__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.agenda-row__text strong {
+  font-size: 14px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agenda-row__text em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agenda-row__go {
+  flex-shrink: 0;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--muted-soft);
+}
+
+/* ── painéis ────────────────────────────────────────────── */
+
+.agenda-sheet__hint {
+  font-size: 13px;
+  line-height: 1.45;
+  margin-top: -6px;
+}
+
+.field .agenda-sheet__hint {
+  margin-top: 0;
+}
+
+.agenda-sheet__remove {
+  align-self: center;
+}
+
+.agenda-sheet__status {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.agenda-sheet__status.is-not_going {
+  background: var(--warn-soft);
+  border-color: var(--warn-line);
+}
+
+.agenda-sheet__status.is-proposed {
+  background: var(--brand-soft);
+  border-color: var(--brand-line);
+}
+
+.agenda-sheet__note {
+  color: var(--muted-strong);
+  font-style: italic;
+}
+
+.agenda-sheet__done {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--good-soft);
+  border: 1px solid var(--good-line);
+  color: var(--good);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.agenda-sheet__days {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.agenda-sheet__day {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  text-align: left;
+}
+
+.agenda-sheet__day.is-on {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+.agenda-sheet__letter {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--paper-3);
+  font-family: var(--font-narrow);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.agenda-sheet__day.is-on .agenda-sheet__letter {
+  background: var(--brand);
+  color: var(--brand-ink);
+}

@@ -1,0 +1,156 @@
+/* As avaliações físicas: a lista, o que cada uma mostra, e o formulário. */
+
+.assess__next {
+  font-size: 13px;
+  text-align: center;
+}
+
+.assess__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.assess__head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  color: var(--ink);
+}
+
+.assess__head-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.assess__head-text strong {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.assess__head-text em {
+  font-style: normal;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.assess__view {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.assess__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.assess__lines {
+  display: flex;
+  flex-direction: column;
+  background: var(--paper-2);
+  border-radius: var(--radius-sm);
+  padding: 2px 11px;
+}
+
+.assess__lines li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.assess__lines li:last-child {
+  border-bottom: none;
+}
+
+.assess__lines li > span:first-child {
+  flex: 1;
+  min-width: 0;
+  color: var(--muted-strong);
+}
+
+.assess__lines strong {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* A diferença para a avaliação anterior. Sem cor: subir não é bom nem mau por si. */
+.assess__lines em {
+  min-width: 44px;
+  text-align: right;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted-soft);
+}
+
+.assess__note {
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.assess__edit,
+.assess__delete {
+  align-self: flex-start;
+}
+
+/* ── formulário ─────────────────────────────────────────── */
+
+.assess__title {
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* O que a app calcula sozinha, logo por baixo do que se escreveu. */
+.assess__result {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  border: 1px solid var(--brand-line);
+  font-size: 13px;
+}
+
+.assess__result > span:first-child {
+  font-family: var(--font-narrow);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brand-text);
+}
+
+.assess__result strong {
+  font-size: 17px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.assess__result em {
+  font-style: normal;
+  color: var(--muted-strong);
+}
+
+/* Duas datas lado a lado: sem isto o campo de data não encolhe e sai do cartão. */
+.assess__form .field,
+.assess__form .input {
+  min-width: 0;
+}
