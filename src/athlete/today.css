@@ -40,8 +40,11 @@
   border-color: transparent;
 }
 
+/* A cor é a do texto do cartão, não a do papel: nos temas em que o cartão de
+   tinta é escuro (Arena, Guerreiro) ou branco (Caderno), o papel confunde-se
+   com o fundo e o botão deixava de se ler. */
 .card--ink .btn.today__peek {
-  color: var(--paper);
+  color: inherit;
   opacity: 0.85;
 }
 
