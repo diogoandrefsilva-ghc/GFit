@@ -35,7 +35,7 @@ function muscleAt(svg: SVGSVGElement, clientX: number, clientY: number): string 
     // esterno, o peito perdia para o deltóide, que nem ali está.
     for (const shape of group.querySelectorAll<SVGGraphicsElement>('path')) {
       const box = shape.getBBox()
-      // A silhueta que não está a ser mostrada não tem caixa; ignora-se, senão
+      // Um path que não esteja a ser desenhado não tem caixa; ignora-se, senão
       // ficava um alvo fantasma na origem do desenho.
       if (box.width === 0 && box.height === 0) continue
       const dx = Math.max(box.x - point.x, 0, point.x - (box.x + box.width))
@@ -75,9 +75,11 @@ export function BodyMap({
   label,
   onPick,
 }: Props) {
-  // Em miniatura o desenho vai sem as linhas anatómicas: não se viam e são
-  // mais de metade dos paths.
-  const html = useMemo(() => markup(view, small ? 'plain' : 'full'), [view, small])
+  // Em miniatura o desenho vai sem as linhas anatómicas, que não se viam.
+  const html = useMemo(
+    () => markup(view, small ? 'plain' : 'full', sex),
+    [view, small, sex],
+  )
 
   const style = useMemo(() => {
     const vars: Record<string, string> = {}

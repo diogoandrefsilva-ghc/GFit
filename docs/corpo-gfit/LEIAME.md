@@ -4,9 +4,14 @@ Ficheiros nesta pasta:
 
 | Ficheiro | O que é |
 |---|---|
-| `corpo-gfit.svg` | O ficheiro a integrar. SVG puro, sem dependências. |
+| `corpo-gfit.svg` | O ficheiro a integrar (está em `src/assets/`). SVG puro, sem dependências. |
 | `exemplo.html` | Página de demonstração com os três contextos, as duas silhuetas e o markup. Abre no browser. |
 | `LEIAME.md` | Isto. |
+
+> **O SVG é gerado, não se edita à mão.** O desenho vive em `scripts/build_body.mjs`
+> como listas de pontos anatómicos; o gerador passa curvas suaves por eles, espelha
+> esquerda/direita e deforma tudo para a silhueta feminina. Para mexer num músculo
+> ou no contorno, muda-se o ponto e corre-se `node scripts/build_body.mjs`.
 
 ---
 
@@ -80,8 +85,10 @@ Costas: `dorsal` · `trapezio` · `ombro_posterior` · `ombro_medio` · `triceps
 
 Combinação típica: aluno → sem classe; aluna → `gfit-body--fem`.
 
-As duas silhuetas partilham exatamente a mesma grelha muscular — os 15 grupos cabem
-dentro das duas, não há geometria duplicada nem lógica diferente por género.
+As duas silhuetas têm os mesmos 15 grupos, com os mesmos identificadores. Cada grupo
+traz os paths das duas (`gfit-v-m` e `gfit-v-f`), porque os músculos acompanham o
+contorno de cada uma; só se vê a que a classe do contentor escolher. A app nem chega
+a pôr a outra no DOM (`markup()` em `src/lib/body.ts`).
 
 ## Variáveis CSS
 
@@ -104,7 +111,8 @@ mantém o que está lá, o comportamento é o mesmo.
 3. `.gfit-line` — contorno, desenhado **por cima** das regiões para que a silhueta
    fique sempre nítida mesmo com o músculo a encostar ao limite
 4. `.gfit-detail` — linhas anatómicas (serrátil, prega inguinal, rótula, antebraço…)
-5. `.gfit-hair` — cabelo
+5. `.gfit-shape.gfit-line` — cabeça e orelhas, com enchimento, por cima do pescoço
+6. `.gfit-hair` — cabelo
 
 Nada fora do ponto 2 é pintado, por construção. Cabeça, mãos, pés e cabelo
 não têm `data-muscle` e ficam sempre neutros.
@@ -112,7 +120,7 @@ não têm `data-muscle` e ficam sempre neutros.
 ## Verificações já feitas
 
 - Nenhuma região sai de nenhuma das duas silhuetas.
-- Nenhuma região se sobrepõe a outra; entre vizinhas há sempre um canal neutro
-  de 2 a 4 unidades, com traço fino.
+- Nenhuma região se sobrepõe a outra; entre vizinhas há sempre um canal neutro,
+  com traço fino.
 - Legível a 110 px por vista (com `gfit-body--sm`), 320 px e 260 px.
 - Sem `<image>`, sem fontes externas, sem JavaScript, sem gradientes nem filtros.
