@@ -83,19 +83,17 @@ comment on column gfit.scheduled_workouts.starts_at is
 
 -- ---------- 2. o treinador regista o treino do aluno ----------
 
-drop policy if exists workout_sessions_athlete_write on gfit.workout_sessions;
-create policy workout_sessions_write on gfit.workout_sessions for all to authenticated
-  using (athlete_id = (select auth.uid()) or gfit.is_my_athlete(athlete_id))
-  with check (athlete_id = (select auth.uid()) or gfit.is_my_athlete(athlete_id));
+-- As políticas somam-se: a do aluno fica como está, e junta-se-lhe uma para
+-- o treinador. Assim não é preciso apagar nenhuma.
+create policy workout_sessions_coach_write on gfit.workout_sessions for all to authenticated
+  using (gfit.is_my_athlete(athlete_id))
+  with check (gfit.is_my_athlete(athlete_id));
 
-drop policy if exists set_logs_athlete_write on gfit.set_logs;
-create policy set_logs_write on gfit.set_logs for all to authenticated
+create policy set_logs_coach_write on gfit.set_logs for all to authenticated
   using (exists (select 1 from gfit.workout_sessions s
-                 where s.id = session_id
-                   and (s.athlete_id = (select auth.uid()) or gfit.is_my_athlete(s.athlete_id))))
+                 where s.id = session_id and gfit.is_my_athlete(s.athlete_id)))
   with check (exists (select 1 from gfit.workout_sessions s
-                 where s.id = session_id
-                   and (s.athlete_id = (select auth.uid()) or gfit.is_my_athlete(s.athlete_id))));
+                 where s.id = session_id and gfit.is_my_athlete(s.athlete_id)));
 
 -- ---------- 3. mensalidade ----------
 
