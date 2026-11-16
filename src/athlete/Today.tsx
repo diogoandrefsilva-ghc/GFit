@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth, useProfile, useTrainsAlone } from '@/auth/useAuth'
 import { Avatar } from '@/components/Avatar'
 import { Loading, ScreenHeader } from '@/components/Screen'
+import { Sheet } from '@/components/Sheet'
 import { FeeCard, NextPresenceCard } from '@/athlete/CoachCards'
 import { RegisterCards } from '@/athlete/RegisterCards'
 import { WeekStreak } from '@/athlete/Regularity'
@@ -133,6 +134,8 @@ export function Today() {
   })
 
   const [draft, setDraft] = useState<Partial<DailyLog> | null>(null)
+  /** A lista dos treinos do plano, para escolher outro que não o sugerido. */
+  const [choosing, setChoosing] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const log = useMemo(
@@ -186,6 +189,34 @@ export function Today() {
   const nextDayExercises = nextDay ? plan!.exercisesByDay.get(nextDay.id) ?? [] : []
   const totalSets = nextDayExercises.reduce((sum, item) => sum + item.sets, 0)
 
+  // Um treino começado hoje e ainda por acabar passa à frente de tudo: quem
+  // saiu a meio quer voltar a ele, e não ao que o plano sugere a seguir.
+  const ongoing =
+    sessions.find(
+      (session) =>
+        session.status === 'in_progress' &&
+        session.session_date === today &&
+        session.id !== marked?.session?.id,
+    ) ?? null
+  const ongoingDay = ongoing
+    ? plan?.days.find((day) => day.id === ongoing.plan_day_id) ?? null
+    : null
+
+  // Os treinos que se podem escolher: os do plano que já têm exercícios.
+  const choices = (plan?.days ?? []).filter(
+    (day) => (plan!.exercisesByDay.get(day.id) ?? []).length > 0,
+  )
+  const chooseOther =
+    choices.length > 1 || (choices.length === 1 && !nextDay) ? (
+      <button
+        type="button"
+        className="btn btn--quiet btn--block today__peek"
+        onClick={() => setChoosing(true)}
+      >
+        Escolher outro treino
+      </button>
+    ) : null
+
   const weights = recent
     .map((entry) => entry.weight_kg)
     .filter((value): value is number => value !== null)
@@ -228,7 +259,29 @@ export function Today() {
       {/* ── treino ─────────────────────────────────────── */}
       {/* A letra do treino vai em `data-letter`: a Arena desenha-a em grande
           por trás do cartão, o Caderno num círculo dourado. */}
-      {marked ? (
+      {ongoing && ongoingDay ? (
+        <section className="card card--ink today__workout" data-letter={ongoingDay.label}>
+          <div className="card__head">
+            <span className="eyebrow today__workout-eyebrow">Treino de hoje</span>
+            <span className="chip chip--accent">a meio</span>
+          </div>
+          <h2 className="today__workout-title">
+            Treino {ongoingDay.label}
+            {ongoingDay.title ? ` · ${ongoingDay.title}` : ''}
+          </h2>
+          <p className="today__workout-meta">
+            Saíste a meio — o que registaste está guardado.
+          </p>
+          <button
+            type="button"
+            className="btn btn--accent btn--block"
+            onClick={() => navigate(`/treino/${ongoing.id}`)}
+          >
+            Continuar treino
+          </button>
+          {chooseOther}
+        </section>
+      ) : marked ? (
         <section className="card card--ink today__workout" data-letter={marked.day?.label}>
           <div className="card__head">
             <span className="eyebrow today__workout-eyebrow">Treino de hoje</span>
@@ -280,6 +333,7 @@ export function Today() {
               Ver os exercícios
             </button>
           )}
+          {chooseOther}
         </section>
       ) : todayMarks.length > 0 ? (
         <section className="card card--good today__workout">
@@ -292,6 +346,7 @@ export function Today() {
               ? `Treino ${todayMarks[0].day?.label ?? ''} arrumado.`
               : 'Os treinos marcados para hoje estão feitos.'}
           </p>
+          {chooseOther}
         </section>
       ) : calendar.length > 0 ? (
         <section className="card card--flat today__workout">
@@ -311,14 +366,12 @@ export function Today() {
           >
             Ver a semana
           </button>
+          {chooseOther}
         </section>
       ) : nextDay ? (
         <section className="card card--ink today__workout" data-letter={nextDay.label}>
           <div className="card__head">
-            <span className="eyebrow today__workout-eyebrow">Treino de hoje</span>
-            {sessions.some((s) => s.status === 'in_progress') && (
-              <span className="chip chip--accent">a meio</span>
-            )}
+            <span className="eyebrow today__workout-eyebrow">Sugestão para hoje</span>
           </div>
           <h2 className="today__workout-title">
             Treino {nextDay.label}
@@ -350,6 +403,7 @@ export function Today() {
               Ver os exercícios
             </button>
           )}
+          {chooseOther}
         </section>
       ) : (
         <section className="card card--flat">
@@ -366,6 +420,49 @@ export function Today() {
             Ir aos treinos
           </button>
         </section>
+      )}
+
+      {choosing && plan && (
+        <Sheet
+          title="Escolher o treino"
+          caption="Vês os exercícios primeiro; só começa quando disseres."
+          done="Fechar"
+          onClose={() => setChoosing(false)}
+        >
+          <ul className="today__choices">
+            {choices.map((day) => {
+              const list = plan.exercisesByDay.get(day.id) ?? []
+              const sets = list.reduce((sum, item) => sum + item.sets, 0)
+              const session = sessions.find((item) => item.plan_day_id === day.id)
+              const suggested = (marked?.day?.id ?? (marked ? null : nextDay?.id)) === day.id
+              return (
+                <li key={day.id}>
+                  <button
+                    type="button"
+                    className="today__choice"
+                    onClick={() => navigate(`/treino/ver/${plan.plan.id}/${day.id}`)}
+                  >
+                    <span className="today__choice-letter">{day.label}</span>
+                    <span className="today__choice-text">
+                      <strong>{day.title ?? `Treino ${day.label}`}</strong>
+                      <em>
+                        {plural(list.length, 'exercício', 'exercícios')} ·{' '}
+                        {plural(sets, 'série', 'séries')}
+                      </em>
+                    </span>
+                    {suggested ? (
+                      <span className="chip chip--accent">sugerido</span>
+                    ) : session?.status === 'done' ? (
+                      <span className="chip chip--good">feito esta semana</span>
+                    ) : (
+                      <span aria-hidden="true">→</span>
+                    )}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </Sheet>
       )}
 
       {/* ── a semana e a sequência ─────────────────────── */}

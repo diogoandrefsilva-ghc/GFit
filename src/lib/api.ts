@@ -34,6 +34,7 @@ import type {
   SetLog,
   WeightDirection,
   WeeklyFeedback,
+  WorkFlow,
   WorkoutSession,
 } from './database.types'
 
@@ -389,6 +390,53 @@ export async function fetchWeekSessions(
       .eq('plan_id', planId)
       .eq('week_number', week)
       .order('session_date'),
+  )
+}
+
+/** Uma sessão com o treino a que pertence, para a mostrar no calendário. */
+export interface DatedSession {
+  session: WorkoutSession
+  day: PlanDay | null
+}
+
+/**
+ * As sessões de um intervalo de datas, de qualquer plano. É o que deixa o
+ * calendário mostrar o que se treinou sem estar marcado — escolhido na lista
+ * do plano, ou num dia que era de descanso.
+ */
+export async function fetchSessionsBetween(
+  athleteId: string,
+  from: string,
+  to: string,
+): Promise<DatedSession[]> {
+  const sessions = unwrap(
+    await supabase
+      .from('workout_sessions')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .gte('session_date', from)
+      .lte('session_date', to)
+      .order('started_at'),
+  )
+  const dayIds = [
+    ...new Set(
+      sessions.map((row) => row.plan_day_id).filter((id): id is string => Boolean(id)),
+    ),
+  ]
+  const days = dayIds.length
+    ? unwrap(await supabase.from('plan_days').select('*').in('id', dayIds))
+    : []
+  const dayById = new Map(days.map((day) => [day.id, day]))
+  return sessions.map((session) => ({
+    session,
+    day: session.plan_day_id ? dayById.get(session.plan_day_id) ?? null : null,
+  }))
+}
+
+/** A ordem que quem treina escolheu para esta sessão: série a série ou circuito. */
+export async function setSessionFlow(sessionId: string, flow: WorkFlow): Promise<void> {
+  unwrap(
+    await supabase.from('workout_sessions').update({ flow }).eq('id', sessionId).select(),
   )
 }
 

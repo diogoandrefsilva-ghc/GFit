@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth, useProfile } from '@/auth/useAuth'
 import { MuscleWork } from '@/components/MuscleWork'
 import { Loading, ScreenHeader } from '@/components/Screen'
+import { Segmented } from '@/components/Segmented'
 import { Stepper } from '@/components/Stepper'
 import { TimedSession } from '@/athlete/TimedSession'
 import { VideoModal } from '@/components/VideoModal'
@@ -19,6 +20,7 @@ import {
   finishSession,
   saveSet,
   saveTimedSets,
+  setSessionFlow,
 } from '@/lib/api'
 import { weeklyVolume } from '@/lib/calc'
 import { hasPlayableVideo } from '@/lib/video'
@@ -27,7 +29,7 @@ import { exerciseName, isTimedWorkout } from '@/lib/workout'
 import { supabase } from '@/lib/supabase'
 import { unwrap, useQuery } from '@/lib/useQuery'
 import { clock, num, plural, repRange, restLabel, signed, titleCase } from '@/lib/format'
-import type { Exercise, PlanExercise, SetLog } from '@/lib/database.types'
+import type { Exercise, PlanExercise, SetLog, WorkFlow } from '@/lib/database.types'
 import './workout-session.css'
 
 /** O resumo que fica no ecrã quando o treino acaba. */
@@ -99,6 +101,8 @@ export function WorkoutSession() {
   const [elapsed, setElapsed] = useState(0)
   /** O treino acabado: fica no ecrã em vez de saltar logo para a lista. */
   const [finished, setFinished] = useState<Summary | null>(null)
+  /** A ordem escolhida nesta visita; até lá vale a da sessão, ou a do treino. */
+  const [flowChoice, setFlowChoice] = useState<WorkFlow | null>(null)
 
   useEffect(() => {
     if (data?.sets) setLogged(data.sets)
@@ -226,7 +230,15 @@ export function WorkoutSession() {
   }
 
   const library = plan?.library ?? new Map<string, Exercise>()
-  const circuit = day.flow === 'circuit'
+  // Série a série ou em circuito: o treino traz uma ordem escrita, mas quem
+  // treina escolhe — e a escolha fica na sessão, para valer ao voltar.
+  const flow: WorkFlow = flowChoice ?? session.flow ?? day.flow
+  const circuit = flow === 'circuit'
+  const chooseFlow = (value: WorkFlow) => {
+    setFlowChoice(value)
+    // Se não gravar, a escolha vale na mesma até se sair do ecrã.
+    setSessionFlow(session.id, value).catch(() => {})
+  }
   const done = countByExercise(logged)
   const totalSets = exercises.reduce((sum, item) => sum + item.sets, 0)
   const doneSets = logged.length
@@ -249,6 +261,29 @@ export function WorkoutSession() {
       seconds: elapsed,
     })
   }
+
+  // A casinha: sai do treino para a lista de treinos. O que está registado
+  // fica guardado, e o treino continua "a meio" até se voltar a ele.
+  const home = (
+    <button
+      type="button"
+      className="screen-head__back session__home"
+      onClick={() => navigate(workouts)}
+      aria-label={forAthlete ? 'Sair do treino' : 'Voltar ao plano de treino'}
+      title={forAthlete ? 'Sair do treino' : 'Voltar ao plano de treino'}
+    >
+      <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
+        <path
+          d="M4 11.2 12 4l8 7.2M6.2 9.8V20h4v-5.6h3.6V20h4V9.8"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
+  )
 
   // ── o resumo: a lista do treino, com o que já está feito ─────────────
   if (view === null) {
@@ -273,6 +308,7 @@ export function WorkoutSession() {
               </span>
             </div>
             <span className="session__clock">{clock(elapsed)}</span>
+            {home}
           </header>
 
           {ownerName && (
@@ -282,12 +318,26 @@ export function WorkoutSession() {
             </p>
           )}
 
-          {circuit && (
-            <p className="session__mode">
-              Em circuito: uma série de cada exercício e volta ao primeiro. Ao
-              guardar uma série a app passa ao exercício seguinte.
-            </p>
+          {session.status !== 'done' && exercises.length > 1 && (
+            <div className="session__flow">
+              <span className="field__label">Como queres fazer o treino?</span>
+              <Segmented<WorkFlow>
+                label="Ordem do treino"
+                value={flow}
+                options={[
+                  ['sets', 'Série a série'],
+                  ['circuit', 'Em circuito'],
+                ]}
+                onChange={chooseFlow}
+              />
+            </div>
           )}
+
+          <p className="session__mode">
+            {circuit
+              ? 'Em circuito: uma série de cada exercício e volta ao primeiro. Ao guardar uma série a app passa ao exercício seguinte.'
+              : 'Série a série: fazes as séries todas de um exercício antes de passar ao seguinte.'}
+          </p>
 
           <WorkoutList
             day={day}
@@ -320,13 +370,32 @@ export function WorkoutSession() {
               {forAthlete ? 'Voltar' : 'Voltar aos treinos'}
             </button>
           ) : (
-            <button
-              type="button"
-              className={`btn btn--block ${upNext === null ? 'btn--accent' : 'btn--quiet'}`}
-              onClick={finish}
-            >
-              Terminar treino
-            </button>
+            <>
+              <button
+                type="button"
+                className={`btn btn--block ${upNext === null ? 'btn--accent' : 'btn--ghost'}`}
+                onClick={finish}
+              >
+                Terminar treino
+              </button>
+              {upNext !== null && (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn--quiet btn--block"
+                    onClick={() => navigate(workouts)}
+                  >
+                    Sair e continuar depois
+                  </button>
+                  {doneSets > 0 && (
+                    <p className="session__hint muted">
+                      O que já registaste fica guardado. O treino fica “a meio” e
+                      continuas de onde paraste.
+                    </p>
+                  )}
+                </>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -356,6 +425,7 @@ export function WorkoutSession() {
             </span>
           </div>
           <span className="session__clock">{clock(elapsed)}</span>
+          {home}
         </header>
 
         <ExerciseCard
@@ -572,22 +642,18 @@ function ExerciseCard({
   const target = editing ?? nextSetNumber
   const editingSet = editing !== null ? byNumber.get(editing) ?? null : null
 
-  // Arranca com a carga da série anterior, ou com a da semana passada. A carga
-  // anda de quilo em quilo: o que vier com casas de antes arredonda-se.
+  // A referência é a última série do último treino: é a carga a que se
+  // chegou, e é dela que se parte — a primeira série de então pode ter sido de
+  // aquecimento. Com séries já feitas hoje, segue-se a carga da anterior, que
+  // é a que está na barra. A carga anda de quilo em quilo: o que vier com
+  // casas de antes arredonda-se.
+  const lastTime = previous?.length ? previous[previous.length - 1] : null
   const suggestedWeight = Math.round(
-    Number(
-      byNumber.get(target - 1)?.weight_kg ??
-        previous?.find((set) => set.set_number === target)?.weight_kg ??
-        previous?.[0]?.weight_kg ??
-        20,
-    ),
+    Number(byNumber.get(target - 1)?.weight_kg ?? lastTime?.weight_kg ?? 20),
   )
 
   const suggestedReps =
-    previous?.find((set) => set.set_number === target)?.reps ??
-    planExercise.rep_max ??
-    planExercise.rep_min ??
-    10
+    lastTime?.reps ?? planExercise.rep_max ?? planExercise.rep_min ?? 10
 
   const [weight, setWeight] = useState<number | null>(null)
   const [reps, setReps] = useState<number | null>(null)
@@ -606,10 +672,9 @@ function ExerciseCard({
     ? previous.map((set) => `${kg(set.weight_kg)} × ${set.reps ?? '—'}`).join(', ')
     : null
 
-  const progress =
-    previous?.length && previous[0].weight_kg
-      ? effectiveWeight - Number(previous[0].weight_kg)
-      : null
+  const progress = lastTime?.weight_kg
+    ? effectiveWeight - Number(lastTime.weight_kg)
+    : null
 
   const allDone = sets.length >= planExercise.sets
 

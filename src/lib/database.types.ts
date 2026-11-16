@@ -306,6 +306,8 @@ export type WorkoutSession = {
   finished_at: string | null
   duration_s: number | null
   status: SessionStatus
+  /** A ordem escolhida por quem treina. Nulo: a que está escrita no treino. */
+  flow: WorkFlow | null
   notes: string | null
   created_at: string
 }

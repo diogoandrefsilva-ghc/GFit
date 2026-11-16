@@ -311,3 +311,22 @@
 .exercise__entry .row .btn {
   flex: 1;
 }
+
+/* A casinha: sair do treino para a lista, de qualquer ponto dele. */
+.session__home {
+  color: var(--brand-text);
+}
+
+/* Série a série ou em circuito — pergunta-se antes de começar. */
+.session__flow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.session__hint {
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+  margin-top: -6px;
+}
