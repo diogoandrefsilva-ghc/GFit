@@ -3,6 +3,7 @@ import { unwrap } from './useQuery'
 import { daysBetween, isoDate, weekStart } from './format'
 import { weekOfPlan } from './calc'
 import type {
+  Assessment,
   AthleteLimitation,
   AthleteProfile,
   AthleteTargets,
@@ -11,6 +12,9 @@ import type {
   Invite,
   Muscle,
   MuscleShare,
+  Payment,
+  SlotAttendance,
+  TrainingSlot,
   DailyLog,
   DietItem,
   DietMeal,
@@ -661,6 +665,7 @@ export async function scheduleWorkouts(
     plan_id: string
     plan_day_id: string
     scheduled_on: string
+    starts_at?: string | null
   }[],
 ): Promise<void> {
   if (rows.length === 0) return
@@ -1224,11 +1229,57 @@ export async function searchExercises(
   return unwrap(await query)
 }
 
-export async function searchFoods(term: string): Promise<Food[]> {
-  let query = supabase.from('foods').select('*').order('name').limit(60)
+/**
+ * Quantas vezes cada alimento já entrou num plano alimentar de quem está a
+ * escrever. É o "histórico" da pesquisa: o frango e o arroz de todos os planos
+ * aparecem antes dos 1300 alimentos que nunca ninguém usou.
+ */
+export async function fetchFoodUsage(): Promise<Map<string, number>> {
+  const rows = unwrap(
+    await supabase
+      .from('diet_items')
+      .select('food_id')
+      .not('food_id', 'is', null)
+      .limit(1000),
+  )
+  const usage = new Map<string, number>()
+  for (const row of rows) {
+    if (row.food_id) usage.set(row.food_id, (usage.get(row.food_id) ?? 0) + 1)
+  }
+  return usage
+}
+
+/**
+ * Procura alimentos, com os mais usados primeiro. Os usados pedem-se à parte:
+ * a base tem 1366 alimentos e a pesquisa traz 60 por ordem alfabética, por
+ * isso o "Frango, peito" de sempre podia nem vir na lista de "frango".
+ */
+export async function searchFoods(
+  term: string,
+  usage: Map<string, number> = new Map(),
+): Promise<Food[]> {
   const normalized = term.trim().toLowerCase()
-  if (normalized) query = query.like('search_name', `%${normalized}%`)
-  return unwrap(await query)
+  const usedIds = [...usage.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 80)
+    .map(([id]) => id)
+
+  let all = supabase.from('foods').select('*').order('name').limit(60)
+  if (normalized) all = all.like('search_name', `%${normalized}%`)
+
+  let used = supabase.from('foods').select('*').in('id', usedIds)
+  if (normalized) used = used.like('search_name', `%${normalized}%`)
+
+  const [general, favourites] = await Promise.all([
+    all.then(unwrap),
+    usedIds.length ? used.then(unwrap) : Promise.resolve([] as Food[]),
+  ])
+
+  favourites.sort(
+    (a, b) => (usage.get(b.id) ?? 0) - (usage.get(a.id) ?? 0) || a.name.localeCompare(b.name),
+  )
+  const seen = new Set(favourites.map((food) => food.id))
+  return [...favourites, ...general.filter((food) => !seen.has(food.id))]
 }
 
 export async function fetchMuscles(): Promise<Muscle[]> {
@@ -1410,4 +1461,379 @@ export async function saveAthleteProfile(
       .select(),
   )
   return rows[0]
+}
+
+// ── treino presencial ────────────────────────────────────────────────
+
+/**
+ * As tabelas deste bloco chegaram com a migração 15. Onde a app as lê em
+ * ecrãs que já existiam — o Hoje do aluno, o Início do treinador —, uma
+ * falha aqui não pode deitar o ecrã abaixo: fica-se sem o cartão novo e o
+ * resto continua a funcionar.
+ */
+export async function soft<T>(promise: Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await promise
+  } catch {
+    return fallback
+  }
+}
+
+/** As regras de treino presencial: de um aluno, ou de todos os que se vêem. */
+export async function fetchTrainingSlots(athleteId?: string): Promise<TrainingSlot[]> {
+  let query = supabase.from('training_slots').select('*').order('weekday').order('start_time')
+  if (athleteId) query = query.eq('athlete_id', athleteId)
+  return unwrap(await query)
+}
+
+export async function addTrainingSlot(
+  coachId: string,
+  athleteId: string,
+  weekday: number,
+  startTime: string,
+): Promise<void> {
+  unwrap(
+    await supabase
+      .from('training_slots')
+      .upsert(
+        {
+          coach_id: coachId,
+          athlete_id: athleteId,
+          weekday,
+          start_time: startTime,
+          starts_on: isoDate(),
+        },
+        { onConflict: 'athlete_id,weekday,start_time', ignoreDuplicates: true },
+      )
+      .select(),
+  )
+}
+
+export async function deleteTrainingSlot(id: string): Promise<void> {
+  unwrap(await supabase.from('training_slots').delete().eq('id', id).select())
+}
+
+/**
+ * As respostas às sessões de um intervalo — as que caem nele e as que foram
+ * mudadas para dentro dele.
+ */
+export async function fetchAttendance(
+  from: string,
+  to: string,
+  athleteId?: string,
+): Promise<SlotAttendance[]> {
+  let query = supabase
+    .from('slot_attendance')
+    .select('*')
+    .or(
+      `and(session_date.gte.${from},session_date.lte.${to}),and(proposed_date.gte.${from},proposed_date.lte.${to})`,
+    )
+  if (athleteId) query = query.eq('athlete_id', athleteId)
+  return unwrap(await query)
+}
+
+/** O aluno diz se vai, e, não indo, que data propõe. */
+export async function saveAttendance(
+  slot: TrainingSlot,
+  sessionDate: string,
+  values: {
+    going: boolean
+    proposed_date?: string | null
+    proposed_time?: string | null
+    note?: string | null
+  },
+): Promise<void> {
+  unwrap(
+    await supabase
+      .from('slot_attendance')
+      .upsert(
+        {
+          slot_id: slot.id,
+          athlete_id: slot.athlete_id,
+          session_date: sessionDate,
+          going: values.going,
+          proposed_date: values.going ? null : (values.proposed_date ?? null),
+          proposed_time: values.going ? null : (values.proposed_time ?? null),
+          note: values.note ?? null,
+          // Uma resposta nova apaga o que o treinador tinha dito à anterior.
+          proposal_accepted: null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'slot_id,session_date' },
+      )
+      .select(),
+  )
+}
+
+/** O treinador aceita ou recusa a data que o aluno propôs. */
+export async function answerProposal(attendanceId: string, accepted: boolean): Promise<void> {
+  unwrap(
+    await supabase
+      .from('slot_attendance')
+      .update({ proposal_accepted: accepted, updated_at: new Date().toISOString() })
+      .eq('id', attendanceId)
+      .select(),
+  )
+}
+
+// ── mensalidade ──────────────────────────────────────────────────────
+
+export async function fetchPayments(athleteId: string, limit = 12): Promise<Payment[]> {
+  return unwrap(
+    await supabase
+      .from('payments')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .order('period', { ascending: false })
+      .limit(limit),
+  )
+}
+
+/** O que os alunos disseram que pagaram e ainda está por validar. */
+export async function fetchPendingPayments(): Promise<Payment[]> {
+  return unwrap(
+    await supabase
+      .from('payments')
+      .select('*')
+      .is('confirmed_at', null)
+      .order('paid_at', { ascending: false }),
+  )
+}
+
+/** O aluno: "já paguei". Fica à espera do treinador. */
+export async function declarePaid(
+  athleteId: string,
+  period: string,
+  amount: number,
+): Promise<void> {
+  unwrap(
+    await supabase
+      .from('payments')
+      .upsert(
+        { athlete_id: athleteId, period, amount, paid_at: new Date().toISOString() },
+        { onConflict: 'athlete_id,period' },
+      )
+      .select(),
+  )
+}
+
+/** O treinador valida — ou regista ele o pagamento, se o aluno não o declarou. */
+export async function confirmPayment(
+  coachId: string,
+  athleteId: string,
+  period: string,
+  amount: number,
+): Promise<void> {
+  unwrap(
+    await supabase
+      .from('payments')
+      .upsert(
+        {
+          athlete_id: athleteId,
+          period,
+          amount,
+          confirmed_at: new Date().toISOString(),
+          confirmed_by: coachId,
+        },
+        { onConflict: 'athlete_id,period' },
+      )
+      .select(),
+  )
+}
+
+/** Voltar atrás: o mês fica outra vez por pagar. */
+export async function deletePayment(id: string): Promise<void> {
+  unwrap(await supabase.from('payments').delete().eq('id', id).select())
+}
+
+// ── avaliações ───────────────────────────────────────────────────────
+
+export async function fetchAssessments(athleteId: string): Promise<Assessment[]> {
+  return unwrap(
+    await supabase
+      .from('assessments')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .order('assessed_on', { ascending: false }),
+  )
+}
+
+export async function saveAssessment(
+  athleteId: string,
+  authorId: string,
+  values: Partial<Assessment> & { assessed_on: string },
+): Promise<void> {
+  // O id e o autor ficam de fora do que vem do formulário: uma avaliação que
+  // muda de data é a mesma linha, e quem a criou não muda por se corrigir.
+  const { id, created_at: _createdAt, created_by: _createdBy, ...fields } = values
+  void _createdAt
+  void _createdBy
+  if (id) {
+    unwrap(await supabase.from('assessments').update(fields).eq('id', id).select())
+  } else {
+    unwrap(
+      await supabase
+        .from('assessments')
+        .upsert(
+          { ...fields, athlete_id: athleteId, created_by: authorId },
+          { onConflict: 'athlete_id,assessed_on' },
+        )
+        .select(),
+    )
+  }
+}
+
+export async function deleteAssessment(id: string): Promise<void> {
+  unwrap(await supabase.from('assessments').delete().eq('id', id).select())
+}
+
+// ── os treinos que ficaram registados ────────────────────────────────
+
+/** Um treino registado, com o nome do treino e de quem o fez. */
+export interface SessionLogEntry {
+  session: WorkoutSession
+  day: PlanDay | null
+  plan: Plan | null
+  athlete: Profile | null
+}
+
+/**
+ * Os treinos registados desde uma data, do mais recente ao mais antigo. Sem
+ * `athleteId` vêm os de toda a gente que o RLS deixa ver — os alunos do
+ * treinador e ele próprio.
+ */
+export async function fetchSessionLog(
+  since: string,
+  athleteId?: string,
+): Promise<SessionLogEntry[]> {
+  let query = supabase
+    .from('workout_sessions')
+    .select('*')
+    .gte('session_date', since)
+    .order('session_date', { ascending: false })
+    .order('started_at', { ascending: false })
+    .limit(200)
+  if (athleteId) query = query.eq('athlete_id', athleteId)
+  const sessions = unwrap(await query)
+  if (sessions.length === 0) return []
+
+  const ids = (values: (string | null)[]) => [
+    ...new Set(values.filter((value): value is string => Boolean(value))),
+  ]
+  const dayIds = ids(sessions.map((row) => row.plan_day_id))
+  const planIds = ids(sessions.map((row) => row.plan_id))
+  const athleteIds = ids(sessions.map((row) => row.athlete_id))
+
+  const [days, plans, athletes] = await Promise.all([
+    dayIds.length
+      ? supabase.from('plan_days').select('*').in('id', dayIds).then(unwrap)
+      : Promise.resolve([] as PlanDay[]),
+    planIds.length
+      ? supabase.from('plans').select('*').in('id', planIds).then(unwrap)
+      : Promise.resolve([] as Plan[]),
+    supabase.from('profiles').select('*').in('id', athleteIds).then(unwrap),
+  ])
+
+  const dayById = new Map(days.map((day) => [day.id, day]))
+  const planById = new Map(plans.map((plan) => [plan.id, plan]))
+  const athleteById = new Map(athletes.map((profile) => [profile.id, profile]))
+
+  return sessions.map((session) => ({
+    session,
+    day: session.plan_day_id ? (dayById.get(session.plan_day_id) ?? null) : null,
+    plan: session.plan_id ? (planById.get(session.plan_id) ?? null) : null,
+    athlete: athleteById.get(session.athlete_id) ?? null,
+  }))
+}
+
+/** As séries de um treino, exercício a exercício, pela ordem do plano. */
+export async function fetchSessionDetail(
+  sessionId: string,
+): Promise<{ name: string; sets: SetLog[] }[]> {
+  const sets = await fetchSessionSets(sessionId)
+  if (sets.length === 0) return []
+
+  const planExerciseIds = [
+    ...new Set(sets.map((set) => set.plan_exercise_id).filter((id): id is string => Boolean(id))),
+  ]
+  const planExercises = planExerciseIds.length
+    ? unwrap(await supabase.from('plan_exercises').select('*').in('id', planExerciseIds))
+    : []
+  const library = await fetchExercisesByIds(planExercises)
+
+  const groups = new Map<string, { name: string; order: number; sets: SetLog[] }>()
+  for (const set of sets) {
+    const key = set.plan_exercise_id ?? set.exercise_id ?? 'outro'
+    if (!groups.has(key)) {
+      const planExercise = planExercises.find((item) => item.id === set.plan_exercise_id)
+      const exercise = planExercise?.exercise_id ? library.get(planExercise.exercise_id) : null
+      groups.set(key, {
+        name: planExercise?.name_override ?? exercise?.name ?? 'Exercício',
+        order: planExercise?.sort_order ?? 999,
+        sets: [],
+      })
+    }
+    groups.get(key)!.sets.push(set)
+  }
+
+  return [...groups.values()]
+    .sort((a, b) => a.order - b.order)
+    .map(({ name, sets: rows }) => ({ name, sets: rows }))
+}
+
+// ── marcar treinos a partir do Início ────────────────────────────────
+
+/** Um plano que se pode marcar, com os treinos que já têm exercícios. */
+export interface SchedulablePlan {
+  plan: Plan
+  days: PlanDay[]
+}
+
+/**
+ * Os planos de um aluno que o treinador pode pôr no calendário: os que ele
+ * próprio escreveu e já publicou. Um treino sem exercícios fica de fora — não
+ * há nada para fazer nesse dia.
+ */
+export async function fetchSchedulablePlans(
+  athleteId: string,
+  authorId: string,
+): Promise<SchedulablePlan[]> {
+  const plans = unwrap(
+    await supabase
+      .from('plans')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .eq('coach_id', authorId)
+      .eq('status', 'published')
+      .order('start_date', { ascending: false }),
+  )
+  if (plans.length === 0) return []
+
+  const days = unwrap(
+    await supabase
+      .from('plan_days')
+      .select('*')
+      .in(
+        'plan_id',
+        plans.map((plan) => plan.id),
+      )
+      .order('sort_order'),
+  )
+  const exercises = days.length
+    ? unwrap(
+        await supabase
+          .from('plan_exercises')
+          .select('plan_day_id')
+          .in(
+            'plan_day_id',
+            days.map((day) => day.id),
+          ),
+      )
+    : []
+  const filled = new Set(exercises.map((item) => item.plan_day_id))
+
+  return plans.map((plan) => ({
+    plan,
+    days: days.filter((day) => day.plan_id === plan.id && filled.has(day.id)),
+  }))
 }

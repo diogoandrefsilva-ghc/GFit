@@ -1,0 +1,113 @@
+/* O combinado com o aluno: dias de treino presencial e mensalidade. */
+
+.coaching__block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coaching__block + .coaching__block {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.coaching__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 30px;
+}
+
+.coaching__empty {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.coaching__slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.coaching__slots:empty {
+  display: none;
+}
+
+.coaching__slots li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 6px 6px 12px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  border: 1px solid var(--brand-line);
+}
+
+.coaching__slots strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.coaching__slots strong::first-letter {
+  text-transform: uppercase;
+}
+
+.coaching__remove {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 17px;
+  line-height: 1;
+  color: var(--muted-strong);
+}
+
+.coaching__form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--paper-2);
+}
+
+.coaching__fee {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.coaching__months {
+  display: flex;
+  flex-direction: column;
+}
+
+.coaching__months li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+
+.coaching__month {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.coaching__month strong {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.coaching__month em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--muted);
+}

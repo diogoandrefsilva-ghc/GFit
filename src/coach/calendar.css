@@ -115,3 +115,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Marcar um treino a partir do próprio dia. */
+.cal-day__add {
+  align-self: flex-start;
+  padding: 2px 0;
+  font-size: 13px;
+  color: var(--muted-soft);
+}

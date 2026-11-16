@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth, useProfile } from '@/auth/useAuth'
 import { MuscleWork } from '@/components/MuscleWork'
 import { Loading, ScreenHeader } from '@/components/Screen'
@@ -11,6 +11,7 @@ import {
   deleteSet,
   fetchActivePlan,
   fetchAthleteProfile,
+  fetchCoach,
   fetchMuscles,
   fetchPlanById,
   fetchPreviousSets,
@@ -62,9 +63,7 @@ export function WorkoutSession() {
   const { isCoach } = useAuth()
   const navigate = useNavigate()
   const { sessionId } = useParams<{ sessionId: string }>()
-  // De onde se veio e para onde se volta: o aluno ao separador Treino, o
-  // treinador à lista de treinos da sua área.
-  const workouts = workoutsPath(isCoach)
+  const location = useLocation()
 
   const { data, loading, error } = useQuery(['treino-sessao', sessionId, profile.id], async () => {
     const sessions = unwrap(
@@ -77,16 +76,21 @@ export function WorkoutSession() {
     // pode ser de um plano que entretanto deixou de ser o último.
     const plan = session.plan_id
       ? await fetchPlanById(session.plan_id)
-      : await fetchActivePlan(profile.id)
+      : await fetchActivePlan(session.athlete_id)
     const day = plan?.days.find((item) => item.id === session.plan_day_id) ?? null
     const exercises = day ? plan!.exercisesByDay.get(day.id) ?? [] : []
-    const [sets, muscles, ficha] = await Promise.all([
+    // Num treino presencial quem regista é o treinador: a sessão é do aluno,
+    // e é dele a ficha, o "da última vez" e o nome que aparece em cima.
+    const [sets, muscles, ficha, owner] = await Promise.all([
       fetchSessionSets(session.id),
       fetchMuscles(),
-      fetchAthleteProfile(profile.id),
+      fetchAthleteProfile(session.athlete_id),
+      session.athlete_id === profile.id
+        ? Promise.resolve(null)
+        : fetchCoach(session.athlete_id),
     ])
 
-    return { session, plan, day, exercises, sets, muscles, ficha }
+    return { session, plan, day, exercises, sets, muscles, ficha, owner }
   })
 
   /** O exercício aberto, ou `null` para o resumo — que é por onde se entra. */
@@ -111,6 +115,16 @@ export function WorkoutSession() {
     return () => window.clearInterval(timer)
   }, [startedAt])
 
+  // De onde se veio e para onde se volta: o aluno ao separador Treino, o
+  // treinador à lista de treinos da sua área — ou, se está a registar o treino
+  // de um aluno, ao ecrã de onde o abriu.
+  const forAthlete =
+    data && data.session.athlete_id !== profile.id ? data.session.athlete_id : null
+  const cameFrom = (location.state as { from?: string } | null)?.from
+  const workouts = forAthlete
+    ? (cameFrom ?? `/alunos/${forAthlete}`)
+    : workoutsPath(isCoach)
+
   if (loading) return <Loading label="A carregar o treino" />
   if (error || !data) {
     return (
@@ -124,6 +138,7 @@ export function WorkoutSession() {
   }
 
   const { session, plan, day, exercises, muscles, ficha } = data
+  const ownerName = forAthlete ? (data.owner?.full_name ?? 'aluno') : null
   const muscleNames = new Map(muscles.map((muscle) => [muscle.slug, muscle.name]))
 
   if (finished) {
@@ -158,7 +173,7 @@ export function WorkoutSession() {
             className="btn btn--accent btn--block"
             onClick={() => navigate(workouts)}
           >
-            Voltar aos treinos
+            {forAthlete ? 'Voltar' : 'Voltar aos treinos'}
           </button>
         </div>
       </div>
@@ -260,6 +275,13 @@ export function WorkoutSession() {
             <span className="session__clock">{clock(elapsed)}</span>
           </header>
 
+          {ownerName && (
+            <p className="session__mode">
+              Estás a registar o treino de <strong>{ownerName}</strong>. Fica no
+              histórico dele como se o tivesse registado.
+            </p>
+          )}
+
           {circuit && (
             <p className="session__mode">
               Em circuito: uma série de cada exercício e volta ao primeiro. Ao
@@ -295,7 +317,7 @@ export function WorkoutSession() {
               className="btn btn--quiet btn--block"
               onClick={() => navigate(workouts)}
             >
-              Voltar aos treinos
+              {forAthlete ? 'Voltar' : 'Voltar aos treinos'}
             </button>
           ) : (
             <button
@@ -338,7 +360,7 @@ export function WorkoutSession() {
 
         <ExerciseCard
           key={current.id}
-          athleteId={profile.id}
+          athleteId={session.athlete_id}
           sessionId={session.id}
           planExercise={current}
           name={exerciseName(current, library)}

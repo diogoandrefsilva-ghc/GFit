@@ -1,12 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Loading, ScreenHeader, Stat } from '@/components/Screen'
-import { deleteDietPlan, fetchDietContents, searchFoods } from '@/lib/api'
+import {
+  deleteDietPlan,
+  fetchCurrentTargets,
+  fetchDietContents,
+  fetchFoodUsage,
+  searchFoods,
+} from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { EMPTY_MACROS, addMacros, macrosOf, scaleFood, type Macros } from '@/lib/calc'
 import { int, num } from '@/lib/format'
 import { unwrap, useQuery } from '@/lib/useQuery'
-import type { DietItem, DietPlan, Food } from '@/lib/database.types'
+import type { AthleteTargets, DietItem, DietPlan, Food } from '@/lib/database.types'
 import './diet-editor.css'
 
 export function DietEditor() {
@@ -18,9 +24,34 @@ export function DietEditor() {
     const plans = unwrap(
       await supabase.from('diet_plans').select('*').eq('id', dietPlanId!).limit(1),
     )
-    const plan = plans[0]
+    let plan = plans[0]
     if (!plan) throw new Error('Plano alimentar não encontrado.')
-    return { plan, ...(await fetchDietContents(plan.id)) }
+
+    // O objectivo do plano alimentar é o das metas do aluno. Um plano que
+    // ainda não o tem — as metas vieram depois, ou ficou em branco — assume-o
+    // sozinho; quem quiser outro número escreve-o por cima.
+    const [targets, usage, contents] = await Promise.all([
+      fetchCurrentTargets(plan.athlete_id),
+      fetchFoodUsage(),
+      fetchDietContents(plan.id),
+    ])
+    if (plan.kcal_target === null && targets?.kcal_target) {
+      const filled = unwrap(
+        await supabase
+          .from('diet_plans')
+          .update({
+            kcal_target: targets.kcal_target,
+            protein_target_g: plan.protein_target_g ?? targets.protein_target_g,
+            fat_target_g: plan.fat_target_g ?? targets.fat_target_g,
+            carb_target_g: plan.carb_target_g ?? targets.carb_target_g,
+          })
+          .eq('id', plan.id)
+          .select(),
+      )
+      plan = filled[0] ?? plan
+    }
+
+    return { plan, targets, usage, ...contents }
   })
 
   const totals = useMemo(() => {
@@ -55,7 +86,7 @@ export function DietEditor() {
     <div className="app">
       <div className="screen screen--plain">
         <ScreenHeader
-          back={() => navigate(`/alunos/${plan.athlete_id}`, { replace: true })}
+          back={() => navigate(`/alunos/${plan.athlete_id}?ver=planos`, { replace: true })}
           title={plan.name}
           subtitle={
             plan.status === 'published'
@@ -64,7 +95,7 @@ export function DietEditor() {
           }
         />
 
-        <TargetsCard plan={plan} onSaved={reload} />
+        <TargetsCard plan={plan} targets={data.targets ?? null} onSaved={reload} />
 
         <section className="card card--flat">
           <span className="eyebrow">Total do plano</span>
@@ -186,7 +217,7 @@ export function DietEditor() {
           <button
             type="button"
             className="btn btn--quiet"
-            onClick={() => navigate(`/alunos/${plan.athlete_id}`, { replace: true })}
+            onClick={() => navigate(`/alunos/${plan.athlete_id}?ver=planos`, { replace: true })}
           >
             Fechar
           </button>
@@ -215,7 +246,7 @@ export function DietEditor() {
           onClick={async () => {
             if (!window.confirm(`Apagar o plano alimentar "${plan.name}"?`)) return
             await deleteDietPlan(plan.id)
-            navigate(`/alunos/${plan.athlete_id}`, { replace: true })
+            navigate(`/alunos/${plan.athlete_id}?ver=planos`, { replace: true })
           }}
         >
           Apagar plano alimentar
@@ -226,6 +257,7 @@ export function DietEditor() {
         <FoodPicker
           mealId={addingTo}
           sortOrder={(itemsByMeal.get(addingTo) ?? []).length}
+          usage={data.usage ?? new Map()}
           onClose={() => setAddingTo(null)}
           onAdded={reload}
         />
@@ -234,8 +266,21 @@ export function DietEditor() {
   )
 }
 
-function TargetsCard({ plan, onSaved }: { plan: DietPlan; onSaved: () => void }) {
+function TargetsCard({
+  plan,
+  targets,
+  onSaved,
+}: {
+  plan: DietPlan
+  /** As metas em vigor do aluno: é delas que o objectivo do plano vem. */
+  targets: AthleteTargets | null
+  onSaved: () => void
+}) {
   const [open, setOpen] = useState(false)
+
+  const KEYS = ['kcal_target', 'protein_target_g', 'fat_target_g', 'carb_target_g'] as const
+  const fromTargets =
+    targets?.kcal_target != null && KEYS.every((key) => (plan[key] ?? null) === (targets[key] ?? null))
 
   async function patch(values: Partial<DietPlan>) {
     unwrap(await supabase.from('diet_plans').update(values).eq('id', plan.id).select())
@@ -302,9 +347,30 @@ function TargetsCard({ plan, onSaved }: { plan: DietPlan; onSaved: () => void })
             ? `${plan.kcal_target} kcal · P ${plan.protein_target_g ?? '—'} · G ${
                 plan.fat_target_g ?? '—'
               } · H ${plan.carb_target_g ?? '—'}`
-            : 'Sem metas definidas.'}
+            : 'Sem objectivo. Define as metas do aluno (separador Metas) e o plano assume-as.'}
         </p>
       )}
+
+      {/* As metas mudaram depois de o plano ser escrito: um toque acerta-o. */}
+      {targets?.kcal_target != null &&
+        (fromTargets ? (
+          <span className="field__hint">igual às metas em vigor do aluno</span>
+        ) : (
+          <button
+            type="button"
+            className="diet-edit__suggest"
+            onClick={() =>
+              patch({
+                kcal_target: targets.kcal_target,
+                protein_target_g: targets.protein_target_g,
+                fat_target_g: targets.fat_target_g,
+                carb_target_g: targets.carb_target_g,
+              })
+            }
+          >
+            metas do aluno: {int(targets.kcal_target)} kcal · usar
+          </button>
+        ))}
     </section>
   )
 }
@@ -365,11 +431,14 @@ function ItemRow({ item, onChange }: { item: DietItem; onChange: () => void }) {
 function FoodPicker({
   mealId,
   sortOrder,
+  usage,
   onClose,
   onAdded,
 }: {
   mealId: string
   sortOrder: number
+  /** Quantas vezes cada alimento já foi usado: os de sempre aparecem primeiro. */
+  usage: Map<string, number>
   onClose: () => void
   onAdded: () => void
 }) {
@@ -385,8 +454,8 @@ function FoodPicker({
   }, [term])
 
   const { data: results, loading } = useQuery(
-    ['alimentos', debounced],
-    () => searchFoods(debounced),
+    ['alimentos', debounced, usage.size],
+    () => searchFoods(debounced, usage),
     { persist: false },
   )
 
@@ -489,8 +558,17 @@ function FoodPicker({
                   Nada encontrado{term ? ` para "${term}"` : ''}.
                 </li>
               )}
-              {(results ?? []).map((food) => (
+              {(results ?? []).map((food, index) => (
                 <li key={food.id} className="picker__item">
+                  {/* O separador entre os que já se usaram e o resto da base. */}
+                  {index === 0 && usage.has(food.id) && (
+                    <span className="picker__section">Os que mais usas</span>
+                  )}
+                  {index > 0 &&
+                    !usage.has(food.id) &&
+                    usage.has(results![index - 1].id) && (
+                      <span className="picker__section">Resto da base</span>
+                    )}
                   <span className="picker__text">
                     <strong>{food.name}</strong>
                     <em>

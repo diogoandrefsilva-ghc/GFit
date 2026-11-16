@@ -112,3 +112,29 @@
   padding: 12px;
   font-variant-numeric: tabular-nums;
 }
+
+/* "metas do aluno: 2 200 kcal · usar" — acertar o plano pelas metas em vigor. */
+.diet-edit__suggest {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand-text);
+  background: var(--brand-soft);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+}
+
+/* Os alimentos que já se usaram vêm primeiro, com um título a separá-los do resto. */
+.picker__item:has(.picker__section) {
+  flex-wrap: wrap;
+}
+
+.picker__section {
+  flex-basis: 100%;
+  font-family: var(--font-narrow);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brand-text);
+}

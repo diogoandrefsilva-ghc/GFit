@@ -75,6 +75,8 @@ export type AthleteProfile = {
   pack_end_date: string | null
   pack_renews_monthly: boolean
   next_update_date: string | null
+  /** Mensalidade em euros. Nulo: não se acompanham pagamentos deste aluno. */
+  monthly_fee: number | null
   updated_at: string
 }
 
@@ -207,7 +209,87 @@ export type ScheduledWorkout = {
   plan_id: string
   plan_day_id: string
   scheduled_on: string
+  /** "12:30:00". Nulo: é para esse dia, a qualquer hora. */
+  starts_at: string | null
   notes: string | null
+  created_at: string
+}
+
+/** Treino presencial recorrente: este dia da semana, a esta hora. */
+export type TrainingSlot = {
+  id: string
+  athlete_id: string
+  coach_id: string
+  /** 0 = domingo … 6 = sábado. */
+  weekday: number
+  start_time: string
+  starts_on: string
+  created_at: string
+}
+
+/** A resposta do aluno a uma sessão presencial. Sem linha, vai. */
+export type SlotAttendance = {
+  id: string
+  slot_id: string
+  athlete_id: string
+  session_date: string
+  going: boolean
+  proposed_date: string | null
+  proposed_time: string | null
+  note: string | null
+  /** Resposta do treinador à proposta. Nulo: por responder. */
+  proposal_accepted: boolean | null
+  updated_at: string
+}
+
+/** A mensalidade de um mês: o aluno diz que pagou, o treinador valida. */
+export type Payment = {
+  id: string
+  athlete_id: string
+  /** O mês, sempre no dia 1. */
+  period: string
+  amount: number
+  paid_at: string | null
+  confirmed_at: string | null
+  confirmed_by: string | null
+  note: string | null
+  created_at: string
+}
+
+/** Avaliação física. O que é conta (IMC, % MG, VO2máx) sai de `lib/assessment`. */
+export type Assessment = {
+  id: string
+  athlete_id: string
+  assessed_on: string
+  next_on: string | null
+  weight_kg: number | null
+  height_cm: number | null
+  abdominal_cm: number | null
+  hip_cm: number | null
+  arm_r_cm: number | null
+  arm_l_cm: number | null
+  mid_thigh_r_cm: number | null
+  mid_thigh_l_cm: number | null
+  calf_r_cm: number | null
+  calf_l_cm: number | null
+  sf_chest_mm: number | null
+  sf_abdomen_mm: number | null
+  sf_thigh_mm: number | null
+  sf_triceps_mm: number | null
+  sf_suprailiac_mm: number | null
+  bp_systolic: number | null
+  bp_diastolic: number | null
+  resting_hr: number | null
+  ankle_r_cm: number | null
+  ankle_l_cm: number | null
+  grip_r_kg: number | null
+  grip_l_kg: number | null
+  push_ups: number | null
+  curl_ups: number | null
+  squat_test: number | null
+  step_test_hr: number | null
+  notes: string | null
+  created_by: string | null
   created_at: string
 }
 
@@ -383,6 +465,10 @@ export type Database = {
       diet_items: Table<DietItem>
       weekly_feedback: Table<WeeklyFeedback>
       coach_notes: Table<CoachNote>
+      training_slots: Table<TrainingSlot>
+      slot_attendance: Table<SlotAttendance>
+      payments: Table<Payment>
+      assessments: Table<Assessment>
     }
     Views: {
       athlete_current_targets: {

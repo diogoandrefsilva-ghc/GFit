@@ -1,10 +1,18 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useProfile } from '@/auth/useAuth'
-import { Avatar } from '@/components/Avatar'
+import { AgendaRow, AgendaSheet } from '@/coach/Agenda'
+import { ScheduleSheet } from '@/coach/ScheduleSheet'
 import { Empty, Loading, ScreenHeader } from '@/components/Screen'
 import { WeekNav } from '@/components/WeekNav'
-import { fetchAthletes, fetchCoachCalendar, isSelfPlan } from '@/lib/api'
+import {
+  fetchAthletes,
+  fetchAttendance,
+  fetchCoachCalendar,
+  fetchTrainingSlots,
+  soft,
+} from '@/lib/api'
+import { buildAgenda, presences, type AgendaItem } from '@/lib/agenda'
 import { dayOfMonth, isoDate, plural, weekDates, weekStart, weekdayShort } from '@/lib/format'
 import { useQuery } from '@/lib/useQuery'
 import './calendar.css'
@@ -15,22 +23,35 @@ import './calendar.css'
  *
  * Mostra também o que não foi ele a marcar: os auto-treinos dos alunos, com a
  * marca "auto" para não se confundirem com o que prescreveu, e os treinos dele
- * próprio.
+ * próprio. E o que ninguém marcou à mão: os treinos presenciais, que saem do
+ * dia e da hora postos na ficha de cada aluno.
+ *
+ * Tocar num treino abre o que se pode fazer com ele — a começar por ser o
+ * treinador a registá-lo, que é o que acontece num treino presencial.
  */
 export function CoachCalendar() {
   const coach = useProfile()
   const today = isoDate()
   const [monday, setMonday] = useState(() => weekStart(today))
   const [athleteId, setAthleteId] = useState<string | null>(null)
+  const navigate = useNavigate()
+  const [open, setOpen] = useState<AgendaItem | null>(null)
+  /** O dia para que se está a marcar um treino, com o painel aberto. */
+  const [scheduling, setScheduling] = useState<string | null>(null)
 
-  const { data, loading, error } = useQuery(['calendario-treinador', coach.id, monday], async () => {
-    const dates = weekDates(monday)
-    const [calendar, athletes] = await Promise.all([
-      fetchCoachCalendar(dates[0], dates[6]),
-      fetchAthletes(coach.id),
-    ])
-    return { calendar, athletes }
-  })
+  const { data, loading, error, reload } = useQuery(
+    ['calendario-treinador', coach.id, monday],
+    async () => {
+      const dates = weekDates(monday)
+      const [calendar, athletes, slots, attendance] = await Promise.all([
+        fetchCoachCalendar(dates[0], dates[6]),
+        fetchAthletes(coach.id),
+        soft(fetchTrainingSlots(), []),
+        soft(fetchAttendance(dates[0], dates[6]), []),
+      ])
+      return { calendar, athletes, slots, attendance }
+    },
+  )
 
   if (loading) return <Loading label="A carregar o calendário" />
   if (error) {
@@ -42,9 +63,16 @@ export function CoachCalendar() {
   }
 
   const { calendar, athletes } = data!
-  const visible = athleteId
-    ? calendar.filter((entry) => entry.schedule.athlete_id === athleteId)
-    : calendar
+  const dates = weekDates(monday)
+  const agenda = buildAgenda(
+    calendar,
+    // O `?? []` é para a cache de uma versão anterior, que ainda não os trazia.
+    presences(data!.slots ?? [], data!.attendance ?? [], dates[0], dates[6]),
+    athletes,
+  )
+  const ownerOf = (item: AgendaItem) =>
+    item.kind === 'workout' ? item.entry.schedule.athlete_id : item.presence.slot.athlete_id
+  const visible = athleteId ? agenda.filter((item) => ownerOf(item) === athleteId) : agenda
   // O treinador só aparece no filtro se tiver treinos marcados para si.
   const filters = calendar.some((entry) => entry.schedule.athlete_id === coach.id)
     ? [{ id: coach.id, name: 'Eu' }, ...athletes.map((item) => ({
@@ -55,8 +83,11 @@ export function CoachCalendar() {
         id: item.id,
         name: item.full_name ?? item.email ?? 'Aluno',
       }))
-  const done = visible.filter((entry) => entry.session?.status === 'done').length
-  const dates = weekDates(monday)
+  const workouts = visible.filter((item) => item.kind === 'workout')
+  const done = workouts.filter(
+    (item) => item.kind === 'workout' && item.entry.session?.status === 'done',
+  ).length
+  const inPerson = visible.length - workouts.length
 
   return (
     <div className="screen">
@@ -65,7 +96,23 @@ export function CoachCalendar() {
         subtitle={
           visible.length === 0
             ? 'Sem treinos marcados nesta semana'
-            : `${done} de ${plural(visible.length, 'treino marcado', 'treinos marcados')} feitos`
+            : [
+                workouts.length > 0
+                  ? `${done} de ${plural(workouts.length, 'treino marcado', 'treinos marcados')} feitos`
+                  : null,
+                inPerson > 0 ? plural(inPerson, 'presencial', 'presenciais') : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')
+        }
+        action={
+          <button
+            type="button"
+            className="btn btn--sm btn--primary"
+            onClick={() => setScheduling(dates.includes(today) ? today : dates[0])}
+          >
+            + Marcar
+          </button>
         }
       />
 
@@ -93,18 +140,16 @@ export function CoachCalendar() {
         </div>
       )}
 
-      {calendar.length === 0 && (
+      {agenda.length === 0 && (
         <Empty
           title="Nada marcado nesta semana"
-          hint="Os treinos marcam-se no calendário do plano, depois de o plano estar publicado."
+          hint="Marca um treino com o + Marcar, ou toca num dia. O treino presencial de cada aluno (ex.: sextas às 12:30) define-se na ficha dele e aparece aqui sozinho."
         />
       )}
 
       <ul className="cal-days">
         {dates.map((date) => {
-          const entries = visible.filter(
-            (entry) => entry.schedule.scheduled_on === date,
-          )
+          const entries = visible.filter((item) => item.date === date)
 
           return (
             <li
@@ -119,65 +164,52 @@ export function CoachCalendar() {
               </span>
 
               <div className="cal-day__body">
-                {entries.length === 0 ? (
-                  <span className="cal-day__rest">sem treinos</span>
-                ) : (
-                  entries.map((entry) => {
-                    const state =
-                      entry.session?.status === 'done'
-                        ? 'feito'
-                        : entry.session?.status === 'in_progress'
-                          ? 'a meio'
-                          : date < today
-                            ? 'em falta'
-                            : null
-                    const mine = entry.schedule.athlete_id === coach.id
-                    const self = entry.plan ? isSelfPlan(entry.plan) : false
-
-                    return (
-                      <Link
-                        key={entry.schedule.id}
-                        to={mine ? '/eu?zona=treino' : `/alunos/${entry.schedule.athlete_id}`}
-                        className="cal-day__card"
-                      >
-                        <Avatar
-                          name={entry.athlete?.full_name}
-                          url={entry.athlete?.avatar_url}
-                          size={28}
-                        />
-                        <span className="cal-day__text">
-                          <strong>
-                            {mine ? 'Eu' : (entry.athlete?.full_name ?? 'Aluno')}
-                            {self && !mine ? ' · auto' : ''}
-                          </strong>
-                          <em>
-                            {entry.day?.label ?? '?'}
-                            {entry.day?.title ? ` · ${entry.day.title}` : ''} ·{' '}
-                            {plural(entry.exerciseCount, 'exercício', 'exercícios')}
-                          </em>
-                        </span>
-                        {state && (
-                          <span
-                            className={`chip ${
-                              state === 'feito'
-                                ? 'chip--good'
-                                : state === 'a meio'
-                                  ? 'chip--accent'
-                                  : ''
-                            }`}
-                          >
-                            {state}
-                          </span>
-                        )}
-                      </Link>
-                    )
-                  })
+                {entries.map((item) => (
+                  <AgendaRow
+                    key={item.key}
+                    item={item}
+                    coachId={coach.id}
+                    onOpen={() =>
+                      ownerOf(item) === coach.id ? navigate('/eu?zona=treino') : setOpen(item)
+                    }
+                  />
+                ))}
+                {/* Um dia vazio é um convite a marcar: o toque abre o painel já nesse dia. */}
+                {entries.length === 0 && (
+                  <button
+                    type="button"
+                    className="cal-day__add"
+                    onClick={() => setScheduling(date)}
+                  >
+                    sem treinos · marcar
+                  </button>
                 )}
               </div>
             </li>
           )
         })}
       </ul>
+
+      {scheduling && (
+        <ScheduleSheet
+          key={scheduling}
+          coachId={coach.id}
+          athletes={athletes}
+          athleteId={athleteId && athleteId !== coach.id ? athleteId : null}
+          date={scheduling}
+          onClose={() => setScheduling(null)}
+          onDone={reload}
+        />
+      )}
+      {open && (
+        <AgendaSheet
+          item={open}
+          coachId={coach.id}
+          from="/calendario"
+          onClose={() => setOpen(null)}
+          onChanged={reload}
+        />
+      )}
     </div>
   )
 }

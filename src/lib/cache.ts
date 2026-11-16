@@ -11,7 +11,9 @@
  * telemóvel partilhado, quem entra a seguir não vê os dados de quem saiu.
  */
 
-const PREFIX = 'gfit.cache.v1.'
+// v2: o Início, o Hoje e o Calendário passaram a trazer mais coisas na mesma
+// consulta; o que ficou guardado da v1 já não tem a forma que os ecrãs esperam.
+const PREFIX = 'gfit.cache.v2.'
 
 /** Uma entrada mais velha do que isto já não se mostra: relê-se primeiro. */
 const MAX_AGE = 7 * 24 * 60 * 60 * 1000
@@ -93,7 +95,8 @@ export function clearCache() {
   const doomed: string[] = []
   for (let i = 0; i < store.length; i++) {
     const key = store.key(i)
-    if (key && key.startsWith(PREFIX)) doomed.push(key)
+    // Sem a versão: leva também o que ficou de versões anteriores do cache.
+    if (key && key.startsWith('gfit.cache.')) doomed.push(key)
   }
   doomed.forEach((key) => store.removeItem(key))
 }

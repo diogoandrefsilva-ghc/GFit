@@ -114,6 +114,18 @@ export function relativeDate(value: string): string {
   return shortDate(value)
 }
 
+/** "novembro", a partir de qualquer dia desse mês. */
+export function monthName(value: string): string {
+  return LONG_MONTHS[parseIso(value).getMonth()]
+}
+
+/** "60 €" ou "62,50 €" */
+export function euros(value: number | null | undefined): string {
+  if (value === null || value === undefined) return '—'
+  const amount = Number(value)
+  return `${Number.isInteger(amount) ? amount : num(amount, 2)} €`
+}
+
 /** Vírgula decimal, como se escreve em português. */
 export function num(value: number | null | undefined, decimals = 1): string {
   if (value === null || value === undefined || Number.isNaN(value)) return '—'
