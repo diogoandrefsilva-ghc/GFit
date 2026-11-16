@@ -397,7 +397,7 @@ function AthleteSection({
           <>
             <p className="subtitle">
               Treinas por tua conta: os planos são os que escreves, e as metas
-              as que pões a ti próprio, no ecrã Medidas. Se um treinador te
+              as que pões a ti próprio, no separador Progresso. Se um treinador te
               convidar com este email, ficas ligado a ele sem perder nada do que
               já registaste.
             </p>
@@ -424,7 +424,7 @@ function AthleteSection({
         <section className="card">
           <span className="eyebrow">As tuas metas</span>
           <p className="subtitle">
-            {coach ? 'Definidas pelo treinador.' : 'Definidas por ti, no ecrã Medidas.'}
+            {coach ? 'Definidas pelo treinador.' : 'Definidas por ti, no separador Progresso.'}
           </p>
           <div className="row">
             <Stat label="Kcal" value={targets.kcal_target ? int(targets.kcal_target) : '—'} />

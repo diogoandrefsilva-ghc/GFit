@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useProfile, useTrainsAlone } from '@/auth/useAuth'
+import { MonthSummaryCard } from '@/athlete/Regularity'
 import { MuscleWork } from '@/components/MuscleWork'
 import { Empty, Loading, ScreenHeader } from '@/components/Screen'
 import { WeekNav } from '@/components/WeekNav'
@@ -281,6 +282,10 @@ export function WorkoutHome() {
           </ul>
         </section>
       )}
+
+      {/* O mês: quantos treinos, quanto do marcado ficou feito. Fica depois
+          da semana e do plano — vem-se cá treinar, e só depois ver como vai. */}
+      <MonthSummaryCard athleteId={profile.id} />
 
       {plan?.plan.notes && (
         <section className="card card--flat">

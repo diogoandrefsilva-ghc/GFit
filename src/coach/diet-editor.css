@@ -138,3 +138,26 @@
   text-transform: uppercase;
   color: var(--brand-text);
 }
+
+/* ── alternativas de uma refeição ────────────────────────── */
+
+.diet-edit__option {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* A alternativa vive dentro do cartão da refeição a que pertence, separada
+   por um traço: é a mesma refeição, comida de outra maneira. */
+.diet-edit__option.is-alternative {
+  padding-top: 14px;
+  border-top: 1px dashed var(--line-2);
+}
+
+.diet-edit__option-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--brand-text);
+}

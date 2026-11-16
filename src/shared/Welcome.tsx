@@ -25,7 +25,7 @@ interface Slide {
  * cada separador ao lado do texto. Quem não quer, salta — e quem saltou pode
  * rever no Perfil.
  *
- * O conteúdo muda com quem está a ver: o treinador não tem "Semana" para
+ * O conteúdo muda com quem está a ver: o treinador não tem "Progresso" para
  * responder, e quem treina por sua conta escreve o plano em vez de o receber.
  * Abre no lado de quem está a ver, e o carril em cima deixa espreitar o outro
  * — o treinador vê o que os alunos veem, o aluno percebe o que chega ao
@@ -224,7 +224,9 @@ function athleteSlides(alone: boolean): Slide[] {
       icon: 'today',
       eyebrow: 'Separador Hoje',
       title: 'O dia começa aqui',
-      body: 'O treino de hoje e o registo do dia: peso, passos, sono, energia, fome e stress. São poucos toques, e é o que faz a diferença entre um plano às cegas e um plano com números.',
+      body: alone
+        ? 'O treino de hoje, a tua semana com os dias já treinados, e o registo do dia: peso, passos, sono, energia, fome e stress. São poucos toques, e é o que faz a diferença entre um plano às cegas e um plano com números.'
+        : 'O treino de hoje, a tua semana com os dias já treinados, o registo do dia — peso, passos, sono — e os hábitos que o treinador te pediu, a um toque cada. É também daqui que lhe escreves, na conversa.',
     },
     {
       icon: 'workout',
@@ -236,17 +238,17 @@ function athleteSlides(alone: boolean): Slide[] {
     },
     {
       icon: 'plate',
-      eyebrow: 'Dieta e Medidas',
-      title: 'O resto da semana',
-      body: 'A dieta mostra as refeições do plano com as calorias e os macros a que te propuseste. Em Medidas ficam os perímetros e o peso, com o gráfico ao lado: interessa o caminho, não o número de hoje.',
+      eyebrow: 'Separador Dieta',
+      title: 'Refeição a refeição',
+      body: 'As refeições do plano, com as calorias e os macros a que te propuseste. Marca cada uma quando a comeres — e, onde houver alternativa, a que escolheste. É daí que sai a tua aderência à dieta, sem contas.',
     },
     {
       icon: 'week',
-      eyebrow: 'Separador Semana',
-      title: 'Fechar a semana',
+      eyebrow: 'Separador Progresso',
+      title: 'Como estás a ir',
       body: alone
-        ? 'No fim da semana respondes a quatro perguntas sobre o que correu bem e o que custou. Fica o registo — e no dia em que tiveres treinador, é a primeira coisa que ele lê.'
-        : 'No fim da semana respondes a quatro perguntas sobre o que correu bem e o que custou. O treinador lê-as e responde-te aí mesmo.',
+        ? 'As medidas — perímetros e peso, com o gráfico ao lado: interessa o caminho, não o número de hoje. E o feedback da semana: quatro perguntas sobre o que correu bem e o que custou. No dia em que tiveres treinador, é a primeira coisa que ele lê.'
+        : 'As medidas — perímetros e peso, com o gráfico ao lado: interessa o caminho, não o número de hoje. E o feedback da semana: quatro perguntas sobre o que correu bem e o que custou, a que o treinador responde.',
     },
     {
       icon: 'person',
@@ -258,7 +260,8 @@ function athleteSlides(alone: boolean): Slide[] {
           Adicionar ao ecrã principal</strong>; no Android, <strong>Instalar
           aplicação</strong> no menu do browser. Guarda o que já abriste, para
           o ginásio onde a rede não chega. Esta apresentação fica no{' '}
-          <strong>Perfil</strong>, se a quiseres rever.
+          <strong>Perfil</strong> — a tua fotografia, no canto de cima —, se a
+          quiseres rever.
         </>
       ),
     },
@@ -277,7 +280,7 @@ function coachSlides(): Slide[] {
       icon: 'people',
       eyebrow: 'Início e Alunos',
       title: 'Quem precisa de ti',
-      body: 'O Início junta o que não pode esperar: quem não treina há dias, o feedback por responder, os planos a acabar. Em Alunos entras na ficha de cada um — medidas, treinos, metas, limitações e as notas que lhe deixas.',
+      body: 'O Início junta o que não pode esperar: quem não treina há dias, o feedback por responder, os planos a acabar. Em Alunos entras na ficha de cada um — medidas, treinos, metas, hábitos, limitações e a conversa com ele.',
     },
     {
       icon: 'library',

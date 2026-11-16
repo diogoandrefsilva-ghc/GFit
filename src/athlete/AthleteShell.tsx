@@ -4,13 +4,13 @@ import { AppBar } from '@/components/AppBar'
 import { TabBar, type Tab } from '@/components/TabBar'
 import { whenIdle } from '@/lib/idle'
 
+// Quatro, e não seis: as medidas e o feedback da semana são o Progresso, e o
+// Perfil está no avatar da barra de cima, que é onde se procura.
 const TABS: Tab[] = [
   { to: '/hoje', label: 'Hoje', icon: 'today' },
   { to: '/treino', label: 'Treino', icon: 'workout' },
   { to: '/dieta', label: 'Dieta', icon: 'plate' },
-  { to: '/medidas', label: 'Medidas', icon: 'ruler' },
-  { to: '/semana', label: 'Semana', icon: 'week' },
-  { to: '/perfil', label: 'Perfil', icon: 'person' },
+  { to: '/progresso', label: 'Progresso', icon: 'week' },
 ]
 
 export function AthleteShell() {

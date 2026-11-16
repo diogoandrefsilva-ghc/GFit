@@ -9,7 +9,8 @@ import { CoachingCard } from '@/coach/CoachingCard'
 import { SessionLogList } from '@/coach/SessionLogs'
 import { IdentityCard } from '@/shared/IdentityCard'
 import { LimitationsCard } from '@/shared/LimitationsCard'
-import { NotesCard } from '@/shared/NotesCard'
+import { HabitsPanel } from '@/shared/Habits'
+import { Thread } from '@/shared/Thread'
 import { TargetsTab } from '@/shared/TargetsTab'
 import {
   createPlan,
@@ -17,16 +18,21 @@ import {
   fetchAthleteProfile,
   fetchCoachNotes,
   fetchCurrentTargets,
+  fetchDietPlan,
   fetchDietPlansFor,
   fetchFeedbackHistory,
   fetchLimitations,
+  fetchMealLogs,
   fetchMeasurements,
   fetchPlansFor,
   fetchRecentLogs,
   fetchSessionLog,
   fetchTargetsHistory,
+  isFromCoach,
   replyToFeedback,
+  soft,
 } from '@/lib/api'
+import { mealAdherence, mealSlots } from '@/lib/diet'
 import { supabase } from '@/lib/supabase'
 import {
   WEIGHT_DIRECTION_LABEL,
@@ -40,9 +46,9 @@ import { unwrap, useQuery } from '@/lib/useQuery'
 import type { AthleteTargets, WeeklyFeedback } from '@/lib/database.types'
 import './athlete-detail.css'
 
-type Tab = 'resumo' | 'treinos' | 'avaliacoes' | 'metas' | 'planos'
+type Tab = 'resumo' | 'conversa' | 'treinos' | 'avaliacoes' | 'metas' | 'planos'
 
-const TABS: Tab[] = ['resumo', 'treinos', 'avaliacoes', 'metas', 'planos']
+const TABS: Tab[] = ['resumo', 'conversa', 'treinos', 'avaliacoes', 'metas', 'planos']
 
 export function AthleteDetail() {
   const coach = useProfile()
@@ -86,6 +92,18 @@ export function AthleteDetail() {
       fetchCoachNotes(athleteId!, 12),
     ])
 
+    // A aderência à dieta dos últimos sete dias, pelas refeições que o aluno
+    // marcou. É um extra do resumo: se falhar, a ficha abre na mesma.
+    const today = isoDate()
+    const week = Array.from({ length: 7 }, (_, index) => addDays(today, index - 6))
+    const [diet, mealLogs] = await Promise.all([
+      soft(fetchDietPlan(athleteId!), null),
+      soft(fetchMealLogs(athleteId!, week[0], today), []),
+    ])
+    const dietAdherence = diet
+      ? mealAdherence(mealSlots(diet.meals), mealLogs, week)
+      : null
+
     return {
       athlete,
       logs,
@@ -98,6 +116,7 @@ export function AthleteDetail() {
       targetsHistory,
       limitations,
       notes,
+      dietAdherence,
     }
   })
 
@@ -129,6 +148,12 @@ export function AthleteDetail() {
     [...logs].reverse().find((log) => log.weight_kg !== null)?.weight_kg ?? null
   const energy = energyOf(ficha, lastWeight)
 
+  // A conversa, vista do resumo: a última mensagem e o que o aluno escreveu
+  // e ainda não foi lido. As notas vêm da mais recente para a mais antiga.
+  const lastMessage = notes[0] ?? null
+  const unreadMessages = notes.filter((note) => !isFromCoach(note) && !note.read_at).length
+  const firstName = (athlete.full_name ?? '').split(' ')[0] || 'o aluno'
+
   return (
     <div className="screen">
       <ScreenHeader
@@ -142,6 +167,7 @@ export function AthleteDetail() {
         {(
           [
             ['resumo', 'Resumo'],
+            ['conversa', 'Conversa'],
             ['treinos', 'Treinos'],
             ['avaliacoes', 'Avaliações'],
             ['metas', 'Metas'],
@@ -155,6 +181,7 @@ export function AthleteDetail() {
             onClick={() => setTab(key)}
           >
             {label}
+            {key === 'conversa' && unreadMessages > 0 ? ` · ${unreadMessages}` : ''}
           </button>
         ))}
       </div>
@@ -199,6 +226,16 @@ export function AthleteDetail() {
                 value={scale(average(logs.slice(-7).map((log) => log.stress)))}
               />
             </div>
+            {data.dietAdherence != null && (
+              <div className="row">
+                <Stat
+                  label="Dieta"
+                  value={`${data.dietAdherence}%`}
+                  hint="das refeições do plano marcadas, em 7 dias"
+                  tone={data.dietAdherence >= 80 ? 'good' : 'default'}
+                />
+              </div>
+            )}
           </section>
 
           <LimitationsCard
@@ -208,12 +245,31 @@ export function AthleteDetail() {
             onChanged={reload}
           />
 
-          <NotesCard
-            coachId={coach.id}
-            athleteId={athlete.id}
-            notes={notes}
-            onSaved={reload}
-          />
+          {/* A conversa tem o seu separador; aqui fica só a ponta dela, para
+              se ver do resumo se há alguma coisa à espera. */}
+          <button
+            type="button"
+            className={`card detail__talk ${unreadMessages > 0 ? 'card--accent' : ''}`}
+            onClick={() => setTab('conversa')}
+          >
+            <span className="detail__talk-text">
+              <span className="eyebrow">Conversa</span>
+              <span className="detail__talk-body">
+                {lastMessage
+                  ? `${isFromCoach(lastMessage) ? 'Tu: ' : ''}${lastMessage.body}`
+                  : `Ainda sem mensagens. O que escreveres aparece no "Hoje" de ${firstName}.`}
+              </span>
+            </span>
+            {unreadMessages > 0 ? (
+              <span className="chip chip--accent">
+                {unreadMessages} por ler
+              </span>
+            ) : (
+              <span className="detail__talk-go" aria-hidden>
+                →
+              </span>
+            )}
+          </button>
 
           <section className="card">
             <span className="eyebrow">Feedback semanal</span>
@@ -261,6 +317,16 @@ export function AthleteDetail() {
         </>
       )}
 
+      {tab === 'conversa' && (
+        <Thread
+          athleteId={athlete.id}
+          coachId={coach.id}
+          meId={coach.id}
+          otherName={firstName}
+          onChanged={reload}
+        />
+      )}
+
       {tab === 'treinos' && <TrainingLog athleteId={athlete.id} />}
 
       {tab === 'avaliacoes' && (
@@ -284,6 +350,9 @@ export function AthleteDetail() {
           onChanged={reload}
         />
       )}
+
+      {/* Os hábitos são metas do dia a dia: ficam ao pé das outras. */}
+      {tab === 'metas' && <HabitsPanel athleteId={athlete.id} authorId={coach.id} />}
 
       {tab === 'planos' && (
         <>

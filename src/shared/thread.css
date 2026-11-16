@@ -1,0 +1,104 @@
+/* O fio da conversa: o que é meu à direita, o que é do outro à esquerda. */
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.thread__empty {
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+  padding: 18px 8px;
+}
+
+.thread__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.thread__list > li {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.thread__day {
+  align-self: center;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.thread__day::first-letter {
+  text-transform: uppercase;
+}
+
+/* Um marco, não uma mensagem: o feedback da semana tem o seu ecrã. */
+.thread__event {
+  align-self: center;
+  max-width: 92%;
+  padding: 6px 12px;
+  border: 1px dashed var(--line-2);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--muted-strong);
+  text-align: center;
+}
+
+.bubble {
+  align-self: flex-start;
+  max-width: 86%;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px 18px 18px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bubble p {
+  font-size: 15px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bubble--mine {
+  align-self: flex-end;
+  background: var(--brand-soft);
+  border-color: var(--brand-line);
+  border-radius: 18px 18px 6px 18px;
+}
+
+.bubble__tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--brand-text);
+}
+
+.bubble__meta {
+  align-self: flex-end;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.thread__composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.textarea.thread__input {
+  min-height: 72px;
+}

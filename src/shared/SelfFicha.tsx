@@ -1,5 +1,6 @@
 import { useProfile } from '@/auth/useAuth'
 import { Loading } from '@/components/Screen'
+import { HabitsPanel } from '@/shared/Habits'
 import { IdentityCard } from '@/shared/IdentityCard'
 import { LimitationsCard } from '@/shared/LimitationsCard'
 import { NotesCard } from '@/shared/NotesCard'
@@ -18,7 +19,8 @@ import { useQuery } from '@/lib/useQuery'
 /**
  * A ficha de quem não tem treinador: os mesmos cartões que o treinador usa num
  * aluno, virados para si próprio. É por aqui que o objectivo, as metas, as
- * limitações e as notas passam a existir para quem treina por sua conta — o
+ * limitações, os hábitos e as notas passam a existir para quem treina por sua
+ * conta — o
  * aluno sozinho e o treinador, que também é aluno dele próprio.
  *
  * O `created_by` das revisões é o próprio: quem escreveu foi quem as definiu.
@@ -64,6 +66,8 @@ export function SelfFicha() {
         self
         onChanged={reload}
       />
+
+      <HabitsPanel athleteId={me.id} authorId={me.id} self />
 
       <LimitationsCard
         athleteId={me.id}

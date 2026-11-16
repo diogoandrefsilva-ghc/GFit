@@ -12,6 +12,7 @@ import {
   fetchCoachCalendar,
   fetchDailyLog,
   fetchPendingPayments,
+  fetchUnreadMessages,
   fetchTrainingSlots,
   soft,
   type CalendarEntry,
@@ -47,7 +48,7 @@ export function Dashboard() {
   const { data, loading, error, reload } = useQuery(
     ['inicio-treinador', profile.id, today],
     async () => {
-      const [summaries, calendar, slots, attendance, payments, myLog, myCalendar] =
+      const [summaries, calendar, slots, attendance, payments, myLog, myCalendar, messages] =
         await Promise.all([
           fetchAthleteSummaries(profile.id),
           fetchCoachCalendar(monday, until > sunday ? until : sunday),
@@ -57,8 +58,10 @@ export function Dashboard() {
           // O treinador também é aluno de si próprio: isto é o dia dele.
           fetchDailyLog(profile.id, today),
           fetchAthleteCalendar(profile.id, today, today),
+          // O que os alunos escreveram na conversa e ainda não foi lido.
+          soft(fetchUnreadMessages(profile.id), []),
         ])
-      return { summaries, calendar, slots, attendance, payments, myLog, myCalendar }
+      return { summaries, calendar, slots, attendance, payments, myLog, myCalendar, messages }
     },
   )
 
@@ -90,7 +93,29 @@ export function Dashboard() {
 
     const payments = (data?.payments ?? []).filter((payment) => payment.paid_at)
 
-    return { summaries, athletes, active, unread, ending, agenda, days, week, weekDone, payments }
+    // As mensagens por ler, uma linha por aluno: a mais recente e quantas são.
+    // Vêm da mais recente para a mais antiga, por isso a primeira de cada um
+    // é a que se mostra.
+    const talks: { athleteId: string; count: number; body: string }[] = []
+    for (const message of data?.messages ?? []) {
+      const held = talks.find((talk) => talk.athleteId === message.athlete_id)
+      if (held) held.count++
+      else talks.push({ athleteId: message.athlete_id, count: 1, body: message.body })
+    }
+
+    return {
+      summaries,
+      athletes,
+      active,
+      unread,
+      ending,
+      agenda,
+      days,
+      week,
+      weekDone,
+      payments,
+      talks,
+    }
   }, [data, today, until, sunday, profile.id])
 
   if (loading) return <Loading label="A carregar" />
@@ -105,7 +130,8 @@ export function Dashboard() {
   const firstName = (profile.full_name ?? '').split(' ')[0] || 'Treinador'
   const nameOf = (id: string) =>
     view.athletes.find((athlete) => athlete.id === id)?.full_name ?? 'Aluno'
-  const pending = view.payments.length + view.unread.length + view.ending.length
+  const pending =
+    view.payments.length + view.talks.length + view.unread.length + view.ending.length
 
   return (
     <div className="screen">
@@ -223,6 +249,21 @@ export function Dashboard() {
                         Validar
                       </button>
                     </div>
+                  </li>
+                ))}
+                {view.talks.map((talk) => (
+                  <li key={`m-${talk.athleteId}`}>
+                    <Link className="dash__row" to={`/alunos/${talk.athleteId}?ver=conversa`}>
+                      <span className="dash__row-text">
+                        <strong>{nameOf(talk.athleteId)}</strong>
+                        <em>
+                          {talk.count === 1
+                            ? `escreveu-te: ${talk.body}`
+                            : `${talk.count} mensagens por ler`}
+                        </em>
+                      </span>
+                      <span className="dash__go">→</span>
+                    </Link>
                   </li>
                 ))}
                 {view.unread.map((summary) => (
