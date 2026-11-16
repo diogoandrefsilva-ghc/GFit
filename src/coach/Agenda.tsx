@@ -109,6 +109,8 @@ export function AgendaSheet({
     item.kind === 'workout' ? item.entry.schedule.athlete_id : item.presence.slot.athlete_id
   const [busy, setBusy] = useState(false)
   const [failure, setFailure] = useState<string | null>(null)
+  /** No treino marcado: a lista dos outros treinos do aluno, para dar outro. */
+  const [others, setOthers] = useState(false)
 
   // Numa sessão presencial o treino não vem marcado: escolhe-se dos planos do aluno.
   const { data: plans, loading } = useQuery(
@@ -148,9 +150,41 @@ export function AgendaSheet({
     </button>
   )
 
+  const days = (plans ?? []).flatMap(({ plan, days: list }) =>
+    list.map((day) => ({ plan, day })),
+  )
+
+  /** Os treinos do aluno, um por linha: tocar num abre-o para registar. */
+  const dayList = (list: typeof days) => (
+    <ul className="agenda-sheet__days">
+      {list.map(({ plan, day }) => (
+        <li key={day.id}>
+          <button
+            type="button"
+            className="agenda-sheet__day"
+            disabled={busy}
+            onClick={() => register(plan, day.id)}
+          >
+            <span className="agenda-sheet__letter">{day.label}</span>
+            <span className="agenda-row__text">
+              <strong>{day.title ?? `Treino ${day.label}`}</strong>
+              <em>{plan.name}</em>
+            </span>
+            <span className="agenda-row__go" aria-hidden="true">
+              ›
+            </span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  )
+
   if (item.kind === 'workout') {
     const { entry } = item
     const session = entry.session
+    // O marcado é a sugestão; os outros treinos do aluno ficam à mão para o
+    // dia em que se decide dar outra coisa.
+    const otherDays = days.filter(({ day }) => day.id !== entry.schedule.plan_day_id)
     return (
       <Sheet
         title={athlete?.full_name ?? 'Aluno'}
@@ -194,6 +228,25 @@ export function AgendaSheet({
           </button>
         )}
 
+        {!session && otherDays.length > 0 && (
+          <div className="field">
+            {others ? (
+              <>
+                <span className="field__label">Dar outro treino hoje</span>
+                {dayList(otherDays)}
+              </>
+            ) : (
+              <button
+                type="button"
+                className="btn btn--quiet btn--block"
+                onClick={() => setOthers(true)}
+              >
+                Dar outro treino
+              </button>
+            )}
+          </div>
+        )}
+
         {ficha}
 
         {!session && entry.schedule.coach_id === coachId && (
@@ -218,9 +271,6 @@ export function AgendaSheet({
 
   const { presence } = item
   const answer = presence.attendance
-  const days = (plans ?? []).flatMap(({ plan, days: list }) =>
-    list.map((day) => ({ plan, day })),
-  )
 
   return (
     <Sheet
@@ -305,27 +355,7 @@ export function AgendaSheet({
               Este aluno ainda não tem nenhum plano publicado com exercícios.
             </p>
           ) : (
-            <ul className="agenda-sheet__days">
-              {days.map(({ plan, day }) => (
-                <li key={day.id}>
-                  <button
-                    type="button"
-                    className="agenda-sheet__day"
-                    disabled={busy}
-                    onClick={() => register(plan, day.id)}
-                  >
-                    <span className="agenda-sheet__letter">{day.label}</span>
-                    <span className="agenda-row__text">
-                      <strong>{day.title ?? `Treino ${day.label}`}</strong>
-                      <em>{plan.name}</em>
-                    </span>
-                    <span className="agenda-row__go" aria-hidden="true">
-                      ›
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            dayList(days)
           )}
         </div>
       )}

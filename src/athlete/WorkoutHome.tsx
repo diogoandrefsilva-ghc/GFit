@@ -12,8 +12,10 @@ import {
   fetchAthleteProfile,
   fetchMuscles,
   fetchSelfPlans,
+  fetchSessionsBetween,
   fetchWeekSessions,
   type CalendarEntry,
+  type DatedSession,
 } from '@/lib/api'
 import { WEEKLY_FULL_SETS, weekOfPlan, weeklyVolume } from '@/lib/calc'
 import {
@@ -45,20 +47,28 @@ export function WorkoutHome() {
     ['treino', profile.id, monday, today],
     async () => {
       const dates = weekDates(monday)
-      const [plan, calendar, muscles, ficha, selfPlans] = await Promise.all([
+      const [plan, calendar, dated, muscles, ficha, selfPlans] = await Promise.all([
         fetchActivePlan(profile.id),
         fetchAthleteCalendar(profile.id, dates[0], dates[6]),
+        fetchSessionsBetween(profile.id, dates[0], dates[6]),
         fetchMuscles(),
         fetchAthleteProfile(profile.id),
         fetchSelfPlans(profile.id),
       ])
+      // O que se treinou sem estar marcado: escolhido na lista do plano, ou num
+      // dia de descanso. Também tem de aparecer na semana — treinou-se.
+      const marked = new Set(
+        calendar.map((entry) => entry.session?.id).filter((id): id is string => Boolean(id)),
+      )
+      const loose = dated.filter((item) => !marked.has(item.session.id))
+
       if (!plan) {
-        return { plan: null, calendar, sessions: [], week: 1, muscles, ficha, selfPlans }
+        return { plan: null, calendar, loose, sessions: [], week: 1, muscles, ficha, selfPlans }
       }
 
       const week = weekOfPlan(plan.plan.start_date, today)
       const sessions = await fetchWeekSessions(profile.id, plan.plan.id, week)
-      return { plan, calendar, sessions, week, muscles, ficha, selfPlans }
+      return { plan, calendar, loose, sessions, week, muscles, ficha, selfPlans }
     },
   )
 
@@ -124,10 +134,11 @@ export function WorkoutHome() {
     )
   }
 
-  const { plan, calendar, sessions, week, muscles, ficha, selfPlans } = data!
+  const { plan, calendar, loose, sessions, week, muscles, ficha, selfPlans } = data!
   const muscleNames = new Map(muscles.map((muscle) => [muscle.slug, muscle.name]))
   const dates = weekDates(monday)
   const doneMarks = calendar.filter((entry) => entry.session?.status === 'done').length
+  const doneLoose = loose.filter((item) => item.session.status === 'done').length
 
   return (
     <div className="screen">
@@ -136,7 +147,9 @@ export function WorkoutHome() {
         title={plan?.plan.name ?? 'Treino'}
         subtitle={
           calendar.length > 0
-            ? `${doneMarks} de ${plural(calendar.length, 'treino marcado', 'treinos marcados')} nesta semana`
+            ? `${doneMarks} de ${plural(calendar.length, 'treino marcado', 'treinos marcados')} nesta semana${
+                doneLoose > 0 ? ` · mais ${doneLoose} por tua conta` : ''
+              }`
             : plan
               ? `${sessions.filter((s) => s.status === 'done').length} de ${plan.days.length} treinos feitos esta semana`
               : undefined
@@ -148,12 +161,14 @@ export function WorkoutHome() {
       <ul className="week-days">
         {dates.map((date) => {
           const entries = calendar.filter((entry) => entry.schedule.scheduled_on === date)
+          const extras = loose.filter((item) => item.session.session_date === date)
+          const empty = entries.length === 0 && extras.length === 0
 
           return (
             <li
               key={date}
               className={`week-day ${date === today ? 'is-today' : ''} ${
-                entries.length === 0 ? 'is-empty' : ''
+                empty ? 'is-empty' : ''
               }`}
             >
               <span className="week-day__date">
@@ -162,19 +177,23 @@ export function WorkoutHome() {
               </span>
 
               <div className="week-day__body">
-                {entries.length === 0 ? (
-                  <span className="week-day__rest">descanso</span>
-                ) : (
-                  entries.map((entry) => (
-                    <ScheduledCard
-                      key={entry.schedule.id}
-                      entry={entry}
-                      date={date}
-                      today={today}
-                      onOpen={() => open(entry)}
-                    />
-                  ))
-                )}
+                {empty && <span className="week-day__rest">descanso</span>}
+                {entries.map((entry) => (
+                  <ScheduledCard
+                    key={entry.schedule.id}
+                    entry={entry}
+                    date={date}
+                    today={today}
+                    onOpen={() => open(entry)}
+                  />
+                ))}
+                {extras.map((item) => (
+                  <LooseCard
+                    key={item.session.id}
+                    item={item}
+                    onOpen={() => navigate(`/treino/${item.session.id}`)}
+                  />
+                ))}
               </div>
             </li>
           )
@@ -228,7 +247,10 @@ export function WorkoutHome() {
             {plan.days.map((day) => {
               const exercises = plan.exercisesByDay.get(day.id) ?? []
               const sets = exercises.reduce((sum, item) => sum + item.sets, 0)
-              const session = sessions.find((item) => item.plan_day_id === day.id)
+              // Havendo um por acabar, é esse que conta: é o que se quer retomar.
+              const ofDay = sessions.filter((item) => item.plan_day_id === day.id)
+              const session =
+                ofDay.find((item) => item.status === 'in_progress') ?? ofDay[0]
               const done = session?.status === 'done'
 
               return (
@@ -238,10 +260,13 @@ export function WorkoutHome() {
                     className={`workout-day ${done ? 'is-done' : ''}`}
                     disabled={exercises.length === 0}
                     onClick={() => {
-                      // O treino de hoje já começado continua; o resto vê-se
-                      // primeiro e começa-se lá dentro.
+                      // O treino já começado e ainda por acabar continua de
+                      // onde ficou; o resto vê-se primeiro e começa-se lá dentro.
                       const ongoing =
-                        session && session.session_date === today ? session : null
+                        session &&
+                        (session.session_date === today || session.status === 'in_progress')
+                          ? session
+                          : null
                       navigate(
                         ongoing
                           ? `/treino/${ongoing.id}`
@@ -406,6 +431,31 @@ function ScheduledCard({
   return (
     <button type="button" className="week-day__card" onClick={onOpen}>
       {body}
+    </button>
+  )
+}
+
+/**
+ * Um treino feito sem estar marcado — escolhido na lista do plano. Aparece no
+ * dia em que se fez, e abre a sessão: para continuar, ou para ver e corrigir.
+ */
+function LooseCard({ item, onOpen }: { item: DatedSession; onOpen: () => void }) {
+  const done = item.session.status === 'done'
+  const label = item.day?.label ?? '✓'
+  return (
+    <button type="button" className="week-day__card" onClick={onOpen}>
+      <span className={`week-day__tag ${done ? 'is-done' : ''}`}>{label}</span>
+      <span className="week-day__text">
+        <strong>{item.day ? item.day.title ?? `Treino ${item.day.label}` : 'Treino'}</strong>
+        <em>por tua conta</em>
+      </span>
+      <span className="week-day__state">
+        {done ? (
+          <span className="chip chip--good">feito</span>
+        ) : (
+          <span className="chip chip--accent">a meio</span>
+        )}
+      </span>
     </button>
   )
 }
