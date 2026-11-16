@@ -4,14 +4,26 @@ import { Loading, ScreenHeader, Stat } from '@/components/Screen'
 import { Scale } from '@/components/Scale'
 import {
   fetchActivePlan,
+  fetchDietPlan,
   fetchFeedbackHistory,
+  fetchMealLogs,
   fetchRecentLogs,
   fetchWeekSessions,
   fetchWeeklyFeedback,
   saveWeeklyFeedback,
+  soft,
 } from '@/lib/api'
+import { mealAdherence, mealSlots } from '@/lib/diet'
 import { average, weekOfPlan } from '@/lib/calc'
-import { addDays, hoursLabel, isoDate, num, shortDate, weekStart } from '@/lib/format'
+import {
+  addDays,
+  hoursLabel,
+  isoDate,
+  num,
+  shortDate,
+  weekDates,
+  weekStart,
+} from '@/lib/format'
 import { useQuery } from '@/lib/useQuery'
 import type { WeeklyFeedback } from '@/lib/database.types'
 import './weekly-feedback.css'
@@ -56,7 +68,17 @@ export function WeeklyFeedbackScreen() {
       ? await fetchWeekSessions(profile.id, plan.plan.id, weekNumber)
       : []
 
-    return { existing, logs, plan, sessions, weekNumber, history }
+    // A aderência à dieta pelas refeições marcadas, nos dias da semana que já
+    // passaram. Quem nunca marcou nenhuma fica sem número, e escreve o seu.
+    const today = isoDate()
+    const days = weekDates(week).filter((date) => date <= today)
+    const [diet, mealLogs] = await Promise.all([
+      soft(fetchDietPlan(profile.id), null),
+      soft(fetchMealLogs(profile.id, week, today), []),
+    ])
+    const dietAdherence = diet ? mealAdherence(mealSlots(diet.meals), mealLogs, days) : null
+
+    return { existing, logs, plan, sessions, weekNumber, history, dietAdherence }
   })
 
   const [draft, setDraft] = useState<Partial<WeeklyFeedback>>({})
@@ -87,12 +109,15 @@ export function WeeklyFeedbackScreen() {
   const energy = average(logs.map((log) => log.energy))
   const hunger = average(logs.map((log) => log.hunger))
   const stress = average(logs.map((log) => log.stress))
+  const dietAdherence = data!.dietAdherence ?? null
 
   async function persist(status: 'draft' | 'sent') {
     setSaving(true)
     try {
       await saveWeeklyFeedback(profile.id, week, {
         ...draft,
+        // Sem número escrito, vale o das refeições marcadas.
+        diet_adherence: draft.diet_adherence ?? dietAdherence,
         plan_id: plan?.plan.id ?? null,
         week_number: weekNumber,
         trainings_done: done,
@@ -132,6 +157,12 @@ export function WeeklyFeedbackScreen() {
             value={`${done} de ${planned || '—'}`}
             tone={planned > 0 && done >= planned ? 'good' : 'default'}
           />
+          <Stat
+            label="Dieta"
+            value={dietAdherence !== null ? `${dietAdherence}%` : '—'}
+            hint="refeições marcadas"
+            tone={dietAdherence !== null && dietAdherence >= 80 ? 'good' : 'default'}
+          />
           <Stat label="Sono médio" value={hoursLabel(sleep)} />
         </div>
         <div className="row">
@@ -168,6 +199,7 @@ export function WeeklyFeedbackScreen() {
             min={0}
             max={100}
             disabled={sent}
+            placeholder={dietAdherence !== null ? String(dietAdherence) : undefined}
             value={draft.diet_adherence ?? ''}
             onChange={(event) =>
               setDraft((current) => ({
@@ -177,6 +209,12 @@ export function WeeklyFeedbackScreen() {
               }))
             }
           />
+          {dietAdherence !== null && (
+            <span className="feedback__hint">
+              Pelas refeições que marcaste esta semana: {dietAdherence}%. Se deixares em
+              branco, é esse o número que segue.
+            </span>
+          )}
         </label>
 
         <Scale

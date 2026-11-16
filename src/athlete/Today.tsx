@@ -5,6 +5,8 @@ import { Avatar } from '@/components/Avatar'
 import { Loading, ScreenHeader } from '@/components/Screen'
 import { FeeCard, NextPresenceCard } from '@/athlete/CoachCards'
 import { RegisterCards } from '@/athlete/RegisterCards'
+import { WeekStreak } from '@/athlete/Regularity'
+import { HabitsToday } from '@/shared/Habits'
 import {
   fetchActivePlan,
   fetchAthleteCalendar,
@@ -16,7 +18,12 @@ import {
   fetchCurrentTargets,
   fetchCoach,
   fetchDailyLog,
+  fetchDoneDates,
+  fetchHabitLogs,
+  fetchHabits,
   fetchLatestCoachNote,
+  fetchThread,
+  isFromCoach,
   fetchLatestMeasurementDate,
   fetchRecentLogs,
   fetchWeekSessions,
@@ -24,6 +31,7 @@ import {
   startSession,
 } from '@/lib/api'
 import { nextPresence, periodOf } from '@/lib/agenda'
+import { dayMarks, trainingStreak } from '@/lib/progress'
 import { average, weekOfPlan } from '@/lib/calc'
 import {
   addDays,
@@ -32,6 +40,7 @@ import {
   plural,
   shortDate,
   signed,
+  weekDates,
   weekStart,
   weekdayShort,
 } from '@/lib/format'
@@ -52,7 +61,10 @@ export function Today() {
 
   const { data, loading, error, reload } = useQuery(['hoje', profile.id, today], async () => {
     const monday = weekStart(today)
-    const [plan, log, recent, note, targets, coach, calendar, measuredOn] =
+    // Oito semanas para trás: é o que a sequência de treinos precisa para
+    // saber há quanto tempo não se falha.
+    const since = addDays(monday, -56)
+    const [plan, log, recent, note, targets, coach, history, measuredOn] =
       await Promise.all([
         fetchActivePlan(profile.id),
         fetchDailyLog(profile.id, today),
@@ -62,7 +74,7 @@ export function Today() {
         profile.coach_id ? fetchCoach(profile.coach_id) : Promise.resolve(null),
         // A semana toda, e não só hoje: é o que permite dizer quando é o
         // próximo treino num dia de descanso.
-        fetchAthleteCalendar(profile.id, monday, addDays(monday, 6)),
+        fetchAthleteCalendar(profile.id, since, addDays(monday, 6)),
         // Só a data, para o cartão das medidas dizer quando foi a última vez.
         fetchLatestMeasurementDate(profile.id),
       ])
@@ -71,6 +83,19 @@ export function Today() {
     const sessions = plan
       ? await fetchWeekSessions(profile.id, plan.plan.id, week)
       : []
+
+    // A semana que está a correr é o que o resto do ecrã usa; o que ficou
+    // para trás só serve a sequência.
+    const calendar = history.filter((entry) => entry.schedule.scheduled_on >= monday)
+
+    // A regularidade, os hábitos e a conversa: nenhuma destas leituras pode
+    // deitar abaixo o ecrã que se abre todos os dias.
+    const [doneDates, habits, habitLogs, thread] = await Promise.all([
+      soft(fetchDoneDates(profile.id, since, today), []),
+      soft(fetchHabits(profile.id), []),
+      soft(fetchHabitLogs(profile.id, addDays(today, -6), today), []),
+      profile.coach_id ? soft(fetchThread(profile.id, 20), []) : Promise.resolve([]),
+    ])
 
     // O que se combina com o treinador — o treino presencial e a mensalidade.
     // Só faz sentido para quem tem treinador; e nenhuma destas leituras pode
@@ -98,6 +123,11 @@ export function Today() {
       week,
       sessions,
       calendar,
+      history,
+      doneDates,
+      habits,
+      habitLogs,
+      thread,
       measuredOn,
     }
   })
@@ -163,6 +193,19 @@ export function Today() {
   const lastWeight = log.weight_kg ?? weights[weights.length - 1] ?? null
 
   const stepsGoal = targets?.steps_goal ?? 9000
+
+  // A semana em estados e a sequência. Só aparece a quem já tem com que a
+  // encher: um plano, uma marcação ou um treino feito.
+  const marks = dayMarks(weekDates(today), calendar, data!.doneDates, today)
+  const streak = trainingStreak(data!.history, data!.doneDates, today)
+  const showWeek =
+    Boolean(plan) || data!.history.length > 0 || data!.doneDates.length > 0
+
+  // A conversa com o treinador: o que ele disse por último, e o que ainda
+  // não foi lido.
+  const thread = data!.thread
+  const unread = thread.filter((item) => isFromCoach(item) && !item.read_at).length
+  const lastMessage = thread[thread.length - 1] ?? null
 
   const presence = nextPresence(data!.slots ?? [], data!.attendance ?? [], today)
   const period = periodOf(today)
@@ -325,6 +368,9 @@ export function Today() {
         </section>
       )}
 
+      {/* ── a semana e a sequência ─────────────────────── */}
+      {showWeek && <WeekStreak marks={marks} streak={streak} today={today} />}
+
       {/* ── treino presencial ──────────────────────────── */}
       {presence && (
         <NextPresenceCard
@@ -348,8 +394,51 @@ export function Today() {
         measurementsPath={measurementsPath(isCoach, true)}
       />
 
-      {/* ── nota do treinador ──────────────────────────── */}
-      {note && (
+      {/* ── hábitos ────────────────────────────────────── */}
+      <HabitsToday
+        habits={data!.habits}
+        logs={data!.habitLogs}
+        today={today}
+        onChanged={reload}
+      />
+
+      {/* ── a conversa com o treinador ─────────────────── */}
+      {profile.coach_id && (
+        <button
+          type="button"
+          className="card card--accent today__talk"
+          onClick={() => navigate('/conversa')}
+        >
+          <Avatar
+            name={coach?.full_name ?? 'Treinador'}
+            url={coach?.avatar_url}
+            size={34}
+            tone="accent"
+          />
+          <span className="today__talk-text">
+            <span className="eyebrow">
+              Conversa com {coach?.full_name?.split(' ')[0] ?? 'o treinador'}
+            </span>
+            <span className="today__talk-body">
+              {lastMessage
+                ? `${isFromCoach(lastMessage) ? '' : 'Tu: '}${lastMessage.body}`
+                : 'Tens uma dúvida ou queres contar como correu? Escreve-lhe aqui.'}
+            </span>
+          </span>
+          {unread > 0 ? (
+            <span className="chip chip--accent">
+              {unread} {unread === 1 ? 'nova' : 'novas'}
+            </span>
+          ) : (
+            <span className="today__talk-go" aria-hidden>
+              →
+            </span>
+          )}
+        </button>
+      )}
+
+      {/* ── a nota de quem treina por sua conta ────────── */}
+      {!profile.coach_id && note && (
         <section className="card card--accent today__note">
           <div className="today__note-head">
             <Avatar

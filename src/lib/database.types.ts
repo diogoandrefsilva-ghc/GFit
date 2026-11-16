@@ -386,6 +386,40 @@ export type DietMeal = {
   sort_order: number
   time_hint: string | null
   notes: string | null
+  /**
+   * Nulo numa refeição do plano. Preenchido, é outra opção para essa refeição
+   * — o aluno escolhe uma, e as alternativas não somam ao total do dia.
+   */
+  alternative_to: string | null
+}
+
+/** Uma refeição do plano que o aluno marcou como feita num dia. */
+export type MealLog = {
+  athlete_id: string
+  log_date: string
+  meal_id: string
+  created_at: string
+}
+
+/** O que o aluno marca todos os dias além do registo do costume. */
+export type Habit = {
+  id: string
+  athlete_id: string
+  created_by: string | null
+  name: string
+  emoji: string | null
+  sort_order: number
+  /** Deixou de se acompanhar; o que ficou marcado continua lá. */
+  archived_at: string | null
+  created_at: string
+}
+
+/** Um dia em que o hábito foi cumprido. Sem linha, não foi. */
+export type HabitLog = {
+  habit_id: string
+  athlete_id: string
+  log_date: string
+  created_at: string
 }
 
 export type DietItem = {
@@ -424,10 +458,17 @@ export type WeeklyFeedback = {
   created_at: string
 }
 
+/**
+ * Uma mensagem do fio entre treinador e aluno. Nasceu como "nota do
+ * treinador" e a tabela guarda o nome; desde que o aluno responde, é o
+ * `author_id` que diz de quem é.
+ */
 export type CoachNote = {
   id: string
   athlete_id: string
   coach_id: string
+  /** Quem escreveu: o treinador ou o aluno. É a base de dados que o põe. */
+  author_id: string | null
   note_date: string
   body: string
   read_at: string | null
@@ -469,6 +510,9 @@ export type Database = {
       slot_attendance: Table<SlotAttendance>
       payments: Table<Payment>
       assessments: Table<Assessment>
+      habits: Table<Habit>
+      habit_logs: Table<HabitLog>
+      meal_logs: Table<MealLog>
     }
     Views: {
       athlete_current_targets: {

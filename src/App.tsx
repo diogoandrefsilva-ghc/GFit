@@ -7,9 +7,8 @@ import { Loading } from '@/components/Screen'
 import { AthleteShell } from '@/athlete/AthleteShell'
 import { Today } from '@/athlete/Today'
 import { WorkoutHome } from '@/athlete/WorkoutHome'
-import { Measurements } from '@/athlete/Measurements'
 import { Diet } from '@/athlete/Diet'
-import { WeeklyFeedbackScreen } from '@/athlete/WeeklyFeedback'
+import { Progress } from '@/athlete/Progress'
 import { WelcomeGate } from '@/shared/Welcome'
 
 // O treino a decorrer e os ecrãs do treinador só se carregam quando fazem
@@ -49,6 +48,9 @@ const ExerciseLibrary = lazy(() =>
 )
 const SelfArea = lazy(() =>
   import('@/coach/SelfArea').then((m) => ({ default: m.SelfArea })),
+)
+const Conversation = lazy(() =>
+  import('@/athlete/Conversation').then((m) => ({ default: m.Conversation })),
 )
 const Profile = lazy(() =>
   import('@/shared/Profile').then((m) => ({ default: m.Profile })),
@@ -126,9 +128,13 @@ export function App() {
           <Route element={<AthleteShell />}>
             <Route path="/hoje" element={<Today />} />
             <Route path="/treino" element={<WorkoutHome />} />
-            <Route path="/medidas" element={<Measurements />} />
             <Route path="/dieta" element={<Diet />} />
-            <Route path="/semana" element={<WeeklyFeedbackScreen />} />
+            <Route path="/progresso" element={<Progress />} />
+            {/* Os endereços de quando eram dois separadores: quem os tem
+                guardado, ou num atalho do ecrã inicial, vai dar ao sítio certo. */}
+            <Route path="/medidas" element={<Navigate to="/progresso" replace />} />
+            <Route path="/semana" element={<Navigate to="/progresso?ver=semana" replace />} />
+            <Route path="/conversa" element={<Conversation />} />
             <Route path="/perfil" element={<Profile />} />
           </Route>
           {/* Ver o treino antes de o começar: olhar não abre sessão. */}

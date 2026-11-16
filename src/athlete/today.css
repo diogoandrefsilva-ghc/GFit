@@ -44,3 +44,37 @@
   color: var(--paper);
   opacity: 0.85;
 }
+
+/* A conversa com o treinador: o cartão inteiro abre o fio. A última mensagem
+   lê-se em duas linhas; o resto está lá dentro. */
+.card.today__talk {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  color: var(--ink);
+}
+
+.today__talk-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.today__talk-body {
+  font-size: 15px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.today__talk-go {
+  color: var(--muted);
+  font-size: 18px;
+}

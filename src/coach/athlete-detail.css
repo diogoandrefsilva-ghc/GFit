@@ -130,3 +130,35 @@
   font-weight: 700;
   color: var(--muted-soft);
 }
+
+/* A ponta da conversa, no resumo: o cartão inteiro abre o separador dela. */
+.card.detail__talk {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  color: var(--ink);
+}
+
+.detail__talk-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail__talk-body {
+  font-size: 15px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.detail__talk-go {
+  color: var(--muted);
+  font-size: 18px;
+}

@@ -9,12 +9,15 @@ ginásio onde a rede é fraca) e está publicada no GitHub Pages.
 - **Aluno** — vê a semana de treinos que o treinador marcou e regista cada série
   (carga, repetições, reps em reserva) com o que fez da última vez ao lado; nos
   treinos por tempo a app conduz com temporizador; regista peso, passos, sono,
-  energia, fome, stress e perímetros em cartões, um por coisa; consulta a
-  dieta; envia o feedback da semana.
+  energia, fome, stress e perímetros em cartões, um por coisa; marca os
+  hábitos que o treinador lhe pediu e as refeições que comeu; vê a semana e o
+  mês de treino, com a sequência sem falhar; conversa com o treinador; envia
+  o feedback da semana.
 - **Treinador** — vê quem precisa de atenção em cartões que abrem a lista ou o
   calendário, escreve o plano de treino a partir da base de exercícios,
   publica-o e marca-o no calendário, monta o plano alimentar a partir da base
-  de alimentos, deixa notas e responde ao feedback. E treina: o separador *Eu*
+  de alimentos (com alternativas por refeição), define os hábitos de cada
+  aluno, conversa com ele e responde ao feedback. E treina: o separador *Eu*
   é o seu lado de aluno, com um lembrete no fim do *Início*.
 - **Auto-treino** — quem quer escrever o seu próprio treino escreve-o, tenha
   treinador ou não. Quem tem treinador continua a mostrar-lho.
@@ -144,12 +147,16 @@ workout_sessions ─── set_logs           o que o aluno fez (C / R / F)
 
 daily_logs                              peso, passos, sono, energia, fome, stress
 measurements                            perímetros
-diet_plans ─── diet_meals ─── diet_items  plano alimentar
+diet_plans ─── diet_meals ─── diet_items  plano alimentar; uma refeição pode
+                                        ser alternativa de outra
+meal_logs                               as refeições que o aluno marcou, dia a dia
+habits ─── habit_logs                   o que o aluno marca todos os dias
 training_slots ─── slot_attendance      treino presencial: a regra e as respostas
 payments                                mensalidades: o aluno paga, o treinador valida
 assessments                             avaliações físicas
 weekly_feedback                         feedback semanal e resposta do treinador
-coach_notes                             notas que aparecem no "Hoje" do aluno
+coach_notes                             a conversa: as notas do treinador e as
+                                        respostas do aluno (`author_id`)
 
 exercises, foods, muscles               bibliotecas partilhadas
 ```
@@ -195,7 +202,7 @@ src/
   auth/        login, contexto de sessão, ecrã de escolha de quem entra sem
                convite (esperar pelo treinador ou treinar por sua conta)
   athlete/     Hoje (com os cartões de registo), Treino (semana marcada),
-               Sessão de treino, Medidas, Dieta, Semana
+               Sessão de treino, Dieta, Progresso (Medidas e Semana), Conversa
   coach/       Alunos, Detalhe do aluno, Calendário, Editor de plano (com a
                marcação no calendário), Editor de dieta, Biblioteca de
                exercícios, Eu (a área pessoal do treinador)
@@ -337,6 +344,74 @@ valem disco.
 Os ecrãs que vivem em chunks próprios são trazidos enquanto a app está parada,
 para o primeiro toque em cada separador não esperar por um download.
 
+## Os separadores do aluno
+
+São quatro: **Hoje**, **Treino**, **Dieta** e **Progresso**. Eram seis. As
+*Medidas* e a *Semana* passaram a ser as duas zonas do Progresso
+(`/progresso?ver=semana`) — são a mesma pergunta, "como estou a ir?" — e o
+*Perfil* ficou só no avatar da barra de cima, onde já estava. Os endereços
+antigos (`/medidas`, `/semana`) redireccionam.
+
+## A semana, a sequência e o mês
+
+Nada disto se guarda: sai das marcações do calendário e dos treinos acabados
+(`src/lib/progress.ts`).
+
+- **No Hoje**, por baixo do treino do dia: os sete dias da semana — treinado,
+  marcado, em falta — e a sequência. Com treinos marcados conta-se treino a
+  treino ("8 treinos seguidos": há quantos não se falha um); sem marcações não
+  há "falhar", e contam-se as semanas seguidas em que se treinou. O treino de
+  hoje por fazer não quebra a sequência.
+- **No Treino**, o cartão *O teu mês*: treinos feitos, adesão (dos marcados até
+  hoje, quantos ficaram feitos) e a média por semana, com o calendário do mês
+  e setas para os meses anteriores.
+
+Não há ranking entre alunos, de propósito: com poucos alunos expõe quem falha.
+
+## Hábitos
+
+O registo do dia é igual para todos. Os hábitos são o que o treinador quer
+acompanhar *neste* aluno — a água, a creatina, os alongamentos. Define-os no
+separador *Metas* da ficha (`habits`), e é a mesma regra das metas: o treinador,
+ou o próprio quando não tem treinador (na sua ficha). O aluno marca-os no
+*Hoje* com um toque (`habit_logs`: uma linha por dia cumprido), e o treinador
+vê os últimos sete dias de cada um. Retirar um hábito arquiva-o; o que ficou
+marcado continua lá.
+
+## Refeições: alternativas e o que foi feito
+
+Uma refeição do plano pode ter alternativas (`diet_meals.alternative_to`): no
+editor, **+ Alternativa** cria a *Opção 2* dentro do cartão da refeição. O
+total do plano conta uma opção por refeição — a primeira.
+
+O aluno escolhe a opção e marca a refeição como feita (`meal_logs`). Daí saem
+três coisas: o "Hoje: 2 de 4 refeições" no topo da *Dieta*; o `kcal_in` do
+registo diário, somado a partir do que ficou marcado; e a **aderência à
+dieta** — a percentagem de refeições do plano marcadas —, que aparece no
+resumo da ficha (7 dias) e pré-preenche o feedback semanal, em vez da
+percentagem que o aluno estimava ao domingo. Quem nunca marcou nenhuma não
+tem 0%: fica sem número, e escreve o seu.
+
+## A conversa
+
+As notas do treinador ganharam resposta. A tabela é a mesma (`coach_notes`):
+uma nota é uma mensagem do treinador, e o `author_id` — posto por um trigger,
+para ninguém escrever em nome do outro — diz de quem é cada uma. O `read_at`
+passou a querer dizer "o outro lado leu".
+
+O fio (`src/shared/Thread.tsx`) é o mesmo dos dois lados e junta o que vivia
+em três sítios: as notas, a resposta do treinador ao feedback da semana, e o
+que o aluno lhe quer dizer. O feedback entra como marco, não como mensagem —
+tem o seu ecrã.
+
+- **Aluno**: o cartão *Conversa com …* no Hoje mostra a última mensagem e
+  quantas há por ler, e abre `/conversa`.
+- **Treinador**: separador *Conversa* na ficha do aluno; as mensagens por ler
+  aparecem em *Por tratar*, no Início.
+
+Quem treina por sua conta continua com as notas na ficha: não há outro lado.
+A app continua sem servidor, por isso não há notificações — vê-se ao abrir.
+
 ## O início do treinador
 
 O Início responde a três perguntas, por esta ordem, e a mais nada:
@@ -345,7 +420,7 @@ O Início responde a três perguntas, por esta ordem, e a mais nada:
 | --- | --- |
 | **Marcar treino** / **Treinos registados** | as duas coisas que se vêm cá fazer. A primeira abre um painel — aluno, plano, treino, dia e hora — e põe o treino no calendário sem passar pelo editor do plano. A segunda leva a `/treinos`: o que os alunos fizeram, dia a dia, com as cargas e repetições de cada série ao toque |
 | **Próximos treinos** | hoje e os seis dias seguintes: os treinos marcados e os presenciais. Tocar num abre o que se pode fazer com ele |
-| **Por tratar** | só aparece se houver: pagamentos por validar, feedback por ler, planos a acabar |
+| **Por tratar** | só aparece se houver: pagamentos por validar, mensagens e feedback por ler, planos a acabar |
 
 Em baixo ficam dois números — alunos activos e treinos feitos dos marcados
 nesta semana (contados pelo calendário, que é para onde o número leva) — e o

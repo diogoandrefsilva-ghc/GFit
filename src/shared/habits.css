@@ -1,0 +1,177 @@
+/* ── os hábitos do dia, no Hoje ──────────────────────────── */
+
+.habits__count {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.habits__count.is-all {
+  color: var(--good);
+}
+
+.habits__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Um alvo do tamanho do polegar, como os cartões de registo: a linha inteira
+   marca, não só o círculo. */
+.habit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 10px 14px;
+  text-align: left;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  transition: transform 0.06s ease, background 0.16s ease, border-color 0.16s ease;
+}
+
+.habit:active {
+  transform: scale(0.985);
+}
+
+.habit.is-done {
+  background: var(--good-soft);
+  border-color: var(--good-line);
+}
+
+.habit__emoji {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.habit__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.habit__text strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.habit__text em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.habit__check {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--line-2);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--good-ink);
+}
+
+.habit.is-done .habit__check {
+  background: var(--good);
+  border-color: var(--good);
+}
+
+/* ── quem os define ──────────────────────────────────────── */
+
+.habits-edit {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.habits-edit__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.habits-edit__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+}
+
+.habits-edit__week {
+  display: flex;
+  gap: 3px;
+}
+
+.habits-edit__week i {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.habits-edit__week i.is-done {
+  background: var(--good);
+  border-color: var(--good);
+  color: var(--good-ink);
+}
+
+.habits-edit__remove {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.habits-edit__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.habits-edit__emoji {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.habits-edit__pick {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.habits-edit__pick.is-on {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}

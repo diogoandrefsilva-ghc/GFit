@@ -115,3 +115,84 @@
   flex-direction: column;
   gap: 12px;
 }
+
+/* ── o dia: o que já se comeu ────────────────────────────── */
+
+.diet__today-count {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.diet__bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--paper-3);
+  overflow: hidden;
+}
+
+.diet__bar span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--good);
+  transition: width 0.2s ease;
+}
+
+.diet__today-kcal {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── marcar a refeição ───────────────────────────────────── */
+
+.meal__row {
+  display: flex;
+  align-items: center;
+}
+
+.meal__row .meal__head {
+  flex: 1;
+  min-width: 0;
+  padding-right: 8px;
+}
+
+/* O círculo é o alvo de marcar; o resto da linha abre a refeição. Tem 44px de
+   toque à volta dos 30 que se vêem. */
+.meal__check {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-right: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--line-2);
+  background: transparent;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--good-ink);
+  position: relative;
+}
+
+.meal__check::after {
+  content: '';
+  position: absolute;
+  inset: -9px;
+}
+
+.card.meal.is-done {
+  background: var(--good-soft);
+  border-color: var(--good-line);
+}
+
+.meal.is-done .meal__check {
+  background: var(--good);
+  border-color: var(--good);
+}
+
+/* O cartão da refeição já traz a sua margem; as opções só se alinham com o
+   título. */
+.meal__options {
+  padding: 0 16px;
+}

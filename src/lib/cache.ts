@@ -13,7 +13,9 @@
 
 // v2: o Início, o Hoje e o Calendário passaram a trazer mais coisas na mesma
 // consulta; o que ficou guardado da v1 já não tem a forma que os ecrãs esperam.
-const PREFIX = 'gfit.cache.v2.'
+// v3: o Hoje, o Treino, a Dieta e a ficha do aluno ganharam a sequência, os
+// hábitos, as refeições feitas e a conversa.
+const PREFIX = 'gfit.cache.v3.'
 
 /** Uma entrada mais velha do que isto já não se mostra: relê-se primeiro. */
 const MAX_AGE = 7 * 24 * 60 * 60 * 1000
@@ -69,10 +71,30 @@ function storage(): Storage | null {
  * limpa o que ficou do anterior.
  */
 export function setScope(next: string | null) {
+  sweepOldVersions()
   if (next === scope) return
   memory.clear()
   if (scope !== null) forgetDisk(scope)
   scope = next
+}
+
+let swept = false
+
+/**
+ * O que ficou em disco de uma versão anterior do cache já ninguém lê: sai uma
+ * vez, no arranque, para não ficar a ocupar a quota do `localStorage`.
+ */
+function sweepOldVersions() {
+  if (swept) return
+  swept = true
+  const store = storage()
+  if (!store) return
+  const doomed: string[] = []
+  for (let i = 0; i < store.length; i++) {
+    const key = store.key(i)
+    if (key && key.startsWith('gfit.cache.') && !key.startsWith(PREFIX)) doomed.push(key)
+  }
+  doomed.forEach((key) => store.removeItem(key))
 }
 
 function forgetDisk(which: string) {

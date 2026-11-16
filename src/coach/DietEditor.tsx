@@ -9,7 +9,8 @@ import {
   searchFoods,
 } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
-import { EMPTY_MACROS, addMacros, macrosOf, scaleFood, type Macros } from '@/lib/calc'
+import { EMPTY_MACROS, macrosOf, scaleFood } from '@/lib/calc'
+import { mealSlots, planMacros } from '@/lib/diet'
 import { int, num } from '@/lib/format'
 import { unwrap, useQuery } from '@/lib/useQuery'
 import type { AthleteTargets, DietItem, DietPlan, Food } from '@/lib/database.types'
@@ -54,13 +55,14 @@ export function DietEditor() {
     return { plan, targets, usage, ...contents }
   })
 
-  const totals = useMemo(() => {
-    if (!data) return EMPTY_MACROS
-    return data.meals.reduce<Macros>(
-      (sum, meal) => addMacros(sum, macrosOf(data.itemsByMeal.get(meal.id) ?? [])),
-      EMPTY_MACROS,
-    )
-  }, [data])
+  const slots = useMemo(() => mealSlots(data?.meals ?? []), [data?.meals])
+
+  // O total do plano conta uma opção por refeição: a primeira. As alternativas
+  // são para o aluno escolher, não para somar.
+  const totals = useMemo(
+    () => (data ? planMacros(slots, data.itemsByMeal) : EMPTY_MACROS),
+    [data, slots],
+  )
 
   if (loading) return <Loading label="A carregar a dieta" />
   if (error || !data) {
@@ -129,68 +131,121 @@ export function DietEditor() {
         </section>
 
         <ul className="diet-edit__meals">
-          {meals.map((meal) => {
-            const items = itemsByMeal.get(meal.id) ?? []
-            const macros = macrosOf(items)
-            return (
-              <li key={meal.id} className="card diet-edit__meal">
-                <div className="card__head">
-                  <input
-                    className="diet-edit__meal-name"
-                    defaultValue={meal.name}
-                    onBlur={async (event) => {
-                      if (event.target.value === meal.name) return
-                      unwrap(
-                        await supabase
-                          .from('diet_meals')
-                          .update({ name: event.target.value || 'Refeição' })
-                          .eq('id', meal.id)
-                          .select(),
-                      )
-                      reload()
-                    }}
-                  />
-                  <span className="diet-edit__meal-kcal">{int(macros.kcal)} kcal</span>
-                </div>
-
-                <ul className="diet-edit__items">
-                  {items.map((item) => (
-                    <ItemRow key={item.id} item={item} onChange={reload} />
-                  ))}
-                  {items.length === 0 && (
-                    <li className="muted diet-edit__no-items">Sem alimentos.</li>
-                  )}
-                </ul>
-
-                <p className="diet-edit__meal-macros">
-                  P {num(macros.protein, 0)} · G {num(macros.fat, 0)} · H{' '}
-                  {num(macros.carb, 0)}
-                </p>
-
-                <div className="row">
-                  <button
-                    type="button"
-                    className="btn btn--sm btn--quiet"
-                    onClick={() => setAddingTo(meal.id)}
+          {slots.map((slot) => (
+            <li key={slot.meal.id} className="card diet-edit__meal">
+              {slot.options.map((meal, index) => {
+                const items = itemsByMeal.get(meal.id) ?? []
+                const macros = macrosOf(items)
+                const isAlternative = index > 0
+                return (
+                  <div
+                    key={meal.id}
+                    className={`diet-edit__option ${isAlternative ? 'is-alternative' : ''}`}
                   >
-                    + Alimento
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn--sm btn--quiet"
-                    onClick={async () => {
-                      unwrap(
-                        await supabase.from('diet_meals').delete().eq('id', meal.id).select(),
-                      )
-                      reload()
-                    }}
-                  >
-                    Remover refeição
-                  </button>
-                </div>
-              </li>
-            )
-          })}
+                    <div className="card__head">
+                      {isAlternative ? (
+                        <span className="diet-edit__option-label">Opção {index + 1}</span>
+                      ) : (
+                        <input
+                          className="diet-edit__meal-name"
+                          defaultValue={meal.name}
+                          onBlur={async (event) => {
+                            if (event.target.value === meal.name) return
+                            unwrap(
+                              await supabase
+                                .from('diet_meals')
+                                .update({ name: event.target.value || 'Refeição' })
+                                .eq('id', meal.id)
+                                .select(),
+                            )
+                            reload()
+                          }}
+                        />
+                      )}
+                      <span className="diet-edit__meal-kcal">{int(macros.kcal)} kcal</span>
+                    </div>
+
+                    {!isAlternative && slot.options.length > 1 && (
+                      <span className="diet-edit__option-label">Opção 1 · a que conta no total</span>
+                    )}
+
+                    <ul className="diet-edit__items">
+                      {items.map((item) => (
+                        <ItemRow key={item.id} item={item} onChange={reload} />
+                      ))}
+                      {items.length === 0 && (
+                        <li className="muted diet-edit__no-items">Sem alimentos.</li>
+                      )}
+                    </ul>
+
+                    <p className="diet-edit__meal-macros">
+                      P {num(macros.protein, 0)} · G {num(macros.fat, 0)} · H{' '}
+                      {num(macros.carb, 0)}
+                    </p>
+
+                    <div className="row row--wrap">
+                      <button
+                        type="button"
+                        className="btn btn--sm btn--quiet"
+                        onClick={() => setAddingTo(meal.id)}
+                      >
+                        + Alimento
+                      </button>
+                      {!isAlternative && (
+                        <button
+                          type="button"
+                          className="btn btn--sm btn--quiet"
+                          onClick={async () => {
+                            // Outra opção para a mesma refeição: o aluno
+                            // escolhe uma das duas à hora de comer.
+                            unwrap(
+                              await supabase
+                                .from('diet_meals')
+                                .insert({
+                                  diet_plan_id: plan.id,
+                                  name: meal.name,
+                                  sort_order: meal.sort_order,
+                                  alternative_to: meal.id,
+                                })
+                                .select(),
+                            )
+                            reload()
+                          }}
+                        >
+                          + Alternativa
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="btn btn--sm btn--quiet"
+                        onClick={async () => {
+                          if (
+                            !isAlternative &&
+                            slot.options.length > 1 &&
+                            !window.confirm(
+                              `Remover "${meal.name}" e as suas alternativas?`,
+                            )
+                          ) {
+                            return
+                          }
+                          unwrap(
+                            await supabase
+                              .from('diet_meals')
+                              .delete()
+                              .eq('id', meal.id)
+                              .select(),
+                          )
+                          reload()
+                        }}
+                      >
+                        {isAlternative ? 'Remover alternativa' : 'Remover refeição'}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </li>
+          ))}
         </ul>
 
         <button
@@ -202,8 +257,10 @@ export function DietEditor() {
                 .from('diet_meals')
                 .insert({
                   diet_plan_id: plan.id,
-                  name: `Refeição ${meals.length + 1}`,
-                  sort_order: meals.length,
+                  name: `Refeição ${slots.length + 1}`,
+                  // Depois da última, e não "quantas há": com refeições
+                  // removidas pelo meio, contar dava ordens repetidas.
+                  sort_order: Math.max(-1, ...meals.map((meal) => meal.sort_order)) + 1,
                 })
                 .select(),
             )

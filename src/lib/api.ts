@@ -9,6 +9,9 @@ import type {
   AthleteTargets,
   CoachNote,
   Food,
+  Habit,
+  HabitLog,
+  MealLog,
   Invite,
   Muscle,
   MuscleShare,
@@ -342,11 +345,15 @@ export async function fetchCoachNotes(
       .from('coach_notes')
       .select('*')
       .eq('athlete_id', athleteId)
-      .order('note_date', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(limit),
   )
 }
 
+/**
+ * A última coisa que o treinador disse — o que o "Hoje" mostra. As mensagens
+ * do próprio aluno ficam de fora: são a resposta, não a nota.
+ */
 export async function fetchLatestCoachNote(
   athleteId: string,
 ): Promise<CoachNote | null> {
@@ -355,10 +362,10 @@ export async function fetchLatestCoachNote(
       .from('coach_notes')
       .select('*')
       .eq('athlete_id', athleteId)
-      .order('note_date', { ascending: false })
-      .limit(1),
+      .order('created_at', { ascending: false })
+      .limit(12),
   )
-  return rows[0] ?? null
+  return rows.find(isFromCoach) ?? null
 }
 
 export async function fetchCoach(coachId: string): Promise<Profile | null> {
@@ -1836,4 +1843,216 @@ export async function fetchSchedulablePlans(
     plan,
     days: days.filter((day) => day.plan_id === plan.id && filled.has(day.id)),
   }))
+}
+
+// ── a conversa ───────────────────────────────────────────────────────
+
+/**
+ * De quem é uma mensagem do fio. Uma nota de quem treina por sua conta é dele
+ * para ele — autor, treinador e aluno são a mesma pessoa —, e conta como nota.
+ */
+export function isFromCoach(note: CoachNote): boolean {
+  return note.author_id === null || note.author_id === note.coach_id
+}
+
+/** O fio entre treinador e aluno, da mensagem mais antiga à mais recente. */
+export async function fetchThread(athleteId: string, limit = 80): Promise<CoachNote[]> {
+  const rows = unwrap(
+    await supabase
+      .from('coach_notes')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .order('created_at', { ascending: false })
+      .limit(limit),
+  )
+  return rows.reverse()
+}
+
+/**
+ * Dá por lido o que o outro lado escreveu. Só toca no que ainda não estava
+ * lido e não é de quem lê — a própria mensagem não se lê a si mesma.
+ */
+export async function markThreadRead(athleteId: string, readerId: string): Promise<void> {
+  unwrap(
+    await supabase
+      .from('coach_notes')
+      .update({ read_at: new Date().toISOString() })
+      .eq('athlete_id', athleteId)
+      .is('read_at', null)
+      .neq('author_id', readerId)
+      .select('id'),
+  )
+}
+
+/** As mensagens dos alunos que o treinador ainda não leu, da mais recente. */
+export async function fetchUnreadMessages(coachId: string): Promise<CoachNote[]> {
+  return unwrap(
+    await supabase
+      .from('coach_notes')
+      .select('*')
+      .eq('coach_id', coachId)
+      .is('read_at', null)
+      .neq('author_id', coachId)
+      .order('created_at', { ascending: false })
+      .limit(100),
+  )
+}
+
+// ── hábitos ──────────────────────────────────────────────────────────
+
+/** Os hábitos que se acompanham agora, pela ordem em que foram postos. */
+export async function fetchHabits(athleteId: string): Promise<Habit[]> {
+  return unwrap(
+    await supabase
+      .from('habits')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .is('archived_at', null)
+      .order('sort_order')
+      .order('created_at'),
+  )
+}
+
+export async function fetchHabitLogs(
+  athleteId: string,
+  from: string,
+  to: string,
+): Promise<HabitLog[]> {
+  return unwrap(
+    await supabase
+      .from('habit_logs')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .gte('log_date', from)
+      .lte('log_date', to),
+  )
+}
+
+export async function addHabit(
+  athleteId: string,
+  createdBy: string,
+  values: { name: string; emoji: string | null; sort_order: number },
+): Promise<Habit> {
+  const rows = unwrap(
+    await supabase
+      .from('habits')
+      .insert({ athlete_id: athleteId, created_by: createdBy, ...values })
+      .select(),
+  )
+  return rows[0]
+}
+
+/** Deixar de acompanhar: sai do dia do aluno, o que ficou marcado continua. */
+export async function archiveHabit(id: string): Promise<void> {
+  unwrap(
+    await supabase
+      .from('habits')
+      .update({ archived_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('id'),
+  )
+}
+
+export async function setHabitDone(
+  habit: Pick<Habit, 'id' | 'athlete_id'>,
+  date: string,
+  done: boolean,
+): Promise<void> {
+  if (done) {
+    unwrap(
+      await supabase
+        .from('habit_logs')
+        .upsert(
+          { habit_id: habit.id, athlete_id: habit.athlete_id, log_date: date },
+          { onConflict: 'habit_id,log_date' },
+        )
+        .select('habit_id'),
+    )
+    return
+  }
+  unwrap(
+    await supabase
+      .from('habit_logs')
+      .delete()
+      .eq('habit_id', habit.id)
+      .eq('log_date', date)
+      .select('habit_id'),
+  )
+}
+
+// ── refeições feitas ─────────────────────────────────────────────────
+
+export async function fetchMealLogs(
+  athleteId: string,
+  from: string,
+  to: string = from,
+): Promise<MealLog[]> {
+  return unwrap(
+    await supabase
+      .from('meal_logs')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .gte('log_date', from)
+      .lte('log_date', to),
+  )
+}
+
+/**
+ * Marca (ou desmarca) uma refeição num dia. De uma refeição com alternativas
+ * só se come uma: marcar uma opção desmarca as outras, que vêm em `siblings`.
+ */
+export async function setMealDone(
+  athleteId: string,
+  date: string,
+  mealId: string,
+  done: boolean,
+  siblings: string[] = [],
+): Promise<void> {
+  const drop = done ? siblings.filter((id) => id !== mealId) : [mealId]
+  if (drop.length > 0) {
+    unwrap(
+      await supabase
+        .from('meal_logs')
+        .delete()
+        .eq('athlete_id', athleteId)
+        .eq('log_date', date)
+        .in('meal_id', drop)
+        .select('meal_id'),
+    )
+  }
+  if (!done) return
+  unwrap(
+    await supabase
+      .from('meal_logs')
+      .upsert(
+        { athlete_id: athleteId, log_date: date, meal_id: mealId },
+        { onConflict: 'athlete_id,log_date,meal_id' },
+      )
+      .select('meal_id'),
+  )
+}
+
+// ── os dias treinados ────────────────────────────────────────────────
+
+/**
+ * As datas dos treinos acabados num intervalo — uma por treino, por isso um
+ * dia com dois treinos aparece duas vezes. É o que enche a sequência do Hoje
+ * e o mês do separador Treino, e conta também o que se treinou sem marcação.
+ */
+export async function fetchDoneDates(
+  athleteId: string,
+  from: string,
+  to: string,
+): Promise<string[]> {
+  const rows = unwrap(
+    await supabase
+      .from('workout_sessions')
+      .select('session_date')
+      .eq('athlete_id', athleteId)
+      .eq('status', 'done')
+      .gte('session_date', from)
+      .lte('session_date', to)
+      .order('session_date'),
+  )
+  return rows.map((row) => row.session_date)
 }
